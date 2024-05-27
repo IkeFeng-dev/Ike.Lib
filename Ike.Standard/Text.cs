@@ -15,7 +15,7 @@ namespace Ike.Standard
 		/// <param name="start">开始位置字符串</param>
 		/// <param name="end">结束位置字符串</param>
 		/// <returns>正常返回提取结果,如果不包含<paramref name="start"/>或者<paramref name="end"/>时返回<see cref="string.Empty"></see></returns>
-		public string ExtractString(string source, string start, string end)
+		public static string ExtractString(string source, string start, string end)
 		{
 			int startIndex = source.IndexOf(start) + start.Length;
 			if (startIndex < start.Length) return string.Empty;
@@ -31,7 +31,7 @@ namespace Ike.Standard
 		/// <param name="start">开始位置字符串</param>
 		/// <param name="end">结束位置字符串</param>
 		/// <returns>匹配到的字符串集合</returns>
-		public List<string> ExtractAllStrings(string source, string start, string end)
+		public static List<string> ExtractAllStrings(string source, string start, string end)
 		{
 			List<string> matches = new List<string>();
 			int startIndex = 0;
