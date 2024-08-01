@@ -198,10 +198,10 @@ namespace Ike
 							tx.Commit();
 							return true;
 						}
-						catch
+						catch (Exception ex)
 						{
 							tx.Rollback();
-							throw;
+							throw ex;
 						}
 					}
 				}
