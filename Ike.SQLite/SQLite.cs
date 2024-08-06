@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.Data;
 using System.Data.SQLite;
@@ -113,6 +112,16 @@ namespace Ike
 			ExecuteNonQuery("PRAGMA foreign_keys = ON;", null);
 		}
 
+        /// <summary> 
+        /// 对SQLite数据库执行增删改操作,返回受影响的行数
+        /// </summary> 
+        /// <param name="sqlCommand">要执行的增删改的SQL语句</param> 
+        /// <returns></returns> 
+        public int ExecuteNonQuery(string sqlCommand)
+        {
+            return ExecuteNonQuery(sqlCommand, null);
+        }
+
 		/// <summary> 
 		/// 对SQLite数据库执行增删改操作,返回受影响的行数
 		/// </summary> 
@@ -134,116 +143,119 @@ namespace Ike
 		public int ExecuteNonQuery(string sqlCommand, SQLiteParameter[] parameters)
 		{
 			int affectedRows = 0;
-			if (Open())
+			using (DbTransaction transaction = connection.BeginTransaction())
 			{
-				using (DbTransaction transaction = connection.BeginTransaction())
+				using (SQLiteCommand command = new SQLiteCommand(connection))
 				{
-					using (SQLiteCommand command = new SQLiteCommand(connection))
+					command.CommandText = sqlCommand;
+					if (parameters != null)
 					{
-						command.CommandText = sqlCommand;
-						if (parameters != null)
-						{
-							command.Parameters.AddRange(parameters);
-						}
-						affectedRows = command.ExecuteNonQuery();
+						command.Parameters.AddRange(parameters);
 					}
-					transaction.Commit();
+					affectedRows = command.ExecuteNonQuery();
 				}
+				transaction.Commit();
 			}
 			return affectedRows;
 		}
 
 		/// <summary>
-		/// 执行SQL语句,返回影响的记录数
+		/// 执行SQL语句,返回影响的行数
 		/// </summary>
 		/// <param name="sqlCommand">SQL语句</param>
-		/// <returns>影响的记录数,如果数据库未打开则返回-1</returns>
+		/// <returns>影响的行数,如果数据库未打开则返回-1</returns>
 		public int ExecuteSql(string sqlCommand)
 		{
-			if (Open())
-			{
-				using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
-				{
-					return cmd.ExecuteNonQuery();
-				}
-			}
-			return -1;
-		}
-
-
+			return ExecuteSql(sqlCommand,null);
+        }
 		/// <summary>
-		/// 执行多条SQL语句,实现数据库事务
-		/// </summary>
-		/// <param name="sqlCommandList">多条SQL语句</param>    
-		public bool ExecuteSqlTran(string[] sqlCommandList)
-		{
-			if (Open())
-			{
-				using (SQLiteCommand cmd = new SQLiteCommand())
-				{
-					cmd.Connection = connection;
-					using (SQLiteTransaction tx = connection.BeginTransaction())
-					{
-						cmd.Transaction = tx;
-						try
-						{
-							foreach (string sql in sqlCommandList)
-							{
-								if (sql.Trim().Length > 1)
-								{
-									cmd.CommandText = sql;
-									cmd.ExecuteNonQuery();
-								}
-							}
-							tx.Commit();
-							return true;
-						}
-						catch (Exception ex)
-						{
-							tx.Rollback();
-							throw ex;
-						}
-					}
-				}
-			}
-			return false;
-		}
-
-
-		/// <summary>
-		/// 执行带一个存储过程参数的的SQL语句
+		/// 执行SQL语句,返回影响的行数
 		/// </summary>
 		/// <param name="sqlCommand">SQL语句</param>
-		/// <param name="parameters">参数内容,比如一个字段是格式复杂的文章,有特殊符号,可以通过这个方式添加</param>
-		/// <returns>影响的记录数</returns>
+		/// <param name="parameters">执行增删改语句所需要的参数,参数必须以它们在SQL语句中的顺序为准</param> 
+		/// <returns>影响的行数</returns>
 		/// <remarks>
 		/// 参数<paramref name="parameters"/>的调用示例:
 		/// <code>
 		/// <see langword="string" />  sqlCommand = @"INSERT INTO Users (username, password) VALUES (@username, @password)";"
-		/// <br />
-		/// <see cref="Dictionary{TKey, TValue}"/> <see langword="Key"/> 必须是'@username'和'@password',会根据对应的<see langword="Key"/>去设置<see langword="Value"/>
+		/// <br/>
+		/// <see cref="SQLiteParameter"/>[] parameters = <see langword="new" /> <see cref="SQLiteParameter"/>[]
+		/// {
+		///     <see langword="new" /> <see cref="SQLiteParameter"/>("@username", "user1"),
+		///     <see langword="new" /> <see cref="SQLiteParameter"/>("@password", "9Jhd7l#3")
+		/// };
 		/// </code>
 		/// </remarks>
-		public int ExecuteSql(string sqlCommand, Dictionary<string, string> parameters)
+		public int ExecuteSql(string sqlCommand, SQLiteParameter[] parameters)
 		{
-			if (Open())
+			using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
 			{
-				using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
+				if (parameters != null)
 				{
-					foreach (var item in parameters)
-					{
-						SQLiteParameter par = new SQLiteParameter(item.Key, DbType.String);
-						par.Value = item.Value;
-						cmd.Parameters.Add(par);
-					}
-					return cmd.ExecuteNonQuery();
+					cmd.Parameters.AddRange(parameters);
 				}
+				return cmd.ExecuteNonQuery();
 			}
-			return -1;
 		}
 
+        /// <summary>
+        /// 执行多条SQL语句,实现数据库事务
+        /// </summary>
+        /// <param name="sqlCommandList">多条SQL语句</param>    
+        public void ExecuteSqlTran(string[] sqlCommandList)
+        {
+            ExecuteSqlTran(sqlCommandList, null);
+        }
 
-
+        /// <summary>
+        /// 执行多条SQL语句,实现数据库事务
+        /// </summary>
+        /// <param name="sqlCommandList">多条SQL语句</param>    
+        /// <param name="parameters">执行增删改语句所需要的参数,参数必须以它们在SQL语句中的顺序为准</param> 
+        /// <remarks>
+        /// 参数<paramref name="parameters"/>的调用示例:
+        /// <code>
+        /// <see langword="string" />  sqlCommand = @"INSERT INTO Users (username, password) VALUES (@username, @password)";"
+        /// <br/>
+        /// <see cref="SQLiteParameter"/>[] parameters = <see langword="new" /> <see cref="SQLiteParameter"/>[]
+        /// {
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@username", "user1"),
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@password", "9Jhd7l#3")
+        /// };
+        /// </code>
+        /// </remarks>
+        public void ExecuteSqlTran(string[] sqlCommandList, SQLiteParameter[] parameters)
+		{
+			using (SQLiteCommand cmd = new SQLiteCommand())
+			{
+				cmd.Connection = connection;
+				if (parameters != null)
+				{
+					cmd.Parameters.AddRange(parameters);
+				}
+				using (SQLiteTransaction tx = connection.BeginTransaction())
+				{
+					cmd.Transaction = tx;
+					try
+					{
+						foreach (string sql in sqlCommandList)
+						{
+							if (sql.Trim().Length > 1)
+							{
+								cmd.CommandText = sql;
+								cmd.ExecuteNonQuery();
+							}
+						}
+						tx.Commit();
+					}
+					catch (Exception ex)
+					{
+						tx.Rollback();
+						throw ex;
+					}
+				}
+			}
+		}
 
 		/// <summary>
 		/// 执行一条计算查询结果语句
@@ -252,55 +264,109 @@ namespace Ike
 		/// <returns>查询结果</returns>
 		public object ExecutionQuery(string sqlCommand)
 		{
-			if (Open())
+			return ExecutionQuery(sqlCommand, null);
+        }
+
+        /// <summary>
+        /// 执行一条计算查询结果语句
+        /// </summary>
+        /// <param name="sqlCommand">计算查询结果语句</param>
+        /// <param name="parameters">执行增删改语句所需要的参数,参数必须以它们在SQL语句中的顺序为准</param> 
+        /// <returns>查询结果</returns>
+        /// <remarks>
+        /// 参数<paramref name="parameters"/>的调用示例:
+        /// <code>
+        /// <see langword="string" />  sqlCommand = @"INSERT INTO Users (username, password) VALUES (@username, @password)";"
+        /// <br/>
+        /// <see cref="SQLiteParameter"/>[] parameters = <see langword="new" /> <see cref="SQLiteParameter"/>[]
+        /// {
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@username", "user1"),
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@password", "9Jhd7l#3")
+        /// };
+        /// </code>
+        /// </remarks>
+        public object ExecutionQuery(string sqlCommand, SQLiteParameter[] parameters)
+		{
+			using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
 			{
-				using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
-				{
-					return cmd.ExecuteScalar();
-				}
+                if (parameters != null)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+                return cmd.ExecuteScalar();
 			}
-			return null;
 		}
 
-		/// <summary>
-		/// 获取数据
-		/// </summary>
-		/// <param name="sqlCommand">SQL语句</param>
-		/// <param name="dataTable">包含查询结果的<see cref="DataTable"/>对象</param>
-		public void ExecutionRead(string sqlCommand, out DataTable dataTable)
+        /// <summary>
+        /// 获取数据
+        /// </summary>
+        /// <param name="sqlCommand">SQL语句</param>
+        /// <param name="dataTable">包含查询结果的<see cref="DataTable"/>对象</param>
+        /// <returns>数据表</returns>
+        public void ExecutionRead(string sqlCommand, out DataTable dataTable)
 		{
 			dataTable = new DataTable();
-			if (Open())
-			{
-				using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
-				{
-					using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
-					{
-						adapter.Fill(dataTable);
-					}
-				}
-			}
+			using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
+            {
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
+                {
+                    adapter.Fill(dataTable);
+                }
+            }
+		}
+
+        /// <summary>
+        /// 获取数据
+        /// </summary>
+        /// <param name="sqlCommand">SQL语句</param>
+        /// <param name="dataTable">包含查询结果的<see cref="DataTable"/>对象</param>
+        /// <param name="parameters">执行增删改语句所需要的参数,参数必须以它们在SQL语句中的顺序为准</param> 
+        /// <returns>数据表</returns>
+        /// <remarks>
+        /// 参数<paramref name="parameters"/>的调用示例:
+        /// <code>
+        /// <see langword="string" />  sqlCommand = @"INSERT INTO Users (username, password) VALUES (@username, @password)";"
+        /// <br/>
+        /// <see cref="SQLiteParameter"/>[] parameters = <see langword="new" /> <see cref="SQLiteParameter"/>[]
+        /// {
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@username", "user1"),
+        ///     <see langword="new" /> <see cref="SQLiteParameter"/>("@password", "9Jhd7l#3")
+        /// };
+        /// </code>
+        /// </remarks>
+        public void ExecutionRead(string sqlCommand, out DataTable dataTable,SQLiteParameter[] parameters)
+		{
+			dataTable = new DataTable();
+			using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
+            {
+                if (parameters != null)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
+                {
+                    adapter.Fill(dataTable);
+                }
+            }
 		}
 
 
-		/// <summary>
-		/// 获取数据
-		/// </summary>
-		/// <param name="sqlCommand">SQL语句</param>
-		/// <param name="dataSet">包含查询结果的<see cref="DataSet"/>对象</param>
-		public void ExecutionRead(string sqlCommand, out DataSet dataSet)
+        /// <summary>
+        /// 获取数据
+        /// </summary>
+        /// <param name="sqlCommand">SQL语句</param>
+        /// <param name="dataSet">包含查询结果的<see cref="DataSet"/>对象</param>
+        /// <returns>数据表</returns>
+        public void ExecutionRead(string sqlCommand, out DataSet dataSet)
 		{
 			dataSet = new DataSet();
-			if (Open())
-			{
-				using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
-				{
-					using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
-					{
-						adapter.Fill(dataSet);
-					}
-				}
-			}
+			using (SQLiteCommand cmd = new SQLiteCommand(sqlCommand, connection))
+            {
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
+                {
+                    adapter.Fill(dataSet);
+                }
+            }
 		}
 
 		/// <summary>
