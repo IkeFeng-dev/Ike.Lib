@@ -135,7 +135,8 @@ namespace Ike.Core.WPF
 			{
 				return false;
 			}
-			Monitor.Enter(lock_log);
+			bool lockTaken = false;
+			Monitor.Enter(lock_log,ref lockTaken);
 			try
 			{
 				string datetime = DateTime.Now.ToString(datetimeFormat);
@@ -187,7 +188,10 @@ namespace Ike.Core.WPF
 			}
 			finally
 			{
-				Monitor.Exit(lock_log);
+				if (lockTaken)
+				{
+					Monitor.Exit(lock_log);
+				}
 			}
 		}
 

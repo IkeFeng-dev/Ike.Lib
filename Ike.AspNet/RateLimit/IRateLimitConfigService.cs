@@ -1,4 +1,4 @@
-﻿namespace Ike.RateLimit
+﻿namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 速率限制配置服务接口，定义了管理速率限制路径配置的方法

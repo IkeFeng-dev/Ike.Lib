@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
-namespace Ike.RateLimit
+namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 速率限制中间件扩展类，用于将速率限制中间件添加到应用程序构建器中
@@ -42,7 +42,7 @@ namespace Ike.RateLimit
         /// <param name="apiPassword">API接口访问密码</param>
         /// <param name="pathsToLimit">需要限制的路径配置</param>
         /// <returns>应用程序构建器</returns>
-        public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder builder, string apiPassword, IDictionary<string, PathConfig> pathsToLimit)
+        public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder builder, string apiPassword, List<PathConfig> pathsToLimit)
         {
             Flag.Password = apiPassword;
             // 获取服务提供者
@@ -52,7 +52,12 @@ namespace Ike.RateLimit
             // 如果路径配置不为空，更新路径限制配置
             if (pathsToLimit != null)
             {
-                configService.UpdatePaths(pathsToLimit);
+                IDictionary<string,PathConfig> keyValuePairs = new Dictionary<string, PathConfig>();
+                foreach (var path in pathsToLimit) 
+                {
+                    keyValuePairs.TryAdd(path.Name,path);
+				}
+                configService.UpdatePaths(keyValuePairs);
             }
             // 使用速率限制中间件
             return builder.UseMiddleware<RateLimitingMiddleware>();

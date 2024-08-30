@@ -46,11 +46,12 @@
         var app = builder.Build();
 
         // 初始化需要限制的路径及其配置
-        var pathsToLimit = new Dictionary<string, PathConfig>
+        var pathsToLimit = new List<PathConfig>
         {
-            { "api", new PathConfig { Name = "api", Path = "/api", TimeWindowInSeconds = 10, MaxRequests = 5 } },
-            { "res", new PathConfig { Name = "res", Path = "/res/*.png", TimeWindowInSeconds = 20, MaxRequests = 2 } },
-            { "*", new PathConfig { Name = "*", Path = "/*", TimeWindowInSeconds = 60, MaxRequests = 10 } }
+            new() { Name = "file_list", Path = "/api/GetFileList", TimeWindowInSeconds = 20, MaxRequests = 3 },
+            new () { Name = "upload_file", Path = "/api/UploadFile", TimeWindowInSeconds = 120, MaxRequests = 2 },
+            new () { Name = "get_cos_data", Path = "/api/GetCosInfo", TimeWindowInSeconds = 120, MaxRequests = 1 },
+            new () { Name = "get_url", Path = "/api/GetUrl", TimeWindowInSeconds = 60, MaxRequests = 1 }
         };
 
         // 使用速率限制中间件并传递API接口访问密码以及路径限制配置

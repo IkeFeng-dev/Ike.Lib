@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections;
 
-namespace Ike.RateLimit
+namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 线程安全的HashSet实现

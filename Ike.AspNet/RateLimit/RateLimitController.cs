@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Ike.RateLimit
+namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 速率限制控制器，用于管理速率限制配置

@@ -1,4 +1,4 @@
-﻿namespace Ike.RateLimit
+﻿namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 表示路径及其速率限制配置的类

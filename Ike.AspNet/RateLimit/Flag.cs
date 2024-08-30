@@ -1,4 +1,4 @@
-﻿namespace Ike.RateLimit
+﻿namespace Ike.AspNet.RateLimit
 {
     internal static class Flag
     {

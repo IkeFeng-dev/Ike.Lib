@@ -104,6 +104,24 @@ namespace Ike
 			}
 			return connection.State == ConnectionState.Open;
 		}
+
+		/// <summary>
+		/// <inheritdoc cref="SQLiteConnection.Close()"/>
+		/// </summary>
+		public void Close()
+		{ 
+		   connection?.Close();
+		}
+
+		/// <summary>
+		/// <inheritdoc cref="SQLiteConnection.Dispose()"/>
+		/// </summary>
+		public void Dispose()
+		{
+			connection?.Dispose();
+		}
+
+
 		/// <summary>
 		/// 启用外键约束
 		/// </summary>
@@ -112,12 +130,25 @@ namespace Ike
 			ExecuteNonQuery("PRAGMA foreign_keys = ON;", null);
 		}
 
-        /// <summary> 
-        /// 对SQLite数据库执行增删改操作,返回受影响的行数
-        /// </summary> 
-        /// <param name="sqlCommand">要执行的增删改的SQL语句</param> 
-        /// <returns></returns> 
-        public int ExecuteNonQuery(string sqlCommand)
+
+		/// <summary>
+		/// 创建一个当前数据库副本文件
+		/// </summary>
+		/// <param name="dbPath">数据库副本文件路径</param>
+		public void CreatCopy(string dbPath)
+		{
+			using (var command = new SQLiteCommand($"VACUUM INTO '{dbPath}';", connection))
+			{
+				command.ExecuteNonQuery();
+			}
+		}
+
+		/// <summary> 
+		/// 对SQLite数据库执行增删改操作,返回受影响的行数
+		/// </summary> 
+		/// <param name="sqlCommand">要执行的增删改的SQL语句</param> 
+		/// <returns></returns> 
+		public int ExecuteNonQuery(string sqlCommand)
         {
             return ExecuteNonQuery(sqlCommand, null);
         }

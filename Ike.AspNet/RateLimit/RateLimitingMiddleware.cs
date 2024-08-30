@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Collections.Concurrent;
 
-namespace Ike.RateLimit
+namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 速率限制中间件，用于限制每个IP地址的API调用次数
@@ -90,7 +90,7 @@ namespace Ike.RateLimit
         /// <param name="requestPath">请求路径</param>
         /// <param name="pattern">匹配模式</param>
         /// <returns>如果匹配，则返回true；否则返回false</returns>
-        private bool MatchesPath(string requestPath, string pattern)
+        private static bool MatchesPath(string requestPath, string pattern)
         {
             if (string.IsNullOrEmpty(requestPath) || string.IsNullOrEmpty(pattern))
             {

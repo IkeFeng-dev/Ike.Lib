@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Ike.RateLimit
+namespace Ike.AspNet.RateLimit
 {
     /// <summary>
     /// 速率限制配置服务，实现 IRateLimitConfigService 接口
