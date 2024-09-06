@@ -289,6 +289,10 @@ namespace Ike.Standard
 		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
 		public static string IniRead(string section, string key, string def, string filePath, Encoding encoding, int bufferSize = 1024)
 		{
+			if (encoding is null)
+			{
+				encoding = Encoding.UTF8;
+			}
 			byte[] buffer = new byte[bufferSize];
 			int count = WinAPI.GetPrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), def.ToBytes(encoding), buffer, bufferSize, filePath);
 			return encoding.GetString(buffer, 0, count);
@@ -296,11 +300,92 @@ namespace Ike.Standard
 
 
 		/// <summary>
+		/// 指定编码格式读取INI内容
+		/// </summary>
+		/// <param name="section">要检索的键所在的节名称</param>
+		/// <param name="key">要检索的项的名称</param>
+		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+		/// <param name="filePath">INI 文件的完整路径</param>
+		/// <param name="encoding">指定编码读取</param>
+		/// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
+		/// <param name="isWriteDefValue">如果读取数据为空是,是否将默认数据写入文件</param>
+		/// <remarks>
+		///   <list type="bullet">
+		///     <item>如果找不到指定的键,则返回默认值<paramref name="def"/></item>
+		///     <item>如果找到指定的键,但其值为空字符串,则返回空字符串</item>
+		///     <item>如果 INI 文件或指定的节和键不存在,或者发生其他错误,函数将返回空字符串</item>
+		///   </list>
+		/// </remarks>
+		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
+		public static string IniRead(string section, string key, string def, string filePath, Encoding encoding, int bufferSize = 1024, bool isWriteDefValue = false)
+		{
+			if (encoding is null)
+			{
+				encoding = Encoding.UTF8;
+			}
+			byte[] buffer = new byte[bufferSize];
+			int count = WinAPI.GetPrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), def.ToBytes(encoding), buffer, bufferSize, filePath);
+			string read = encoding.GetString(buffer, 0, count);
+			if (isWriteDefValue && string.IsNullOrEmpty(read))
+			{
+				WinAPI.WritePrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), def.ToBytes(encoding), filePath);
+			}
+			return read;
+		}
+
+
+		/// <summary>
+		/// 指定编码格式读取INI中 <see cref="int"></see> 数据
+		/// </summary>
+		/// <param name="section">要检索的键所在的节名称</param>
+		/// <param name="key">要检索的项的名称</param>
+		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+		/// <param name="filePath">INI 文件的完整路径</param>
+		/// <param name="encoding">指定编码读取</param>
+		/// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
+		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
+		public static int IniReadToInt(string section, string key, int def, string filePath, Encoding encoding, int bufferSize = 1024)
+		{
+			if (encoding is null)
+			{
+				encoding = Encoding.UTF8;
+			}
+			byte[] buffer = new byte[bufferSize];
+			int count = WinAPI.GetPrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), def.ToString().ToBytes(encoding), buffer, bufferSize, filePath);
+			int.TryParse(encoding.GetString(buffer, 0, count), out def);
+			return def;
+		}
+
+		/// <summary>
+		/// 指定编码格式读取INI中 <see cref="double"></see> 数据
+		/// </summary>
+		/// <param name="section">要检索的键所在的节名称</param>
+		/// <param name="key">要检索的项的名称</param>
+		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+		/// <param name="filePath">INI 文件的完整路径</param>
+		/// <param name="encoding">指定编码读取</param>
+		/// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
+		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
+		public static double IniReadToDouble(string section, string key, double def, string filePath, Encoding encoding, int bufferSize = 1024)
+		{
+			if (encoding is null)
+			{
+				encoding = Encoding.UTF8;
+			}
+			byte[] buffer = new byte[bufferSize];
+			int count = WinAPI.GetPrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), def.ToString().ToBytes(encoding), buffer, bufferSize, filePath);
+			double.TryParse(encoding.GetString(buffer, 0, count), out def);
+			return def;
+		}
+
+
+
+		/// <summary>
 		/// 指定编码格式写入INI内容
 		/// </summary>
 		/// <param name="section">要写入的键所在的节名称</param>
 		/// <param name="key">要写入的项的名称</param>
-		/// <param name="value">要写入的项的新字符串</param>
+		/// <param name="value">要写入的项的新字符串,通过 <see cref="object.ToString()"/> 方法转为字符串</param>
 		/// <param name="filePath">INI 文件的完整路径</param>
 		/// <param name="encoding">指定编码写入</param>
 		/// <remarks>
@@ -311,10 +396,16 @@ namespace Ike.Standard
 		/// </list>
 		/// </remarks>
 		/// <returns>如果写入成功,则返回 <seealso langword="true"/>;否则,返回 <seealso langword="false"/></returns>
-		public static bool IniWrite(string section, string key, string value, string filePath, Encoding encoding)
+		public static bool IniWrite(string section, string key, object value, string filePath, Encoding encoding)
 		{
-			return WinAPI.WritePrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), value.ToBytes(encoding), filePath);
+			if (encoding is null)
+			{
+				encoding = Encoding.UTF8;
+			}
+			return WinAPI.WritePrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), value.ToString().ToBytes(encoding), filePath);
 		}
+
+
 
 	}
 }

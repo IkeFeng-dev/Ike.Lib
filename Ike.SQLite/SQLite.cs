@@ -2,6 +2,8 @@
 using System.Data.Common;
 using System.Data;
 using System.Data.SQLite;
+using System.Data.SqlTypes;
+using System.Collections.Generic;
 
 namespace Ike
 {
@@ -420,6 +422,91 @@ namespace Ike
 			ExecutionRead("SELECT * FROM sqlite_master;", out DataTable dataTable);
 			return dataTable;
 		}
+
+		/// <summary>
+		/// 指定值是否存在
+		/// </summary>
+		/// <param name="tableName">表名</param>
+		/// <param name="fieldName">字段名</param>
+		/// <param name="fieldValue">字段值</param>
+		/// <returns></returns>
+		public bool ExistFieldValue(string tableName, string fieldName, string fieldValue)
+		{
+			string sql = $"SELECT EXISTS (SELECT 1 FROM {tableName} WHERE {fieldName} = @fieldValue);";
+			SQLiteParameter[] parameters = { new SQLiteParameter("@fieldValue", fieldValue)};
+			object result =ExecutionQuery(sql, parameters);
+			return int.TryParse(result.ToString(), out int i) && i > 0;
+		}
+
+		/// <summary>
+		/// 检查表中是否存在匹配的两列值
+		/// </summary>
+		/// <param name="tableName">表名</param>
+		/// <param name="fieldName1">第一个字段的名称</param>
+		/// <param name="fieldValue1">第一个字段的值</param>
+		/// <param name="fieldName2">第二个字段的名称</param>
+		/// <param name="fieldValue2">第二个字段的值</param>
+		/// <returns>如果记录存在则返回 <c>true</c>，否则返回 <c>false</c></returns>
+		public bool ExistFieldValue(string tableName, string fieldName1, string fieldValue1, string fieldName2, string fieldValue2)
+		{
+			string sql = $"SELECT EXISTS (SELECT 1 FROM {tableName} WHERE {fieldName1} = @fieldValue1 AND {fieldName2} = @fieldValue2);";
+			SQLiteParameter[] parameters = {
+			new SQLiteParameter("@fieldValue1", fieldValue1),
+			new SQLiteParameter("@fieldValue2", fieldValue2)
+			};
+			object result = ExecutionQuery(sql, parameters);
+			return int.TryParse(result.ToString(), out int i) && i > 0;
+		}
+
+		/// <summary>
+		/// 检查表中是否存在匹配的三列值
+		/// </summary>
+		/// <param name="tableName">表名</param>
+		/// <param name="fieldName1">第一个字段的名称</param>
+		/// <param name="fieldValue1">第一个字段的值</param>
+		/// <param name="fieldName2">第二个字段的名称</param>
+		/// <param name="fieldValue2">第二个字段的值</param>
+		/// <param name="fieldName3">第三个字段的名称</param>
+		/// <param name="fieldValue3">第三个字段的值</param>
+		/// <returns>如果记录存在则返回 <c>true</c>，否则返回 <c>false</c></returns>
+		public bool ExistFieldValue(string tableName, string fieldName1, string fieldValue1, string fieldName2, string fieldValue2, string fieldName3, string fieldValue3)
+		{
+			string sql = $"SELECT EXISTS (SELECT 1 FROM {tableName} WHERE {fieldName1} = @fieldValue1 AND {fieldName2} = @fieldValue2 AND {fieldName3} = @fieldValue3);";
+			SQLiteParameter[] parameters = {
+			new SQLiteParameter("@fieldValue1", fieldValue1),
+			new SQLiteParameter("@fieldValue2", fieldValue2),
+			new SQLiteParameter("@fieldValue3", fieldValue3)
+			};
+			object result = ExecutionQuery(sql, parameters);
+			return int.TryParse(result.ToString(), out int i) && i > 0;
+		}
+
+
+		/// <summary>
+		/// 指定值是否存在
+		/// </summary>
+		/// <param name="tableName">表名</param>
+		/// <param name="fields">字段名和值的字典</param>
+		/// <returns>如果匹配的记录存在，返回true，否则false</returns>
+		public bool ExistFieldValue(string tableName, Dictionary<string, string> fields)
+		{
+			if (fields == null || fields.Count == 0)
+			{
+				throw new ArgumentException("必须至少提供一个字段和值对");
+			}
+			List<string> conditions = new List<string>();
+			List<SQLiteParameter> parameters = new List<SQLiteParameter>();
+			foreach (var field in fields)
+			{
+				conditions.Add($"{field.Key} = @{field.Key}");
+				parameters.Add(new SQLiteParameter($"@{field.Key}", field.Value));
+			}
+			string whereClause = string.Join(" AND ", conditions);
+			string sql = $"SELECT EXISTS (SELECT 1 FROM {tableName} WHERE {whereClause});";
+			object result = ExecutionQuery(sql, parameters.ToArray());
+			return int.TryParse(result.ToString(), out int i) && i > 0;
+		}
+
 
 	}
 }
