@@ -405,6 +405,38 @@ namespace Ike.Standard
 			return WinAPI.WritePrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), value.ToString().ToBytes(encoding), filePath);
 		}
 
+		/// <summary>
+		/// 目录移动
+		/// </summary>
+		/// <param name="sourceDirName">原目录</param>
+		/// <param name="destDirName">目标目录</param>
+		/// <param name="copySubDirs">是否移动子目录</param>
+		public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+		{
+			DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+			DirectoryInfo[] dirs = dir.GetDirectories();
+			// 如果目标目录不存在，创建它
+			if (!Directory.Exists(destDirName))
+			{
+				Directory.CreateDirectory(destDirName);
+			}
+			// 获取源目录中的所有文件并复制到目标目录
+			FileInfo[] files = dir.GetFiles();
+			foreach (FileInfo file in files)
+			{
+				string tempPath = Path.Combine(destDirName, file.Name);
+				file.CopyTo(tempPath, false);
+			}
+			// 如果复制子目录，递归调用
+			if (copySubDirs)
+			{
+				foreach (DirectoryInfo subdir in dirs)
+				{
+					string tempPath = Path.Combine(destDirName, subdir.Name);
+					DirectoryCopy(subdir.FullName, tempPath, copySubDirs);
+				}
+			}
+		}
 
 
 	}
