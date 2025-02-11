@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using static Ike.Standard.Enums;
+
 
 namespace Ike.Standard
 {
@@ -52,8 +52,8 @@ namespace Ike.Standard
 		/// <summary>
 		/// 根据指定的窗口类名或窗口标题查找顶层窗口的句柄
 		/// </summary>
-		/// <param name="className">窗口类名（可以为 null，表示忽略类名）</param>
-		/// <param name="captionName">窗口标题名（可以为 null，表示忽略窗口标题）</param>
+		/// <param name="className">窗口类名（可以为 <see langword="null" />，表示忽略类名）</param>
+		/// <param name="captionName">窗口标题名（可以为 <see langword="null" />，表示忽略窗口标题）</param>
 		/// <remarks>
 		/// <list type="bullet">
 		/// <item>如果找到了符合条件的窗口，此函数返回窗口的句柄</item>
@@ -108,20 +108,65 @@ namespace Ike.Standard
 		/// <summary>
 		/// 设置当前线程的执行状态，从而影响系统的电源管理行为。通过设置不同的执行状态标志，可以防止系统进入睡眠、休眠或关闭显示器
 		/// </summary>
-		/// <param name="esFlags">指定执行状态的枚举标志，可以是多个 <see cref="ExecutionState"/> 标志的组合</param>
-		/// <returns>返回上一个线程的 <see cref="ExecutionState"/> 状态，如果失败则返回 <see langword="0"></see></returns>
+		/// <param name="esFlags">指定执行状态的枚举标志，可以是多个 <see cref="Enums.ExecutionState"/> 标志的组合</param>
+		/// <returns>返回上一个线程的 <see cref="Enums.ExecutionState"/> 状态，如果失败则返回 <see langword="0"></see></returns>
 		/// <remarks>
 		/// <list type="bullet">
 		/// <item>此函数可以用来阻止系统进入休眠或关闭显示器，常用于长时间运行的任务或需要保持显示器开启的操作</item>
-		/// <item>传递 <see cref="ExecutionState.Continuous"/> 标志时，状态将持续生效，直到下一次调用清除状态</item>
-		/// <item>如果不传递 <see cref="ExecutionState.Continuous"/>，设置的状态仅会在该调用结束时生效，之后系统将恢复默认行为</item>
-		/// <item>可以通过再次调用 <see cref="SetThreadExecutionState"/> 并只传递 <see cref="ExecutionState.Continuous"/> 来清除之前设置的状态</item>
-		/// <item>示例:阻止休眠-> SetThreadExecutionState(<see cref="ExecutionState.Continuous"/> | <see cref="ExecutionState.SystemRequired"/> | <see cref="ExecutionState.DisplayRequired"/>);</item>
-		/// <item>示例:恢复休眠-> SetThreadExecutionState(<see cref="ExecutionState.Continuous"/>);</item>
+		/// <item>传递 <see cref="Enums.ExecutionState.Continuous"/> 标志时，状态将持续生效，直到下一次调用清除状态</item>
+		/// <item>如果不传递 <see cref="Enums.ExecutionState.Continuous"/>，设置的状态仅会在该调用结束时生效，之后系统将恢复默认行为</item>
+		/// <item>可以通过再次调用 <see cref="SetThreadExecutionState"/> 并只传递 <see cref="Enums.ExecutionState.Continuous"/> 来清除之前设置的状态</item>
+		/// <item>示例:阻止休眠-> SetThreadExecutionState(<see cref="Enums.ExecutionState.Continuous"/> | <see cref="Enums.ExecutionState.SystemRequired"/> | <see cref="Enums.ExecutionState.DisplayRequired"/>);</item>
+		/// <item>示例:恢复休眠-> SetThreadExecutionState(<see cref="Enums.ExecutionState.Continuous"/>);</item>
 		/// </list>
 		/// </remarks>
 		[DllImport("kernel32")]
-		public static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
+		public static extern Enums.ExecutionState SetThreadExecutionState(Enums.ExecutionState esFlags);
+
+
+		/// <summary>
+		/// 通过窗体句柄获取进程ID
+		/// </summary>
+		/// <param name="hwnd">要检索线程和进程 ID 的窗口句柄,该句柄可以通过 <see cref="FindWindow(string, string)"/>,<see cref="GetForegroundWindow()"/>等等函数获得</param>
+		/// <param name="ID">当此函数返回时，包含拥有该窗口的进程的标识符</param>
+		/// <returns>创建窗口的线程的标识符</returns>
+		[DllImport("User32.dll", CharSet = CharSet.Auto)]
+		public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int ID);
+
+
+		/// <summary>
+		/// 获取当前焦点窗体句柄
+		/// </summary>
+		/// <returns></returns>
+		[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+		public static extern IntPtr GetForegroundWindow();
+
+
+		/// <summary>
+		/// 获取窗体大小矩形
+		/// </summary>
+		/// <param name="hWnd">窗体句柄</param>
+		/// <param name="lpRect">返回矩形数据</param>
+		/// <returns></returns>
+		[DllImport("user32.dll")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool GetWindowRect(IntPtr hWnd, out Structure.RECT lpRect);
+
+
+
+		/// <summary>
+		/// 设置本地系统时间
+		/// </summary>
+		/// <param name="sysTime">包含要设置的本地时间信息的 <see cref="Structure.SystemTime"/> 结构体</param>
+		/// <remarks>
+		/// 该方法通过调用 Win32 API `SetLocalTime` 来设置系统的本地时间。调用此方法需要管理员权限
+		/// </remarks>
+		/// <returns>
+		/// 如果函数执行成功，则返回 <seealso langword="true"/>；否则，返回 <seealso langword="false"/>
+		/// </returns>
+		[DllImport("Kernel32.dll")]
+		public static extern bool SetLocalTime(ref Structure.SystemTime sysTime);
+
 
 
 	}
