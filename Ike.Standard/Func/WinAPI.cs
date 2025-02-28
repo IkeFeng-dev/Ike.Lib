@@ -169,5 +169,15 @@ namespace Ike.Standard
 
 
 
+		/// <summary>
+		/// 向调试器输出调试信息
+		/// </summary>
+		/// <param name="message">要输出的调试信息字符串</param>
+		/// <remarks>
+		/// 该方法通过调用 Win32 API `OutputDebugString` 将指定的调试信息发送到调试器
+		/// 调试信息可以通过调试工具（如 DebugView）捕获和查看
+		/// </remarks>
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+		public static extern void OutputDebugString(string message);
 	}
 }
