@@ -7,7 +7,7 @@ using System.Windows.Input;
 namespace Ike.Standard
 {
     /// <summary>
-    /// WPF MVVM 模式,实现<see cref="INotifyPropertyChanged"/> 接口的基类
+    /// WPF MVVM 模式,实现<see cref="INotifyPropertyChanged"/>, <see cref="ICommand"/>接口的基类
     /// </summary>
     public class ViewModelBase : INotifyPropertyChanged
     {

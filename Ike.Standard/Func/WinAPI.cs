@@ -179,5 +179,23 @@ namespace Ike.Standard
 		/// </remarks>
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
 		public static extern void OutputDebugString(string message);
+
+
+		/// <summary>
+		/// 为指定窗口创建一个关机阻止原因，以防止系统关闭或重启。
+		/// </summary>
+		/// <param name="hWnd">要设置关机阻止原因的窗口句柄。</param>
+		/// <param name="reason">描述阻止关机的原因的字符串。</param>
+		/// <returns>如果函数成功，返回值为非零；如果函数失败，返回值为零。</returns>
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string reason);
+
+		/// <summary>
+		/// 销毁与指定窗口关联的关机阻止原因。
+		/// </summary>
+		/// <param name="hWnd">要销毁关机阻止原因的窗口句柄。</param>
+		/// <returns>如果函数成功，返回值为非零；如果函数失败，返回值为零。</returns>
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool ShutdownBlockReasonDestroy(IntPtr hWnd);
 	}
 }
