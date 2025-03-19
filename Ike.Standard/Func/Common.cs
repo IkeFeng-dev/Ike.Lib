@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Ike.Standard
@@ -12,6 +14,39 @@ namespace Ike.Standard
     /// </summary>
     public class Common
     {
+        /// <summary>
+        /// 获取指定文件SHA256哈希值
+        /// </summary>
+        /// <param name="filePath">文件路径</param>
+        /// <returns>文件的哈希值</returns>
+        /// <exception cref="FileNotFoundException">文件未找到</exception>
+        public static string GetFileSHA256(string filePath)
+        {
+            // 检查文件是否存在
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException("file not found", filePath);
+            }
+            // 创建 SHA256 实例
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                // 打开文件流
+                using (FileStream stream = File.OpenRead(filePath))
+                {
+                    // 计算哈希值
+                    byte[] hashBytes = sha256.ComputeHash(stream);
+                    // 将字节数组转换为十六进制字符串
+                    StringBuilder sb = new StringBuilder();
+                    foreach (byte b in hashBytes)
+                    {
+                        // "x2" 表示两位小写十六进制
+                        sb.Append(b.ToString("x2"));
+                    }
+                    return sb.ToString();
+                }
+            }
+        }
+
         /// <summary>
         /// 计算集合中的平均时间
         /// </summary>
