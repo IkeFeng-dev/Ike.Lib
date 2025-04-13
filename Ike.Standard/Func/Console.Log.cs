@@ -1,5 +1,5 @@
 ﻿using System;
-using static Ike.Standard.Enums;
+using static Ike.Standard.Log;
 
 namespace Ike.Standard
 {

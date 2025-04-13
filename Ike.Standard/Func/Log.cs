@@ -10,10 +10,45 @@ namespace Ike.Standard
 	/// </summary>
 	public class Log
 	{
-		/// <summary>
-		/// 日志锁
-		/// </summary>
-		private readonly object _lock = new { };
+        /// <summary>
+        /// 表示日志的类型
+        /// </summary>
+        public enum LogType
+        {
+            /// <summary>
+            /// 详细信息,记录详细的调试信息或其他较为冗长的输出
+            /// </summary>
+            Verbose,
+            /// <summary>
+            /// 调试信息,用于诊断和调试目的
+            /// </summary>
+            Debug,
+            /// <summary>
+            /// 提供程序状态信息,用于跟踪程序的执行情况
+            /// </summary>
+            Information,
+            /// <summary>
+            /// 表示成功
+            /// </summary>
+            Succeed,
+            /// <summary>
+            /// 警告信息,表示潜在的问题或不符合预期的情况,但不会影响程序的正常执行
+            /// </summary>
+            Warning,
+            /// <summary>
+            /// 错误信息,用于指示程序出现的错误,但不会导致程序终止执行
+            /// </summary>
+            Error,
+            /// <summary>
+            /// 严重错误信息,用于指示程序出现的严重错误,可能会导致程序终止执行或无法继续正常运行
+            /// </summary>
+            Critical
+        }
+
+        /// <summary>
+        /// 日志锁
+        /// </summary>
+        private readonly object _lock = new { };
 		/// <summary>
 		/// 当前日志文件的文件流
 		/// </summary>
@@ -41,7 +76,7 @@ namespace Ike.Standard
 		/// <summary>
 		/// 获取或设置写入日志的最低级别
 		/// </summary>
-		public Enums.LogType RequiredLevel { get; set; } = Enums.LogType.Information;
+		public LogType RequiredLevel { get; set; } = LogType.Information;
 		/// <summary>
 		/// 获取或设置编码格式
 		/// </summary>
@@ -112,7 +147,7 @@ namespace Ike.Standard
 		/// <item>2 = 日志写入引发异常</item>
 		/// </list>
 		/// </returns>
-		public int Write(string log, Enums.LogType logType)
+		public int Write(string log, LogType logType)
 		{
 			bool lockTaken = false;
 			try

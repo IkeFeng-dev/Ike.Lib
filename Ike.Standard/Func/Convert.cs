@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -10,6 +11,59 @@ namespace Ike.Standard
 	/// </summary>
 	public static class Convert
 	{
+
+	   /// <summary>
+	   /// 将数组转换为指定字符分割的字符串
+	   /// </summary>
+	   /// <param name="array">数组</param>
+	   /// <param name="split">分隔符</param>
+	   /// <returns>转换后的字符串</returns>
+		public static string ConvertArrayToString(object array, string split)
+		{
+			// 使用 System.Array 的静态方法处理
+			if (!(array is System.Collections.IEnumerable enumerable))
+			{
+				return string.Empty;
+			}
+			var elements = new List<string>();
+			foreach (var item in enumerable)
+			{
+				elements.Add(item?.ToString() ?? string.Empty);
+			}
+			return string.Join(split, elements);
+		}
+
+		/// <summary>
+		/// 字符串转bool
+		/// </summary>
+		/// <param name="value">字符串</param>
+		/// <returns></returns>
+		public static bool ConvertToBoolean(string value)
+		{
+			if (bool.TryParse(value, out bool result))
+				return result;
+
+			switch (value.ToLower())
+			{
+				case "1":
+				case "yes":
+				case "y":
+				case "true":
+				case "t":
+				case "on":
+					return true;
+				case "0":
+				case "no":
+				case "n":
+				case "false":
+				case "f":
+				case "off":
+					return false;
+				default:
+					return false;
+			}
+		}
+
 		/// <summary>
 		/// 十六进制颜色转RGB
 		/// </summary>

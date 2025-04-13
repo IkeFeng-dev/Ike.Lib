@@ -11,12 +11,19 @@ namespace Ike.Standard
 	public static class Extensions
 	{
 
-
-		
+		/// <summary>
+		/// <inheritdoc cref="Convert.ConvertToBoolean(string)"/>
+		/// </summary>
+		/// <param name="value">值</param>
+		/// <returns></returns>
+		public static bool ConvertToBoolean(this string value)
+		{
+			return Convert.ConvertToBoolean(value);
+		}
 
 
 		/// <summary>
-		///     检查值是否在<paramref name="minValue"/>和<paramref name="maxValue"/>之间(不包括<paramref name="minValue"/>)
+		/// 检查值是否在<paramref name="minValue"/>和<paramref name="maxValue"/>之间(不包括<paramref name="minValue"/>)
 		/// </summary>
 		/// <param name="this">this</param>
 		/// <param name="minValue">时间段起始值</param>

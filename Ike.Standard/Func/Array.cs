@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Ike.Standard
@@ -9,6 +10,19 @@ namespace Ike.Standard
 	/// </summary>
 	public static class Array
 	{
+		/// <summary>
+		/// 泛型数组转换
+		/// </summary>
+		/// <typeparam name="T">数据类型</typeparam>
+		/// <param name="value">值</param>
+		/// <param name="split">分割符</param>
+		/// <param name="converter">转换方法,例如:  <see cref="int.Parse(string)"/></param>
+		/// <returns>转换结果</returns>
+		public static T[] ConvertArray<T>(string value, char split, Func<string, T> converter)
+		{
+			return value.Split(split).Select(s => converter(s)).ToArray();
+		}
+
 		/// <summary>
 		/// 将多个相同类型的数组合并为一个数组
 		/// </summary>
