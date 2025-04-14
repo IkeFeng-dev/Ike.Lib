@@ -16,40 +16,48 @@ namespace Test.Framework
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
 
-            // 初始化配置管理器
-            IniConfigManager<IniData> configManager = new IniConfigManager<IniData>("F:\\Desktop\\test.ini");
-            // 加载配置
-            configManager.Load();
-            // 修改配置档数据
-            configManager.Data.Port = 5555;
-            // 保存配置
-            configManager.Save();
 
+            Ike.Standard.WinMethod.EnableAnsiSupport();
+            var log = new Ike.Standard.LOG(@"F:\Desktop\Logs\");
 
+            string info = "This is test console  ->  ";
+            for (int i = 0; i < 30; i++)
+            {
+                if (i < 4)
+                {
+                    log.Debug(info + i);
+                }
+                else if (i < 8)
+                {
+                    log.Info(info + i);
+                }
+                else if (i < 12)
+                {
+                    log.Warning(info + i);
+                }
+                else if (i < 16)
+                {
+                    log.Error(info + i);
+                }
+                else if (i < 20)
+                {
+                    log.Fatal(info + i);
+                }
+                else if (i < 25)
+                {
+                    log.Success(info + i);
+                }
+                else
+                {
+                    log.Verbose(info + i);
+                }
+            }
 
+            Console.ReadKey();
         }
 
 
-        public class IniData
-        {
-            [IniSection("Test")]
-            public string IP { get; set; } = "127.0.0.1";
-
-            [IniSection("Test")]
-            public int Port { get; set; } = 5200;
-
-            [IniSection("Socket")]
-            public bool Open { get; set; } = true;
-
-            [IniSection("Test")]
-            public int[] TestIntArr { get; set; } = new int[] { 2, 4, 6, 8, 12, 34, 45, 0, -1 };
-
-            [IniSection("Test")]
-            [IniKey("KeyName")]
-            public string Temp { get; set; } = "The Key in the file is KeyName";
-        }
-
-
+      
 
 
 

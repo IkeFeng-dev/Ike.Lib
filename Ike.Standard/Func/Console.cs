@@ -7,6 +7,22 @@ namespace Ike.Standard
 	public partial class Console
 	{
 		/// <summary>
+		/// 是否为控制台环境
+		/// </summary>
+		/// <returns></returns>
+		public static bool IsConsoleEnv()
+		{
+			try
+			{
+				return System.Console.WindowHeight > 0;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// 将指定的字符以指定RGB颜色写入标准输出流
 		/// </summary>
 		/// <param name="value">写入标准输出流的字符串</param>

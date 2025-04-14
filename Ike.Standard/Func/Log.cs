@@ -2,16 +2,117 @@
 using System.IO;
 using System.Text;
 using System.Threading;
+   
 
 namespace Ike.Standard
 {
-	/// <summary>
-	/// 日志类
-	/// </summary>
-	public class Log
-	{
+    /// <summary>
+    /// 日志输出
+    /// </summary>
+    public class LOG
+    {
         /// <summary>
-        /// 表示日志的类型
+        /// 是否为控制台环境
+        /// </summary>
+        private readonly bool isonsoleEnv;
+        /// <summary>
+        /// 是否输出线程ID
+        /// </summary>
+        private readonly bool isOutThreadId;
+        /// <summary>
+        /// 文件名格式
+        /// </summary>
+        private readonly string fileNameFormat;
+        /// <summary>
+        /// 时间戳格式
+        /// </summary>
+        private readonly string timestamp;
+        /// <summary>
+        /// 日志目录
+        /// </summary>
+        public string LogDirectory { get; private set; }
+        /// <summary>
+        /// 异常日志目录
+        /// </summary>
+        public string ErrorLogDirectory { get; private set; }
+
+        /// <summary>
+        /// 控制台输出计数
+        /// </summary>
+        private int consoleCount = 0;
+        /// <summary>
+        /// 控制台输出最大行数
+        /// </summary>
+        private readonly int consoleMaxRow;
+        /// <summary>
+        /// 日志队列
+        /// </summary>
+        private readonly DynamicQueue<LogStruct> queue;
+        /// <summary>
+        /// 日志输出到控制台的颜色
+        /// </summary>
+        private readonly LogColors logColors;
+        /// <summary>
+        /// 用于委托日志输出事件
+        /// </summary>
+        /// <param name="log"></param>
+        public delegate void LogEventHandler(LogStruct log);
+        /// <summary>
+        /// 日志事件,可用于订阅此事件后同步在自定义方法中输出到UI,输出前提是定义了<see cref="LogStruct.WriteToEvent"/> = <see langword="true"/>
+        /// </summary>
+        public event LogEventHandler LogEvent;
+
+        /// <summary>
+        /// 定义日志输出颜色
+        /// </summary>
+        /// <summary>
+        /// 定义日志输出颜色
+        /// </summary>
+        public class LogColors
+        {
+            /// <summary>
+            /// 日志类型字符串颜色，默认颜色<see langword="#808080"/>(中性灰)
+            /// </summary>
+            public string Type = "#ffffff";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Verbose"/>，默认颜色<see langword="#c0c0c0"/>(浅银灰)
+            /// </summary>
+            public string Verbose = "#c0c0c0";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Debug"/>，默认颜色<see langword="#e4e4e4"/>(灰白色)
+            /// </summary>
+            public string Debug = "#e4e4e4";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Info"/>，默认颜色<see langword="#afd7ff"/>(淡天蓝)
+            /// </summary>
+            public string Info = "#afd7ff";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Warning"/>，默认颜色<see langword="#ffffaf"/>(浅米黄)
+            /// </summary>
+            public string Warning = "#ffffaf";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Error"/>，默认颜色<see langword="#ff5f87"/>(粉红色)
+            /// </summary>
+            public string Error = "#ff5f87";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Fatal"/>，默认颜色<see langword="#ff0000"/>(纯红色)
+            /// </summary>
+            public string Fatal = "#ff0000";
+
+            /// <summary>
+            /// <inheritdoc cref="LogType.Success"/>，默认颜色<see langword="#87d7af"/>(浅蓝绿色)
+            /// </summary>
+            public string Success = "#87d7af";
+        }
+
+        /// <summary>
+        /// 表示日志的类型，帮助区分不同的日志级别或类别。
         /// </summary>
         public enum LogType
         {
@@ -20,196 +121,372 @@ namespace Ike.Standard
             /// </summary>
             Verbose,
             /// <summary>
-            /// 调试信息,用于诊断和调试目的
+            /// 一般调试信息
             /// </summary>
             Debug,
             /// <summary>
-            /// 提供程序状态信息,用于跟踪程序的执行情况
+            /// 信息日志
             /// </summary>
-            Information,
+            Info,
             /// <summary>
-            /// 表示成功
-            /// </summary>
-            Succeed,
-            /// <summary>
-            /// 警告信息,表示潜在的问题或不符合预期的情况,但不会影响程序的正常执行
+            /// 警告日志
             /// </summary>
             Warning,
             /// <summary>
-            /// 错误信息,用于指示程序出现的错误,但不会导致程序终止执行
+            /// 错误日志
             /// </summary>
             Error,
             /// <summary>
-            /// 严重错误信息,用于指示程序出现的严重错误,可能会导致程序终止执行或无法继续正常运行
+            /// 致命错误日志
             /// </summary>
-            Critical
+            Fatal,
+            /// <summary>
+            /// 成功信息
+            /// </summary>
+            Success
         }
 
         /// <summary>
-        /// 日志锁
+        /// 日志队列结构
         /// </summary>
-        private readonly object _lock = new { };
-		/// <summary>
-		/// 当前日志文件的文件流
-		/// </summary>
-		private FileStream _logFileStream;
-		/// <summary>
-		/// 当前日志文件流的写入流
-		/// </summary>
-		private StreamWriter _logStreamWriter;
-		/// <summary>
-		/// 控制台日志实例,同步输出需要设置属性<see cref="OutputToConsole"/>=<see langword="true"></see>
-		/// </summary>
-		public readonly Console.Log ConsoleLog = new Console.Log();
-		/// <summary>
-		/// 日志目录
-		/// </summary>
-		private readonly string targetDirectory;
-		/// <summary>
-		/// 获取或设置日志写入的时间戳格式
-		/// </summary>
-		public string TimestampFormat { get; set; }
-		/// <summary>
-		/// 获取或设置日志文件的文件名格式,根据格式设定文件有效周期
-		/// </summary>
-		public string FileNameFormat { get; set; }
-		/// <summary>
-		/// 获取或设置写入日志的最低级别
-		/// </summary>
-		public LogType RequiredLevel { get; set; } = LogType.Information;
-		/// <summary>
-		/// 获取或设置编码格式
-		/// </summary>
-		public Encoding EncodingFormat { get; set; } = Encoding.UTF8;
-		/// <summary>
-		/// 获取或设置是否同步输出到控制台
-		/// </summary>
-		public bool OutputToConsole { get; set; } = false;
-		/// <summary>
-		/// 获取当前日志文件的路径
-		/// </summary>
-		public string FilePath { get { return Path.Combine(targetDirectory, DateTime.Now.ToString(FileNameFormat) + ".log"); } }
+        public class LogStruct
+        {
+            /// <summary>
+            /// 日志信息
+            /// </summary>
+            public string Info { get; set; }
+            /// <summary>
+            /// 日志类型
+            /// </summary>
+            public LogType LogType { get; set; }
+            /// <summary>
+            /// 是否输出到控制台
+            /// </summary>
+            public bool WriteToConsole { get; set; }
+            /// <summary>
+            /// 是否输出到文件
+            /// </summary>
+            public bool WriteToFile { get; set; }
+            /// <summary>
+            /// 是否输出到事件
+            /// </summary>
+            public bool WriteToEvent { get; set; }
+            /// <summary>
+            /// 线程ID
+            /// </summary>
+            public int ThreadID { get; set; }
+        }
 
-		/// <summary>
-		/// 构造实例
-		/// </summary>
-		/// <param name="timestampFormat">时间戳格式</param>
-		/// <param name="fileNameFormat">文件名格式</param>
-		/// <param name="targetDirectory">日志输出目录</param>
-		public Log(string timestampFormat = "yyyy-MM-dd HH:mm:ss.fff", string fileNameFormat = "yyyy-MM-dd", string targetDirectory = "")
-		{
-			TimestampFormat = timestampFormat;
-			FileNameFormat = fileNameFormat;
-			ConsoleLog.TimestampFormat = TimestampFormat;
-			if (string.IsNullOrEmpty(targetDirectory))
-			{
-				targetDirectory = Environment.CurrentDirectory;
-			}
-			else
-			{
-				this.targetDirectory = targetDirectory;
-			}
-			if (!Directory.Exists(targetDirectory))
-			{
-				Directory.CreateDirectory(targetDirectory);
-			}
-		}
+        /// <summary>
+        /// 构造日志实例,如需订阅输出事件,可通过<see cref="LogEvent"/>进行订阅
+        /// </summary>
+        /// <param name="logDirectory">日志目录</param>
+        /// <param name="consoleMaxRow">控制台输出的最大行</param>
+        /// <param name="fileNameFormat">文件名格式</param>
+        /// <param name="timestamp">时间戳格式</param>
+        /// <param name="isOutThreadId">是否输出线程ID</param>
+        /// <param name="logColors">定义控制台输出的颜色</param>
 
-		/// <summary>
-		/// 创建文件流
-		/// </summary>
-		/// <param name="logPath">日志文件路径</param>
-		private void CreateStream(string logPath)
-		{
-			if (_logFileStream is null)
-			{
-				_logFileStream = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.Read);
-			}
-			if (_logStreamWriter is null)
-			{
-				_logStreamWriter = new StreamWriter(_logFileStream, EncodingFormat)
-				{
-					AutoFlush = true
-				};
-			}
-		}
+        public LOG(string logDirectory, int consoleMaxRow = 5000, string fileNameFormat = "yyyy-MM-dd", string timestamp = "yyyy-MM-dd HH:mm:ss", bool isOutThreadId = true, LogColors logColors = default)
+        {
+            isonsoleEnv = Console.IsConsoleEnv();
+            this.timestamp = timestamp;
+            LogDirectory = logDirectory;
+            this.consoleMaxRow = consoleMaxRow;
+            this.fileNameFormat = fileNameFormat;
+            this.isOutThreadId = isOutThreadId;
+            if (logColors == default)
+            {
+                logColors = new LogColors();
+            }
+            this.logColors = logColors;
+            ErrorLogDirectory = Path.Combine(logDirectory, "Error");
+            queue = new DynamicQueue<LogStruct>(OutLog);
+            queue.StartConsuming();
+            WinMethod.EnableAnsiSupport();
+        }
 
-		/// <summary>
-		/// 写入日志
-		/// </summary>
-		/// <param name="log">日志内容</param>
-		/// <param name="logType">日志类型</param>
-		/// <returns>
-		/// 结果返回值
-		/// <list type="bullet">
-		/// <item>0 = 未满足写入级别,跳过日志写入,可通过属性<see cref="RequiredLevel"/>修改</item>
-		/// <item>1 = 日志写入成功</item>
-		/// <item>2 = 日志写入引发异常</item>
-		/// </list>
-		/// </returns>
-		public int Write(string log, LogType logType)
-		{
-			bool lockTaken = false;
-			try
-			{
-				if (OutputToConsole)
-				{
-					ConsoleLog.Write(log, logType);
-				}
-				if (logType < RequiredLevel)
-				{
-					return 0;
-				}
-				string logPath = FilePath;
-				if (!File.Exists(logPath))
-				{
-					Close();
-				}
-				CreateStream(logPath);
-				StringBuilder sb = new StringBuilder(log.Length + TimestampFormat.Length + 10);
-				sb.Append(DateTime.Now.ToString(TimestampFormat));
-				sb.Append(":  | ");
-				sb.Append(logType.ToString().Substring(0, 3));
-				sb.Append(" |  ");
-				sb.Append(log);
-				Monitor.Enter(_lock, ref lockTaken);
-				_logStreamWriter.WriteLine(sb.ToString());
-				return 1;
-			}
-			catch
-			{
-				return -1;
-			}
-			finally
-			{
-				if (lockTaken)
-				{
-					Monitor.Exit(_lock);
-				}
-			}
-		}
 
-		/// <summary>
-		/// 关闭文件流,释放日志文件句柄
-		/// </summary>
-		public void Close()
-		{
-			if (_logStreamWriter != null)
-			{
-				_logStreamWriter.Close();
-				_logStreamWriter.Dispose();
-				_logStreamWriter = null;
-			}
-			if (_logFileStream != null)
-			{
-				_logFileStream.Close();
-				_logFileStream.Dispose();
-				_logFileStream = null;
-			}
-		}
+        /// <summary>
+        /// 输出日志
+        /// </summary>
+        /// <param name="logStruct"></param>
+        private void OutLog(LogStruct logStruct)
+        {
+            try
+            {
+                string time = DateTime.Now.ToString(timestamp);
+                string typeStr = logStruct.LogType.ToString().Substring(0, 3).ToUpper();
+                if (logStruct.WriteToFile)
+                {
+                    ToFile(logStruct.Info, logStruct.ThreadID, typeStr, time);
+                }
+                if (logStruct.WriteToEvent)
+                {
+                    LogEvent?.Invoke(logStruct);
+                }
+                if (logStruct.WriteToConsole)
+                {
+                    ToConsole(logStruct.Info, logStruct.LogType, logStruct.ThreadID, typeStr, time);
+                }
+            }
+            catch (Exception ex)
+            {
+                RecordException(ex);
+            }
+        }
+
+        /// <summary>
+        /// 日志输出
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="logType">日志类型</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        /// <param name="writeToFile">是否输出到文件</param>
+        /// <param name="writeToEvent">是否输出到UI</param>
+        public void Log(string info, LogType logType, bool writeToConsole, bool writeToFile, bool writeToEvent = true)
+        {
+            int currentThreadID = 0;
+            if (isOutThreadId)
+            {
+                currentThreadID = Thread.CurrentThread.ManagedThreadId;
+            }
+            queue.Add(new LogStruct()
+            {
+                Info = info,
+                LogType = logType,
+                WriteToConsole = writeToConsole,
+                WriteToEvent = writeToEvent,
+                WriteToFile = writeToFile,
+                ThreadID = currentThreadID
+            });
+        }
 
 
 
+        /// <summary>
+        /// 写入文件
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="currentThreadID">当前线程ID</param>
+        /// <param name="typeStr">日志类型字符串</param>
+        /// <param name="time">时间戳</param>
+        private void ToFile(string info, int currentThreadID, string typeStr,string time)
+        {
+            var sb = new StringBuilder();
+            if (isOutThreadId)
+            {
+                sb.Append(DateTime.Now.ToString(timestamp))
+                  .Append("  :[")
+                  .Append(currentThreadID)
+                  .Append("]-[")
+                  .Append(typeStr)
+                  .Append("]  ")
+                  .Append(info)
+                  .AppendLine();
+            }
+            else
+            {
+                sb.Append(time)
+                  .Append("  :[")
+                  .Append(typeStr)
+                  .Append("]  ")
+                  .Append(info)
+                  .AppendLine();
+            }
+            string filePath = Path.Combine(LogDirectory, DateTime.Now.ToString(fileNameFormat) + ".log");
+            Directory.CreateDirectory(LogDirectory);
+            File.AppendAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
 
-	}
+
+        /// <summary>
+        /// 写入控制台
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="type">日志类型</param>
+        /// <param name="currentThreadID">当前线程ID</param>
+        /// <param name="typeStr">日志类型字符串</param>
+        /// <param name="time">时间戳</param>
+        private void ToConsole(string info, LogType type, int currentThreadID, string typeStr,string time)
+        {
+            if (!isonsoleEnv)
+            {
+                return;
+            }
+            if (consoleCount > consoleMaxRow)
+            {
+                System.Console.Clear();
+                consoleCount = 0;
+            }
+            string timeRGB = logColors.Verbose;
+            string infoRGB = logColors.Verbose;
+            switch (type)
+            {
+                case LogType.Debug:
+                    infoRGB = logColors.Debug;
+                    break;
+                case LogType.Info:
+                    infoRGB = logColors.Info;
+                    break;
+                case LogType.Warning:
+                    infoRGB = logColors.Warning;
+                    break;
+                case LogType.Error:
+                    infoRGB = logColors.Error;
+                    break;
+                case LogType.Fatal:
+                    infoRGB = logColors.Fatal;
+                    break;
+                case LogType.Success:
+                    infoRGB = logColors.Success;
+                    break;
+            }
+            Console.Write(string.Format("{0} => [{1}]:  ",time, currentThreadID),timeRGB);
+            if (isOutThreadId)
+            {
+                Console.Write(string.Format("[{0}]  ", typeStr), logColors.Type);
+            }
+            else
+            {
+                Console.Write(string.Format("[{0}]  ", typeStr), logColors.Type);
+            }
+            Console.WriteLine(info, infoRGB);
+            consoleCount++;
+        }
+
+
+        /// <summary>
+        /// 输出信息到调试器中(中文会乱码)
+        /// </summary>
+        /// <param name="text">输出的信息</param>
+        public void ToDebugger(string text)
+        {
+            WinAPI.OutputDebugString(text);
+        }
+
+
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Verbose"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Verbose(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Verbose, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+        
+
+        /// <summary>
+        /// 输出<see cref="LogType.Debug"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Debug(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Debug, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Info"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Info(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Info, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Warning"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Warning(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Warning, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Success"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Success(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Success, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Error"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Error(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Error, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="LogType.Fatal"/>类型日志
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        public void Fatal(string info, bool writeToEvent = true, bool writeToConsole = true)
+        {
+            Log(info, LogType.Fatal, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+        }
+
+
+        /// <summary>
+        /// 输出<see cref="System.Exception"/>异常信息
+        /// </summary>
+        /// <param name="exception">捕获异常</param>
+        public void Exception(Exception exception)
+        {
+            Log(exception.Message, LogType.Error, writeToConsole: true, writeToFile: true, writeToEvent: true);
+            RecordException(exception);
+        }
+
+
+        /// <summary>
+        /// 记录程序异常信息
+        /// </summary>
+        /// <param name="exception">捕获的异常</param>
+        private void RecordException(Exception exception)
+        {
+            var sb = new StringBuilder();
+            sb.Append(DateTime.Now.ToString(timestamp))
+              .Append("  :[")
+              .Append(Thread.CurrentThread.ManagedThreadId)
+              .Append("]  ")
+              .Append(exception.Message)
+              .AppendLine()
+              .Append(exception.ToString())
+              .AppendLine()
+              .AppendLine();
+
+            string filePath = Path.Combine(ErrorLogDirectory, DateTime.Now.ToString(fileNameFormat) + ".log");
+            Directory.CreateDirectory(ErrorLogDirectory);
+            File.AppendAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
+
+
+
+
+    }
 }

@@ -71,7 +71,26 @@ namespace Ike.Standard
             WinAPI.SetConsoleMode(consoleHandle, newMode);
         }
 
-
+        /// <summary>
+        /// 启用控制台ANSI转义序列支持
+        /// </summary>
+        /// <remarks>
+        /// <para>功能说明：</para>
+        /// <list type="bullet">
+        /// <item>通过设置控制台模式启用虚拟终端处理</item>
+        /// <item>允许解析ANSI颜色代码(如\x1b[31m)等转义序列</item>
+        /// <item>Windows 10 1607及以上版本原生支持</item>
+        /// </list>
+        /// </remarks>
+        public static void EnableAnsiSupport()
+        {
+            var handle = WinAPI.GetStdHandle(ConstValue.STD_OUTPUT_HANDLE);
+            if (handle != IntPtr.Zero)
+            {
+                WinAPI.GetConsoleMode(handle, out uint mode);
+                WinAPI.SetConsoleMode(handle, mode | ConstValue.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            }
+        }
 
     }
 }
