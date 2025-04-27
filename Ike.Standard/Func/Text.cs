@@ -2,14 +2,48 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Ike.Standard
 {
 	/// <summary>
 	/// 文本相关
 	/// </summary>
-	public class Text
+	public static class Text
 	{
+
+		/// <summary>
+		/// 使用通配符匹配字符串['*','?']
+		/// </summary>
+		/// <param name="input">输入字符串</param>
+		/// <param name="pattern">带通配符的匹配内容</param>
+		/// <returns>字符串是否匹配</returns>
+		public static bool MatchPattern(string input, string pattern)
+		{
+			string regexPattern = "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+			return Regex.IsMatch(input, regexPattern);
+		}
+
+
+		/// <summary>
+		/// 使用通配符匹配字符串数组,通配符['*','?']
+		/// </summary>
+		/// <param name="inputs">待匹配的字符串集合</param>
+		/// <param name="pattern">带通配符的匹配内容</param>
+		/// <returns>成功匹配到的字符串集合</returns>
+		public static string[] MatchPattern(IEnumerable<string> inputs, string pattern)
+		{
+			var matchedStrings = new List<string>();
+			foreach (var input in inputs)
+			{
+				if (MatchPattern(input, pattern))
+				{
+					matchedStrings.Add(input);
+				}
+			}
+			return matchedStrings.ToArray();
+		}
+
 
 		/// <summary>
 		/// 生成两个字符串的所有字符组合（全排列）
@@ -73,14 +107,33 @@ namespace Ike.Standard
 		/// <param name="start">开始位置字符串</param>
 		/// <param name="end">结束位置字符串</param>
 		/// <returns>正常返回提取结果,如果不包含<paramref name="start"/>或者<paramref name="end"/>时返回<see cref="string.Empty"></see></returns>
+		/// <remarks>
+		/// [<see langword="2025年4月14日18:23:57" />]
+		/// </remarks>
 		public static string ExtractString(string source, string start, string end)
 		{
-			int startIndex = source.IndexOf(start) + start.Length;
-			if (startIndex < start.Length) return string.Empty;
+			if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(start) || string.IsNullOrEmpty(end))
+			{
+				return string.Empty;
+			}
+
+			int startIndex = source.IndexOf(start);
+			if (startIndex == -1)
+			{
+				return string.Empty;
+			}
+
+			startIndex += start.Length;
+
 			int endIndex = source.IndexOf(end, startIndex);
-			if (endIndex < 0) return string.Empty;
+			if (endIndex == -1)
+			{
+				return string.Empty;
+			}
+
 			return source.Substring(startIndex, endIndex - startIndex);
 		}
+
 
 		/// <summary>
 		/// 提取指定文本中两个字符串中间的所有内容
@@ -89,7 +142,7 @@ namespace Ike.Standard
 		/// <param name="start">开始位置字符串</param>
 		/// <param name="end">结束位置字符串</param>
 		/// <returns>匹配到的字符串集合</returns>
-		public static List<string> ExtractAllStrings(string source, string start, string end)
+		public static string[] ExtractAllStrings(string source, string start, string end)
 		{
 			List<string> matches = new List<string>();
 			int startIndex = 0;
@@ -105,7 +158,7 @@ namespace Ike.Standard
 				matches.Add(match);
 				startIndex = endIndex + end.Length;
 			}
-			return matches;
+			return matches.ToArray();
 		}
 
 		/// <summary>

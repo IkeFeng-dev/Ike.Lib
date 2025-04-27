@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
+using static Ike.Standard.Convert;
 
 namespace Ike.Standard
 {
@@ -11,11 +13,43 @@ namespace Ike.Standard
 	public static class Extensions
 	{
 
-		/// <summary>
+
+		/// <inheritdoc cref="NameToEnum"/>
+		public static T ToEnum<T>(this string value) where T : struct, Enum
+		{
+			return NameToEnum<T>(value);
+		}
+
+
+		/// <inheritdoc cref="ValueToEnum"/>
+		public static T ToEnum<T>(this int value) where T : struct, Enum
+		{
+			return ValueToEnum<T>(value);
+		}
+
+
+		/// <inheritdoc cref="StringToBytes(string,Encoding)"/>
+		public static byte[] ToBytes(this string str, Encoding encoding)
+		{
+			return StringToBytes(str, encoding);
+		}
+
+
+		/// <inheritdoc cref="ColorToHex(Color)"/>
+		public static string ToHex(this Color color)
+		{
+			return ColorToHex(color);
+		}
+
+
+		/// <inheritdoc cref="Text.ExtractString(string, string, string)"/> 
+		public static string ExtractString(this string source, string start, string end)
+		{
+			return Text.ExtractString(source, start, end);
+		}
+
+
 		/// <inheritdoc cref="Convert.ConvertToBoolean(string)"/>
-		/// </summary>
-		/// <param name="value">值</param>
-		/// <returns></returns>
 		public static bool ConvertToBoolean(this string value)
 		{
 			return Convert.ConvertToBoolean(value);

@@ -52,6 +52,9 @@
       <HintPath>..\packages\Microsoft.Diagnostics.Tracing.TraceEvent.3.1.8\lib\netstandard2.0\Dia2Lib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="DiffPlex, Version=1.7.2.0, Culture=neutral, PublicKeyToken=1d35e91d1bd7bc0f, processorArchitecture=MSIL">
+      <HintPath>..\packages\DiffPlex.1.7.2\lib\net40\DiffPlex.dll</HintPath>
+    </Reference>
     <Reference Include="Gee.External.Capstone, Version=2.3.0.0, Culture=neutral, PublicKeyToken=b117d7a2dc33ffa6, processorArchitecture=MSIL">
       <HintPath>..\packages\Gee.External.Capstone.2.3.0\lib\netstandard2.0\Gee.External.Capstone.dll</HintPath>
     </Reference>

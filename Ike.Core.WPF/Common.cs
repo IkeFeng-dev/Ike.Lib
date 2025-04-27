@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace Ike.Core.WPF
 {
@@ -13,6 +15,7 @@ namespace Ike.Core.WPF
     /// </summary>
     public static class Common
     {
+
         /// <summary>
         /// 获取指定类型的所有子控件
         /// </summary>

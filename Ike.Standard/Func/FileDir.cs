@@ -7,14 +7,75 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Reflection;
 
 namespace Ike.Standard
 {
 	/// <summary>
 	/// 文件及目录相关
 	/// </summary>
-	public class FileDir
+	public static class FileDir
 	{
+
+
+		/// <summary>
+		/// 将程序内部镶嵌的资源文件保存包指定路径
+		/// </summary>
+		/// <param name="resPath">资源文件路径,格式为: [namespace.Res.source.png] 以'.'分割资源子级</param>
+		/// <param name="outputPath">资源文件保存到的路径</param>
+		/// <returns>写出后判断文件是否存在,存在则为<see langword="true"/>,反之为<see langword="false"/></returns>
+		/// <exception cref="FileNotFoundException"></exception>
+		public static bool GetResourceToFile(string resPath, string outputPath)
+		{
+			using (Stream resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resPath))
+			{
+				if (resourceStream is null)
+				{
+					throw new FileNotFoundException(resPath);
+				}
+				using (FileStream fileStream = File.Create(outputPath))
+				{
+					resourceStream.CopyTo(fileStream);
+				}
+				return File.Exists(outputPath);
+			}
+		}
+
+
+		/// <summary>
+		/// 获取指定文件SHA256哈希值
+		/// </summary>
+		/// <param name="filePath">文件路径</param>
+		/// <returns>文件的哈希值</returns>
+		/// <exception cref="FileNotFoundException">文件未找到</exception>
+		public static string GetFileSHA256(string filePath)
+		{
+			// 检查文件是否存在
+			if (!File.Exists(filePath))
+			{
+				throw new FileNotFoundException("file not found", filePath);
+			}
+			// 创建 SHA256 实例
+			using (SHA256 sha256 = SHA256.Create())
+			{
+				// 打开文件流
+				using (FileStream stream = File.OpenRead(filePath))
+				{
+					// 计算哈希值
+					byte[] hashBytes = sha256.ComputeHash(stream);
+					// 将字节数组转换为十六进制字符串
+					StringBuilder sb = new StringBuilder();
+					foreach (byte b in hashBytes)
+					{
+						// "x2" 表示两位小写十六进制
+						sb.Append(b.ToString("x2"));
+					}
+					return sb.ToString();
+				}
+			}
+		}
+
+
 		/// <summary>
 		/// 指针数据写入Bin文件
 		/// </summary>
@@ -38,6 +99,7 @@ namespace Ike.Standard
 			File.WriteAllBytes(filePath, buffer);
 			return File.Exists(filePath);
 		}
+
 
 		/// <summary>
 		/// Bin文件加载到指针
@@ -134,6 +196,7 @@ namespace Ike.Standard
 			return Directory.GetFiles(directoryPath, search, select).OrderBy(File.GetLastWriteTime).ToArray();
 		}
 
+
 		/// <summary>
 		/// 获取文件夹内文件,按照最后修改文件的日期排序
 		/// </summary>
@@ -150,6 +213,7 @@ namespace Ike.Standard
 			}
 			return Directory.GetFiles(directoryPath, search, select).OrderBy(File.GetLastWriteTime).ToArray();
 		}
+
 
 		/// <summary>
 		/// 获取<see langword="ini"/>文件中所有的<see langword="Section"/>
@@ -178,6 +242,7 @@ namespace Ike.Standard
 			}
 			return sectionNames;
 		}
+
 
 		/// <summary>
 		/// 获取<see langword="ini"/>文件指定<see langword="Section"/>下的所有<see langword="Key"/>和<see langword="Value"/>
@@ -218,6 +283,7 @@ namespace Ike.Standard
 			return keyValues;
 		}
 
+
 		/// <summary>
 		/// 获取<see langword="ini"/>文件中所有的<see langword="Key"/>和<see langword="Value"/>
 		/// </summary>
@@ -232,6 +298,7 @@ namespace Ike.Standard
 			}
 			return keyValues;
 		}
+
 
 		/// <summary>
 		/// 使用<seealso cref="SHA256"/>哈希算法比较两个文件是否相同
@@ -252,6 +319,7 @@ namespace Ike.Standard
 				}
 			}
 		}
+
 
 		/// <summary>
 		/// 获取文件哈希值,使用<seealso cref="SHA256"/>算法
@@ -405,12 +473,13 @@ namespace Ike.Standard
 			return WinAPI.WritePrivateProfileString(section.ToBytes(encoding), key.ToBytes(encoding), value.ToString().ToBytes(encoding), filePath);
 		}
 
+
 		/// <summary>
-		/// 目录移动
+		/// 目录复制
 		/// </summary>
 		/// <param name="sourceDirName">原目录</param>
 		/// <param name="destDirName">目标目录</param>
-		/// <param name="copySubDirs">是否移动子目录</param>
+		/// <param name="copySubDirs">是否复制子目录</param>
 		public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
 		{
 			DirectoryInfo dir = new DirectoryInfo(sourceDirName);

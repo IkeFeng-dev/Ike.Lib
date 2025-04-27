@@ -32,20 +32,21 @@ namespace Ike.Standard
             return hWnd;
         }
 
+
         /// <summary>
         /// 禁用控制台编辑
         /// </summary>
         public static void DisableQuickEdit()
         {
-            IntPtr consoleHandle = WinAPI.GetStdHandle(ConstValue.STD_INPUT_HANDLE);
+            IntPtr consoleHandle = WinAPI.GetStdHandle(WindowsMessages.STD_INPUT_HANDLE);
             if (consoleHandle == IntPtr.Zero) return;
             // 获取当前控制台模式
             if (!WinAPI.GetConsoleMode(consoleHandle, out uint currentMode))
                 return;
             // 禁用快速编辑模式（保留其他标志）
-            uint newMode = currentMode & ~ConstValue.ENABLE_QUICK_EDIT_MODE;
+            uint newMode = currentMode & ~WindowsMessages.ENABLE_QUICK_EDIT_MODE;
             // 确保保留扩展标志（部分系统需要）
-            newMode |= ConstValue.ENABLE_EXTENDED_FLAGS;
+            newMode |= WindowsMessages.ENABLE_EXTENDED_FLAGS;
             WinAPI.SetConsoleMode(consoleHandle, newMode);
         }
 
@@ -55,7 +56,7 @@ namespace Ike.Standard
         /// </summary>
         public static void EnableQuickEdit()
         {
-            IntPtr consoleHandle = WinAPI.GetStdHandle(ConstValue.STD_INPUT_HANDLE);
+            IntPtr consoleHandle = WinAPI.GetStdHandle(WindowsMessages.STD_INPUT_HANDLE);
             if (consoleHandle == IntPtr.Zero) return;
 
             // 获取当前控制台模式
@@ -63,13 +64,14 @@ namespace Ike.Standard
                 return;
 
             // 启用快速编辑模式（保留其他标志）
-            uint newMode = currentMode | ConstValue.ENABLE_QUICK_EDIT_MODE;
+            uint newMode = currentMode | WindowsMessages.ENABLE_QUICK_EDIT_MODE;
 
             // 确保保留扩展标志（部分系统需要）
-            newMode |= ConstValue.ENABLE_EXTENDED_FLAGS;
+            newMode |= WindowsMessages.ENABLE_EXTENDED_FLAGS;
 
             WinAPI.SetConsoleMode(consoleHandle, newMode);
         }
+
 
         /// <summary>
         /// 启用控制台ANSI转义序列支持
@@ -82,15 +84,43 @@ namespace Ike.Standard
         /// <item>Windows 10 1607及以上版本原生支持</item>
         /// </list>
         /// </remarks>
+        /// <exception cref="InvalidOperationException"></exception>
         public static void EnableAnsiSupport()
         {
-            var handle = WinAPI.GetStdHandle(ConstValue.STD_OUTPUT_HANDLE);
+            var handle = WinAPI.GetStdHandle(WindowsMessages.STD_OUTPUT_HANDLE);
             if (handle != IntPtr.Zero)
             {
                 WinAPI.GetConsoleMode(handle, out uint mode);
-                WinAPI.SetConsoleMode(handle, mode | ConstValue.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                WinAPI.SetConsoleMode(handle, mode | WindowsMessages.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            }
+            else
+            {
+                throw new InvalidOperationException("Failed to obtain the standard output handle.");
             }
         }
 
+
+        /// <summary>
+        /// 保持系统唤醒状态以及显示器开启（持续生效）
+        /// </summary>
+        /// <remarks>
+        /// [<see langword="2025年4月27日08:41:42" />]
+        /// </remarks>
+        public static void KeepSystemAwake()
+        {
+            WinAPI.SetThreadExecutionState(WinAPI.ExecutionState.Continuous | WinAPI.ExecutionState.SystemRequired | WinAPI.ExecutionState.DisplayRequired);
+        }
+
+
+        /// <summary>
+        /// 恢复系统默认的电源管理行为,取消<see cref="KeepSystemAwake()"/>的状态
+        /// </summary>
+        /// <remarks>
+        /// [<see langword="2025年4月27日08:41:42" />]
+        /// </remarks>
+        public static void ReleaseSystemWake()
+        {
+            WinAPI.SetThreadExecutionState(WinAPI.ExecutionState.Continuous);
+        }
     }
 }

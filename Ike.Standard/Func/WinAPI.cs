@@ -12,56 +12,96 @@ namespace Ike.Standard
 	public class WinAPI
 	{
 
-        /// <summary>
-        /// <see cref="ExecutionState"/> 枚举标志,表示 <see cref="WinAPI.SetThreadExecutionState"/> 方法的参数,用于指定执行状态
-        /// </summary>
-        [Flags]
-        public enum ExecutionState : uint
-        {
-            /// <summary>
-            /// 通过复位系统空闲定时器,强制系统进入工作状态
-            /// </summary>
-            SystemRequired = 0x01,
-            /// <summary>
-            /// 通过重置显示空闲计时器来强制打开显示
-            /// </summary>
-            DisplayRequired = 0x02,
-            /// <summary>
-            /// 该值不支持,如果<see cref="UserPresent"/> 与其他esFlags值相结合,则调用将失败,没有指定的状态设置
-            /// </summary>
-            [Obsolete("该值不支持")]
-            UserPresent = 0x04,
-            /// <summary>
-            /// 启用离开模式,此值必须指定<see cref="Continuous"/>
-            /// <para />
-            /// 离开模式应该只用于媒体记录和媒体分发应用程序,这些应用程序必须在桌面计算机上执行关键的后台处理,而计算机似乎处于睡眠状态
-            /// </summary>
-            AwaymodeRequired = 0x40,
-            /// <summary>
-            ///通知系统正在设置的状态应该保持有效,直到下一次调用使用<see cref="Continuous"/>并且其他状态标志之一被清除
-            /// </summary>
-            Continuous = 0x80000000,
-        }
+		/// <summary>
+		/// <see cref="ExecutionState"/> 枚举标志,表示 <see cref="WinAPI.SetThreadExecutionState"/> 方法的参数,用于指定执行状态
+		/// </summary>
+		[Flags]
+		public enum ExecutionState : uint
+		{
+			/// <summary>
+			/// 通过复位系统空闲定时器,强制系统进入工作状态
+			/// </summary>
+			SystemRequired = 0x01,
+			/// <summary>
+			/// 通过重置显示空闲计时器来强制打开显示
+			/// </summary>
+			DisplayRequired = 0x02,
+			/// <summary>
+			/// 该值不支持,如果<see cref="UserPresent"/> 与其他esFlags值相结合,则调用将失败,没有指定的状态设置
+			/// </summary>
+			[Obsolete("该值不支持")]
+			UserPresent = 0x04,
+			/// <summary>
+			/// 启用离开模式,此值必须指定<see cref="Continuous"/>
+			/// <para />
+			/// 离开模式应该只用于媒体记录和媒体分发应用程序,这些应用程序必须在桌面计算机上执行关键的后台处理,而计算机似乎处于睡眠状态
+			/// </summary>
+			AwaymodeRequired = 0x40,
+			/// <summary>
+			///通知系统正在设置的状态应该保持有效,直到下一次调用使用<see cref="Continuous"/>并且其他状态标志之一被清除
+			/// </summary>
+			Continuous = 0x80000000,
+		}
 
 
-        /// <summary>
-        /// 从 INI 文件中检索指定的键的值
-        /// </summary>
-        /// <param name="section">要检索的键所在的节名称</param>
-        /// <param name="key">要检索的项的名称</param>
-        /// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
-        /// <param name="retVal">用于保存返回的字符串值的缓冲区</param>
-        /// <param name="size">缓冲区大小,用于保存返回的字符串</param>
-        /// <param name="filePath">INI 文件的完整路径</param>
-        /// <remarks>
-        ///   <list type="bullet">
-        ///     <item>如果找不到指定的键,则返回默认值<paramref name="def"/></item>
-        ///     <item>如果找到指定的键,但其值为空字符串,则返回空字符串</item>
-        ///     <item>如果 INI 文件或指定的节和键不存在,或者发生其他错误,函数将返回空字符串</item>
-        ///   </list>
-        /// </remarks>
-        /// <returns>从 INI 文件中检索到的字符串的字节长度</returns>
-        [DllImport("kernel32")]
+		/// <summary>
+		/// 系统信息结构体
+		/// </summary>
+		[StructLayout(LayoutKind.Sequential)]
+		public struct SYSTEM_INFO
+		{
+			/// <summary>处理器架构</summary>
+			public ushort wProcessorArchitecture;
+
+			/// <summary>保留字段</summary>
+			public ushort wReserved;
+
+			/// <summary>页面大小</summary>
+			public uint dwPageSize;
+
+			/// <summary>最小应用程序地址</summary>
+			public IntPtr lpMinimumApplicationAddress;
+
+			/// <summary>最大应用程序地址</summary>
+			public IntPtr lpMaximumApplicationAddress;
+
+			/// <summary>处理器掩码</summary>
+			public UIntPtr dwActiveProcessorMask;
+
+			/// <summary>处理器数量</summary>
+			public uint dwNumberOfProcessors;
+
+			/// <summary>处理器类型（已弃用）</summary>
+			public uint dwProcessorType;
+
+			/// <summary>分配粒度</summary>
+			public uint dwAllocationGranularity;
+
+			/// <summary>处理器级别</summary>
+			public ushort wProcessorLevel;
+
+			/// <summary>处理器版本</summary>
+			public ushort wProcessorRevision;
+		}
+
+		/// <summary>
+		/// 从 INI 文件中检索指定的键的值
+		/// </summary>
+		/// <param name="section">要检索的键所在的节名称</param>
+		/// <param name="key">要检索的项的名称</param>
+		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+		/// <param name="retVal">用于保存返回的字符串值的缓冲区</param>
+		/// <param name="size">缓冲区大小,用于保存返回的字符串</param>
+		/// <param name="filePath">INI 文件的完整路径</param>
+		/// <remarks>
+		///   <list type="bullet">
+		///     <item>如果找不到指定的键,则返回默认值<paramref name="def"/></item>
+		///     <item>如果找到指定的键,但其值为空字符串,则返回空字符串</item>
+		///     <item>如果 INI 文件或指定的节和键不存在,或者发生其他错误,函数将返回空字符串</item>
+		///   </list>
+		/// </remarks>
+		/// <returns>从 INI 文件中检索到的字符串的字节长度</returns>
+		[DllImport("kernel32")]
 		public static extern int GetPrivateProfileString(byte[] section, byte[] key, byte[] def, byte[] retVal, int size, string filePath);
 
 
@@ -84,6 +124,8 @@ namespace Ike.Standard
 		public static extern bool WritePrivateProfileString(byte[] section, byte[] key, byte[] val, string filePath);
 
 
+		#region 窗口操作相关
+
 		/// <summary>
 		/// 根据指定的窗口类名或窗口标题查找顶层窗口的句柄
 		/// </summary>
@@ -100,7 +142,6 @@ namespace Ike.Standard
 		[DllImport("User32.dll")]
 		public static extern IntPtr FindWindow(string className, string captionName);
 
-
 		/// <summary>
 		/// 改变指定窗口的大小、位置和 Z 顺序
 		/// </summary>
@@ -115,7 +156,7 @@ namespace Ike.Standard
 		/// <list type="bullet">
 		/// <item>可以使用此函数改变窗口的大小、位置以及它在 Z 顺序中的位置</item>
 		/// <item>如果窗口的大小或位置没有改变，该函数会返回 <seealso langword="true"/>，即使指定的参数没有改变</item>
-		/// <item>uFlags 可以指定如何操作窗口，常用的标志包括 <see cref="CONST.SetWindowPosFlags.SWP_NOSIZE"/>（保持窗口大小不变）和 <see cref="CONST.SetWindowPosFlags.SWP_NOMOVE"/>（保持窗口位置不变）</item>
+		/// <item>uFlags 可以指定如何操作窗口，常用的标志包括 <see cref="WindowsMessages.SWP_NOSIZE"/>（保持窗口大小不变）和 <see cref="WindowsMessages.SWP_NOMOVE"/>（保持窗口位置不变）</item>
 		/// </list>
 		/// </remarks>
 		/// <returns>如果函数成功，则返回 <seealso langword="true"/>；否则，返回 <seealso langword="false"/></returns>
@@ -130,7 +171,7 @@ namespace Ike.Standard
 		/// <param name="nCmdShow">指定窗口显示状态的参数</param>
 		/// <remarks>
 		/// <list type="bullet">
-		/// <item>nCmdShow 的常用值包括 <see cref="CONST.WindowShowCommand.SW_SHOWNORMAL"/>、<see cref="CONST.WindowShowCommand.SW_MINIMIZE"/>、<see cref="CONST.WindowShowCommand.SW_MAXIMIZE"/> 等</item>
+		/// <item>nCmdShow 的常用值包括 <see cref="WindowsMessages.SW_SHOWNORMAL"/>、<see cref="WindowsMessages.SW_MINIMIZE"/>、<see cref="WindowsMessages.SW_MAXIMIZE"/> 等</item>
 		/// <item>此函数不能改变子窗口的显示状态，只能操作顶层窗口或弹出窗口</item>
 		/// <item>如果窗口当前已处于指定的显示状态，<see cref="ShowWindow"></see> 不会做任何操作</item>
 		/// </list>
@@ -138,6 +179,31 @@ namespace Ike.Standard
 		/// <returns>如果窗口之前是可见的且现在被隐藏，返回非零值；如果窗口之前是隐藏的且现在被显示，返回<see langword="0"/></returns>
 		[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
 		public static extern int ShowWindow(IntPtr hwnd, int nCmdShow);
+
+
+		/// <summary>
+		/// 改变指定窗口的位置和大小
+		/// </summary>
+		/// <param name="hWnd">窗口句柄，表示要操作的窗口</param>
+		/// <param name="X">窗口新的左上角X坐标（屏幕坐标系）</param>
+		/// <param name="Y">窗口新的左上角Y坐标（屏幕坐标系）</param>
+		/// <param name="nWidth">窗口的新宽度（像素）</param>
+		/// <param name="nHeight">窗口的新高度（像素）</param>
+		/// <param name="bRepaint">是否立即重绘窗口（通常设为true）</param>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>此函数可以用于顶层窗口和子窗口</item>
+		/// <item>坐标和尺寸参数使用屏幕坐标系（对于顶层窗口）或父窗口客户区坐标系（对于子窗口）</item>
+		/// <item>如果窗口有菜单，新宽度和新高度应包括菜单的高度</item>
+		/// <item>对于子窗口，X和Y参数是相对于父窗口客户区的坐标</item>
+		/// </list>
+		/// </remarks>
+		/// <returns>如果函数成功，返回非零值；如果失败，返回<see langword="false"/></returns>
+		[DllImport("user32.dll", SetLastError = true)]
+		public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
+		#endregion
+
 
 
 		/// <summary>
@@ -417,5 +483,237 @@ namespace Ike.Standard
 		[DllImport("kernel32.dll")]
 		public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
 
+		/// <summary>
+		/// 向指定窗口发送消息并等待消息处理完成
+		/// </summary>
+		/// <param name="hWnd">目标窗口的句柄。如果此参数为 <see cref="IntPtr.Zero"/>，则消息会被发送到系统中的所有顶层窗口</param>
+		/// <param name="Msg">要发送的消息标识符,常用消息常量定义在 <see cref="WindowsMessages"/> 类中</param>
+		/// <param name="wParam">附加的消息特定信息</param>
+		/// <param name="lParam">附加的消息特定信息</param>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>此函数是同步调用，会等待目标窗口处理完消息后才返回</item>
+		/// <item>如果目标窗口属于另一个线程，SendMessage 会切换到该线程的上下文</item>
+		/// <item>对于跨进程发送消息，参数中的数据必须能被目标进程访问</item>
+		/// </list>
+		/// </remarks>
+		/// <returns>返回值取决于发送的具体消息，通常表示消息处理的结果</returns>
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+		/// <summary>
+		/// 将消息放入与创建指定窗口的线程关联的消息队列后立即返回（异步发送）
+		/// </summary>
+		/// <param name="hWnd">目标窗口的句柄。特殊值 <see cref="WindowsMessages.HWND_NOTOPMOST"/>表示发送到所有顶层窗口</param>
+		/// <param name="Msg">要发送的消息标识符,常用消息常量定义在 <see cref="WindowsMessages"/> 类中</param>
+		/// <param name="wParam">附加的消息特定信息</param>
+		/// <param name="lParam">附加的消息特定信息</param>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>此函数是异步调用，将消息放入队列后立即返回，不等待消息处理</item>
+		/// <item>如果目标窗口属于当前线程，消息会被直接发送到窗口过程</item>
+		/// <item>对于跨线程/跨进程通信，参数中的指针数据必须有效且可访问</item>
+		/// <item>如果目标窗口句柄无效，函数会失败但不会报错（返回false）</item>
+		/// </list>
+		/// </remarks>
+		/// <returns>如果函数成功，返回 <see langword="true"/>；否则返回 <see langword="false"/></returns>
+		[DllImport("user32.dll", SetLastError = true)]
+		public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+
+		/// <summary>
+		/// 获取当前进程运行所在系统的信息
+		/// </summary>
+		/// <param name="lpSystemInfo">接收系统信息的结构体</param>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>在WOW64环境下，返回的是32位系统的信息</item>
+		/// <item>dwNumberOfProcessors返回的是逻辑处理器数量</item>
+		/// </list>
+		/// </remarks>
+		[DllImport("kernel32.dll")]
+		public static extern void GetSystemInfo(out SYSTEM_INFO lpSystemInfo);
+
+		/// <summary>
+		/// 获取本地系统的真实信息（不受WOW64影响）
+		/// </summary>
+		/// <param name="lpSystemInfo">接收系统信息的结构体</param>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>在64位系统上运行32位进程时，仍返回64位系统的真实信息</item>
+		/// <item>与<see cref="GetSystemInfo"/>的区别仅在于WOW64环境下的行为</item>
+		/// <item>建议在需要确定实际系统架构时使用此函数</item>
+		/// </list>
+		/// </remarks>
+		[DllImport("kernel32.dll")]
+		public static extern void GetNativeSystemInfo(out SYSTEM_INFO lpSystemInfo);
+
+		/// <summary>
+		/// 获取系统度量信息（屏幕、界面元素尺寸等）
+		/// </summary>
+		/// <param name="nIndex">系统度量指标ID,在<see cref="WindowsMessages"/>类中,以SM_*的常量参数ID,如<see cref="WindowsMessages.SM_CXSCREEN"/></param>
+		/// <returns>请求的度量值（像素或布尔值）</returns>
+		[DllImport("user32.dll", SetLastError = true)]
+		public static extern int GetSystemMetrics(int nIndex);
+
+		/// <summary>
+		/// 获取当前线程的唯一标识符
+		/// </summary>
+		/// <returns>当前线程的ID（非零值）</returns>
+		/// <remarks>
+		/// 线程ID在系统范围内唯一，直到线程终止后可能被回收重用
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = false)]
+		public static extern uint GetCurrentThreadId();
+
+		/// <summary>
+		/// 获取当前进程的唯一标识符
+		/// </summary>
+		/// <returns>当前进程的ID（非零值）</returns>
+		/// <remarks>
+		/// 进程ID在系统范围内唯一，直到进程终止后可能被回收重用
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = false)]
+		public static extern uint GetCurrentProcessId();
+
+		/// <summary>
+		/// 获取当前进程的伪句柄
+		/// </summary>
+		/// <returns>总返回值为 -1 的伪句柄（无需关闭）</returns>
+		/// <remarks>
+		/// <list type="bullet">
+		/// <item>伪句柄仅在当前进程上下文中有效</item>
+		/// <item>不可传递给其他进程使用</item>
+		/// <item>无需调用释放句柄</item>
+		/// </list>
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = false)]
+		public static extern IntPtr GetCurrentProcess();
+
+		/// <summary>
+		/// 在调用进程的虚拟地址空间中分配内存
+		/// </summary>
+		/// <param name="lpAddress">
+		/// 期望的起始地址（传<see cref="IntPtr.Zero"/>表示系统自动分配）
+		/// </param>
+		/// <param name="dwSize">要分配的内存大小（字节）</param>
+		/// <param name="flAllocationType">分配类型,在<see cref="WindowsMessages"/>类中,以<see langword="MEM_*"/>的常量参数,如<see cref="WindowsMessages.MEM_COMMIT"/></param>
+		/// <param name="flProtect">内存保护属性,在<see cref="WindowsMessages"/>类中,以<see langword="PAGE_*"/>的常量参数,如<see cref="WindowsMessages.PAGE_READWRITE"/></param>
+		/// <returns>
+		/// 成功返回分配的内存地址，失败返回<see cref="IntPtr.Zero"/>
+		/// 可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误代码
+		/// </returns>
+		/// <remarks>
+		/// 分配大小会自动对齐到系统页面边界（通常4KB）
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+		/// <summary>
+		/// 释放虚拟内存
+		/// </summary>
+		/// <param name="lpAddress">要释放的内存起始地址</param>
+		/// <param name="dwSize">
+		/// 要释放的大小（<see cref="WindowsMessages.MEM_DECOMMIT"/>时有效，<see cref="WindowsMessages.MEM_RELEASE"/> 必须为0）
+		/// </param>
+		/// <param name="dwFreeType">释放类型,在<see cref="WindowsMessages"/>类中,以<see langword="MEM_*"/>的常量参数,如<see cref="WindowsMessages.MEM_DECOMMIT"/></param>
+		/// <returns>成功返回true，失败返回false</returns>
+		/// <remarks>
+		/// <see cref="WindowsMessages.MEM_RELEASE"/>会完全释放由<see cref="VirtualAlloc"/>保留的整个区域
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool VirtualFree(IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
+		/// <summary>
+		/// 在指定进程的虚拟地址空间中分配内存
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_VM_OPERATION"/>权限）</param>
+		/// <param name="lpAddress">
+		/// 期望的起始地址（传<see cref="IntPtr.Zero"/>表示系统自动分配）
+		/// </param>
+		/// <param name="dwSize">要分配的内存大小（字节）</param>
+		/// <param name="flAllocationType">分配类型,在<see cref="WindowsMessages"/>类中,以<see langword="MEM_*"/>的常量参数,如<see cref="WindowsMessages.MEM_COMMIT"/></param>
+		/// <param name="flProtect">内存保护属性,在<see cref="WindowsMessages"/>类中,以<see langword="PAGE_*"/>的常量参数,如<see cref="WindowsMessages.PAGE_READWRITE"/></param>
+		/// <returns>
+		/// 成功返回分配的内存地址，失败返回<see cref="IntPtr.Zero"/>
+		/// 可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误代码
+		/// </returns>
+		/// <remarks>
+		/// 分配的内存初始内容为0，大小会自动对齐到系统页面边界
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+		/// <summary>
+		/// 释放指定进程中的虚拟内存
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_VM_OPERATION"/>权限）</param>
+		/// <param name="lpAddress">要释放的内存起始地址</param>
+		/// <param name="dwSize">
+		/// 要释放的大小（<see cref="WindowsMessages.MEM_DECOMMIT"/>时有效，<see cref="WindowsMessages.MEM_RELEASE"/>必须为0）
+		/// </param>
+		/// <param name="dwFreeType">释放类型（<see cref="WindowsMessages.MEM_RELEASE"/>）</param>
+		/// <returns>成功返回true，失败返回false</returns>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
+		/// <summary>
+		/// 向目标进程写入内存数据
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_VM_WRITE"/>权限）</param>
+		/// <param name="lpBaseAddress">目标内存起始地址</param>
+		/// <param name="lpBuffer">要写入的数据缓冲区</param>
+		/// <param name="nSize">要写入的字节数</param>
+		/// <param name="lpNumberOfBytesWritten">实际写入的字节数</param>
+		/// <returns>成功返回true，失败可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误码</returns>
+		/// <remarks>
+		/// 写入前应确保内存区域有<see cref="WindowsMessages.PAGE_READWRITE"/>或<see cref="WindowsMessages.PAGE_EXECUTE_READWRITE"/>权限
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out int lpNumberOfBytesWritten);
+
+		/// <summary>
+		/// 修改目标进程的内存保护属性
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_VM_WRITE"/>权限）</param>
+		/// <param name="lpAddress">内存起始地址</param>
+		/// <param name="dwSize">内存区域大小</param>
+		/// <param name="flNewProtect">新的保护属性（<see langword="PAGE_*"/> 常量）</param>
+		/// <param name="lpflOldProtect">返回原来的保护属性</param>
+		/// <returns>成功返回true，失败可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误码</returns>
+		/// <remarks>
+		/// 典型用法：临时修改为可写(<see cref="WindowsMessages.PAGE_READWRITE"/>)，写入后恢复原属性
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+
+		/// <summary>
+		/// 读取目标进程的内存数据
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_VM_WRITE"/>权限）</param>
+		/// <param name="lpBaseAddress">要读取的内存起始地址</param>
+		/// <param name="lpBuffer">接收数据的缓冲区</param>
+		/// <param name="nSize">要读取的字节数</param>
+		/// <param name="lpNumberOfBytesRead">实际读取的字节数</param>
+		/// <returns>成功返回true，失败可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误码</returns>
+		/// <remarks>
+		/// 读取前应确保内存区域有可读权限
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, [Out] byte[] lpBuffer, uint nSize, out int lpNumberOfBytesRead);
+
+		/// <summary>
+		/// 检测目标进程是否为WOW64（32位进程运行在64位系统）
+		/// </summary>
+		/// <param name="hProcess">目标进程句柄（需<see cref="WindowsMessages.PROCESS_QUERY_LIMITED_INFORMATION"/>权限）</param>
+		/// <param name="wow64Process">返回是否为WOW64进程</param>
+		/// <returns>成功返回true，失败可通过<see cref="Marshal.GetLastWin32Error()"/>获取错误码</returns>
+		/// <remarks>
+		/// 在64位系统上检测32位进程的关键API
+		/// </remarks>
+		[DllImport("kernel32.dll", SetLastError = true)]
+		public static extern bool IsWow64Process(IntPtr hProcess, [MarshalAs(UnmanagedType.Bool)] out bool wow64Process);
 	}
 }

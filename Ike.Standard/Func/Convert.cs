@@ -76,7 +76,7 @@ namespace Ike.Standard
 
 			if (hexColor.Length != 6)
 			{
-				throw new ArgumentException("无效的颜色代码");
+				throw new ArgumentException("Invalid color code.");
 			}
 			byte red = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
 			byte green = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
@@ -105,6 +105,7 @@ namespace Ike.Standard
 		{
 			return RgbToHex(rgb.R, rgb.G, rgb.B);
 		}
+
 
 		/// <inheritdoc cref="RgbToHex(Structure.RGB)"/>
 		public static string ToHex(this Structure.RGB rgb)
@@ -145,6 +146,7 @@ namespace Ike.Standard
 			}
 		}
 
+
 		/// <summary>
 		/// <see cref="Color"/>转十六进制格式
 		/// </summary>
@@ -155,11 +157,9 @@ namespace Ike.Standard
 			return RgbToHex(color.R, color.G, color.B);
 		}
 
-		/// <inheritdoc cref="ColorToHex(Color)"/>
-		public static string ToHex(this Color color)
-		{
-			return ColorToHex(color);
-		}
+
+
+
 
 		/// <summary>
 		/// 字符串转<see  cref="byte"/>
@@ -170,12 +170,6 @@ namespace Ike.Standard
 		public static byte[] StringToBytes(string str, Encoding encoding)
 		{
 			return encoding.GetBytes(str);
-		}
-
-		/// <inheritdoc cref="StringToBytes(string,Encoding)"/>
-		public static byte[] ToBytes(this string str, Encoding encoding)
-		{
-			return StringToBytes(str, encoding);
 		}
 
 
@@ -191,20 +185,18 @@ namespace Ike.Standard
 		{
 			if (!typeof(T).IsEnum)
 			{
-				throw new ArgumentException("泛型类型必须是枚举类型");
+				throw new ArgumentException("A generic type must be an enumerated type");
 			}
 			if (!Enum.IsDefined(typeof(T), value))
 			{
-				throw new ArgumentException($"值 '{value}'未在 {typeof(T).Name} 中定义");
+				throw new ArgumentException($"The value '{value}' is not defined in {typeof(T).Name}");
 			}
 			return (T)Enum.ToObject(typeof(T), value);
 		}
 
-		/// <inheritdoc cref="ValueToEnum"/>
-		public static T ToEnum<T>(this int value) where T : struct, Enum
-		{
-			return ValueToEnum<T>(value);
-		}
+
+
+
 		/// <summary>
 		/// 根据枚举名称获取枚举值
 		/// </summary>
@@ -216,21 +208,15 @@ namespace Ike.Standard
 		{
 			if (!typeof(T).IsEnum)
 			{
-				throw new ArgumentException("泛型类型必须是枚举类型");
+				throw new ArgumentException("A generic type must be an enumerated type");
 			}
 			if (!Enum.IsDefined(typeof(T), value))
 			{
-				throw new ArgumentException($"值 '{value}'未在 {typeof(T).Name} 中定义");
+				throw new ArgumentException($"The value '{value}' is not defined in {typeof(T).Name}");
 			}
 			return (T)Enum.Parse(typeof(T), value);
 		}
 
-
-		/// <inheritdoc cref="NameToEnum"/>
-		public static T ToEnum<T>(this string value) where T : struct, Enum
-		{
-			return NameToEnum<T>(value);
-		}
 
 
 	}

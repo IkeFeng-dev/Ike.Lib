@@ -15,4 +15,8 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ike.Standard\Ike.Standard.csproj" />
+  </ItemGroup>
+
 </Project>
