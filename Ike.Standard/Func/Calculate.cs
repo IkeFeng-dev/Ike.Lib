@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Ike.Standard
 {
@@ -27,5 +28,6 @@ namespace Ike.Standard
             // 使用平均 ticks 创建平均时间
             return new DateTime(averageTicks);
         }
+
     }
 }

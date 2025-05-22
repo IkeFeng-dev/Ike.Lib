@@ -38,15 +38,15 @@ namespace Ike.Standard
         /// </summary>
         public static void DisableQuickEdit()
         {
-            IntPtr consoleHandle = WinAPI.GetStdHandle(WindowsMessages.STD_INPUT_HANDLE);
+            IntPtr consoleHandle = WinAPI.GetStdHandle(WinMessages.STD_INPUT_HANDLE);
             if (consoleHandle == IntPtr.Zero) return;
             // 获取当前控制台模式
             if (!WinAPI.GetConsoleMode(consoleHandle, out uint currentMode))
                 return;
             // 禁用快速编辑模式（保留其他标志）
-            uint newMode = currentMode & ~WindowsMessages.ENABLE_QUICK_EDIT_MODE;
+            uint newMode = currentMode & ~WinMessages.ENABLE_QUICK_EDIT_MODE;
             // 确保保留扩展标志（部分系统需要）
-            newMode |= WindowsMessages.ENABLE_EXTENDED_FLAGS;
+            newMode |= WinMessages.ENABLE_EXTENDED_FLAGS;
             WinAPI.SetConsoleMode(consoleHandle, newMode);
         }
 
@@ -56,7 +56,7 @@ namespace Ike.Standard
         /// </summary>
         public static void EnableQuickEdit()
         {
-            IntPtr consoleHandle = WinAPI.GetStdHandle(WindowsMessages.STD_INPUT_HANDLE);
+            IntPtr consoleHandle = WinAPI.GetStdHandle(WinMessages.STD_INPUT_HANDLE);
             if (consoleHandle == IntPtr.Zero) return;
 
             // 获取当前控制台模式
@@ -64,10 +64,10 @@ namespace Ike.Standard
                 return;
 
             // 启用快速编辑模式（保留其他标志）
-            uint newMode = currentMode | WindowsMessages.ENABLE_QUICK_EDIT_MODE;
+            uint newMode = currentMode | WinMessages.ENABLE_QUICK_EDIT_MODE;
 
             // 确保保留扩展标志（部分系统需要）
-            newMode |= WindowsMessages.ENABLE_EXTENDED_FLAGS;
+            newMode |= WinMessages.ENABLE_EXTENDED_FLAGS;
 
             WinAPI.SetConsoleMode(consoleHandle, newMode);
         }
@@ -87,11 +87,11 @@ namespace Ike.Standard
         /// <exception cref="InvalidOperationException"></exception>
         public static void EnableAnsiSupport()
         {
-            var handle = WinAPI.GetStdHandle(WindowsMessages.STD_OUTPUT_HANDLE);
+            var handle = WinAPI.GetStdHandle(WinMessages.STD_OUTPUT_HANDLE);
             if (handle != IntPtr.Zero)
             {
                 WinAPI.GetConsoleMode(handle, out uint mode);
-                WinAPI.SetConsoleMode(handle, mode | WindowsMessages.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                WinAPI.SetConsoleMode(handle, mode | WinMessages.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
             }
             else
             {

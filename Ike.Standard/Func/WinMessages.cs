@@ -6,7 +6,7 @@ namespace Ike.Standard
     /// <summary>
     /// 常量值
     /// </summary>
-    public class WindowsMessages
+    public class WinMessages
     {
 
         #region 控制台相关标志
@@ -28,7 +28,10 @@ namespace Ike.Standard
         /// <para>Windows API 常量，对应标准输出流的句柄值</para>
         /// </summary>
         public const int STD_OUTPUT_HANDLE = -11;
-
+        /// <summary>
+        /// 标准错误输出（Standard Error）的设备句柄标识符
+        /// </summary>
+        public const int STD_ERROR_HANDLE = -12;
         /// <summary>
         /// 启用虚拟终端处理的控制台模式标志
         /// <para>允许控制台解析ANSI转义序列(如颜色代码)</para>
@@ -456,6 +459,10 @@ namespace Ike.Standard
         public const uint PAGE_EXECUTE_READWRITE = 0x40;
         /// <summary>可读写</summary>
         public const uint PAGE_READWRITE = 0x04;
+        /// <summary>
+        /// 对文件映射视图的完全访问权限
+        /// </summary>
+        public const uint FILE_MAP_ALL_ACCESS = 0xF001F;
         /// <summary>仅执行</summary>
         public const uint PAGE_EXECUTE = 0x10;
         /// <summary>不可访问</summary>
@@ -477,6 +484,41 @@ namespace Ike.Standard
         /// <summary>
         /// 允许查询有限进程信息 Windows Vista+ 新增的轻量级查询权限 </summary>
         public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+        // ==================== 进程权限常量 ====================
+        /// <summary>允许设置进程优先级</summary>
+        public const uint PROCESS_SET_INFORMATION = 0x0200;
+
+        /// <summary>允许查询进程信息</summary>
+        public const uint PROCESS_QUERY_INFORMATION = 0x0400;
+
+        // ==================== 优先级常量 ====================
+        /// <summary>空闲优先级（系统空闲时运行）</summary>
+        public const uint PRIORITY_IDLE = 0x00000040;
+
+        /// <summary>正常优先级（默认）</summary>
+        public const uint PRIORITY_NORMAL = 0x00000020;
+
+        /// <summary>高优先级（可能影响系统响应）</summary>
+        public const uint PRIORITY_HIGH = 0x00000080;
+
+        /// <summary>实时优先级（慎用，可能导致系统冻结）</summary>
+        public const uint PRIORITY_REALTIME = 0x00000100;
+
+        /// <summary>低于正常优先级</summary>
+        public const uint PRIORITY_BELOW_NORMAL = 0x00004000;
+
+        /// <summary>高于正常优先级</summary>
+        public const uint PRIORITY_ABOVE_NORMAL = 0x00008000;
+        // ==================== 进程状态常量 ====================
+        /// <summary>进程仍在运行的退出码</summary>
+        public const uint STILL_ACTIVE = 259;
+
+
+        # endregion
+
+
+        #region 
+
 
 
         #endregion
