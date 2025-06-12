@@ -9,13 +9,15 @@
 	  <PackageIcon>ico.png</PackageIcon>
 	  <RepositoryType>git</RepositoryType>
 	  <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-	  <Version>1.0.0</Version>
+	  <Version>2.0.0</Version>
 	  <AssemblyVersion>0.0.0.2</AssemblyVersion>
 	  <FileVersion>0.0.0.2</FileVersion>
 	  <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 	  <RepositoryUrl>https://github.com/IkeFeng-dev/Ike.Lib</RepositoryUrl>
 	  <PackageProjectUrl>https://github.com/IkeFeng-dev/Ike.Lib</PackageProjectUrl>
-	  <Description>C# 通用标准库</Description>
+	  <Description>C# Standard2.0 通用标准库</Description>
+	  <Title>C# Standard2.0 通用标准库</Title>
+	  <PackageReleaseNotes>C# Standard2.0 通用标准库</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

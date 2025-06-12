@@ -403,16 +403,62 @@ namespace Ike.Standard
 
 
 		/// <summary>
-		/// 指定编码格式读取INI中 <see cref="int"></see> 数据
+		/// 直接遍历文件读取INI指定键值
 		/// </summary>
-		/// <param name="section">要检索的键所在的节名称</param>
-		/// <param name="key">要检索的项的名称</param>
-		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
-		/// <param name="filePath">INI 文件的完整路径</param>
-		/// <param name="encoding">指定编码读取</param>
-		/// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
-		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
-		public static int IniReadToInt(string section, string key, int def, string filePath, Encoding encoding, int bufferSize = 1024)
+		/// <param name="section">数据部分</param>
+		/// <param name="key">键</param>
+		/// <param name="defAult">如果读取失败,则返回这个默认值</param>
+		/// <param name="iniPath">INI文件路径</param>
+		/// <returns>读取成功返回读取值,失败则返回默认值</returns>
+        public static string ReadIniValue(string section, string key,string defAult, string iniPath)
+        {
+            if (!File.Exists(iniPath))
+                return defAult;
+
+            string[] lines = File.ReadAllLines(iniPath);
+			// 如果未指定 section，则匹配所有键
+            bool inCorrectSection = (section == null); 
+
+            foreach (string line in lines)
+            {
+                string trimmedLine = line.Trim();
+
+                // 检查是否是节标记（如 [Section]）
+                if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
+                {
+                    string currentSection = trimmedLine.Substring(1, trimmedLine.Length - 2);
+                    inCorrectSection = (section == null) || currentSection.Equals(section, StringComparison.OrdinalIgnoreCase);
+                    continue;
+                }
+                // 如果不在正确的节，跳过
+                if (!inCorrectSection)
+                    continue;
+                // 解析键值对
+                int equalSignIndex = line.IndexOf('=');
+                if (equalSignIndex > 0)
+                {
+                    string currentKey = line.Substring(0, equalSignIndex).Trim();
+                    if (currentKey.Equals(key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return line.Substring(equalSignIndex + 1).Trim();
+                    }
+                }
+            }
+
+            return defAult;
+        }
+
+        /// <summary>
+        /// 指定编码格式读取INI中 <see cref="int"></see> 数据
+        /// </summary>
+        /// <param name="section">要检索的键所在的节名称</param>
+        /// <param name="key">要检索的项的名称</param>
+        /// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+        /// <param name="filePath">INI 文件的完整路径</param>
+        /// <param name="encoding">指定编码读取</param>
+        /// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
+        /// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
+        public static int IniReadToInt(string section, string key, int def, string filePath, Encoding encoding, int bufferSize = 1024)
 		{
 			if (encoding is null)
 			{
