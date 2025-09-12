@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -60,7 +61,7 @@ namespace Ike.Standard.Ini
         /// <summary>
         /// 数组分隔符
         /// </summary>
-        private readonly char split = ',';
+        private readonly char split = '|';
         /// <summary>
         /// 配置档路径
         /// </summary>
@@ -158,17 +159,33 @@ namespace Ike.Standard.Ini
         /// configManager.Data.Port = 5555;
         /// // 保存配置
         /// configManager.Save();
+        /// 
+        ///  <para>4. 自动更新：</para>
+        ///  如果实例类实现了INotifyPropertyChanged接口,则更新字段时自动写入文档
+        /// 
         /// </code>
         /// </example>
         /// </summary>
         /// <param name="filePath">配置档路径</param>
         /// <param name="encoding">配置档读写编码,默认使用<see cref="Encoding.UTF8"/></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public IniConfigManager(string filePath,Encoding encoding = default)
+        public IniConfigManager(string filePath, Encoding encoding = default)
         {
             this.encoding = encoding ?? Encoding.UTF8;
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
             _sectionMappings = BuildSectionMappings();
+
+            Load();
+            // 如果T实现了INotifyPropertyChanged，注册事件
+            if (Data is INotifyPropertyChanged notifyObj)
+            {
+                notifyObj.PropertyChanged += (sender, args) =>
+                {
+                    // 属性变更时自动保存
+                    Save();
+                };
+            }
+
         }
 
 
@@ -366,21 +383,19 @@ namespace Ike.Standard.Ini
         //           genericType == typeof(IEnumerable<>);
         //}
 
-        
+
 
         /// <summary>
         /// 支持的数据类型
         /// </summary>
         /// <returns>数据类型集合</returns>
-        public Type[] SupportedTypes()
-        {
-            return types;
-        }
+        public Type[] SupportedTypes() => types;
 
 
         /// <summary>
         /// 保存配置到INI文件
         /// </summary>
+        /// <param name="config">配置档实例对象</param>
         public void Save(T config)
         {
             var sb = new StringBuilder();

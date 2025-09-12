@@ -21,6 +21,10 @@ namespace Ike.Standard
 			/// </summary>
 			Receive,
 			/// <summary>
+			/// 发送
+			/// </summary>
+			Send,
+			/// <summary>
 			/// 异常
 			/// </summary>
 			Error,
@@ -167,36 +171,43 @@ namespace Ike.Standard
 						ReceiveStatus = true;
 						try
 						{
-							using (Socket client = await listener.AcceptAsync())
-							{
-								if (!_disposed)
-								{
-									_method?.Invoke("The service terminal is out of service", MessageType.Info);
-									client.Close();
-									listener.Close();
-								}
-								else
-								{
-									_method?.Invoke($"Client {client.RemoteEndPoint} connected", MessageType.Info);
-									var receive = await ReceiveMessage(client);
-									if (_asyncreplyMethod != null && receive != null)
-									{
-										string handle = await _asyncreplyMethod(receive);
-										byte[] data = Encoding.UTF8.GetBytes(handle);
-										await client.SendAsync(new ArraySegment<byte>(data), SocketFlags.None);
-									}
-								}
-							}
-						}
-						catch (SocketException ex)
-						{
-							_method?.Invoke($"[Socket Error] {ex.Message}", MessageType.Error);
+							Socket client = await listener.AcceptAsync();
+							_ = Task.Run(() => HandleClientAsync(client));
 						}
 						catch (Exception ex)
 						{
-							_method?.Invoke($"[Exception] {ex.Message}", MessageType.Error);
+							_method?.Invoke($"[Error] {ex.Message}", MessageType.Error);
 						}
 					}
+				}
+			}
+
+			/// <summary>
+			/// 独立处理客户端的方法
+			/// </summary>
+			/// <param name="client">连接对象</param>
+			/// <returns></returns>
+			private async Task HandleClientAsync(Socket client)
+			{
+				try
+				{
+					_method?.Invoke($"Client {client.RemoteEndPoint} connected", MessageType.Info);
+					var receive = await ReceiveMessage(client);
+					if (_asyncreplyMethod != null && receive != null)
+					{
+						string handle = await _asyncreplyMethod(receive);
+						byte[] data = Encoding.UTF8.GetBytes(handle);
+						await client.SendAsync(new ArraySegment<byte>(data), SocketFlags.None);
+						_method?.Invoke(handle, MessageType.Send);
+					}
+				}
+				catch (Exception ex)
+				{
+					_method?.Invoke($"[Error] {ex.Message}", MessageType.Error);
+				}
+				finally
+				{
+					client.Dispose();
 				}
 			}
 

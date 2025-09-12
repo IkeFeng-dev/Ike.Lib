@@ -1,24 +1,245 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using Iced.Intel;
+using Ike.Standard.Ini;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using OpCodes = Mono.Cecil.Cil.OpCodes;
 
 
 namespace Test.Framework
 {
+    /// <summary>
+    /// 入库请求
+    /// </summary>
+    public class RuninRequest
+    {
+        /// <summary>
+        /// 放料次数
+        /// </summary>
+        public SocketMessageTimes Times { get; set; }
+
+        /// <summary>
+        /// <inheritdoc cref="SocketMessageActionFlag"/>
+        /// </summary>
+        public SocketMessageActionFlag Flag { get; set; }
+
+        /// <summary>
+        /// 时间戳
+        /// </summary>
+        public DateTime Timestamp { get; set; }
+
+        /// <summary>
+        /// <inheritdoc cref="SocketMessageDestination "/>
+        /// </summary>
+        public SocketMessageDestination Destination { get; set; }
+
+        /// <summary>
+        /// 入库数据
+        /// </summary>
+        public Value Values { get; set; }
+    }
+
+    /// <summary>
+    /// 出库响应
+    /// </summary>
+    public class RuninResponse
+    {
+        /// <summary>
+        /// <inheritdoc cref="SocketMessageActionFlag"/>
+        /// </summary>
+        public SocketMessageActionFlag Flag { get; set; }
+
+        /// <summary>
+        /// 时间戳
+        /// </summary>
+        public DateTime Timestamp { get; set; }
+
+        /// <summary>
+        /// <inheritdoc cref="SocketMessageDestination "/>
+        /// </summary>
+        public SocketMessageDestination Destination { get; set; }
+
+        /// <summary>
+        /// 出库数据
+        /// </summary>
+        public List<Value> Values { get; set; }
+    }
+
+
+    public class Value
+    {
+
+        /// <summary>
+        /// 机台编码
+        /// </summary>
+        public string MachineCode { get; set; }
+
+        /// <summary>
+        /// 载具编码
+        /// </summary>
+        public string CarrierCode { get; set; }
+
+        /// <summary>
+        /// 货架编码
+        /// </summary>
+        public string ShelfCode { get; set; }
+
+        /// <summary>
+        /// 包装线别
+        /// </summary>
+        public string Line { get; set; }
+    }
+
+    /// <summary>
+    /// 发送次数
+    /// </summary>
+    public enum SocketMessageTimes
+    {
+        /// <summary>
+        /// 第一次
+        /// </summary>
+        First = 1,
+        /// <summary>
+        /// 第二次
+        /// </summary>
+        Second = 2,
+        /// <summary>
+        /// 第三次
+        /// </summary>
+        Third = 3
+    }
+
+    /// <summary>
+    /// Socket数据结构消息动作标志
+    /// </summary>
+    public enum SocketMessageActionFlag
+    {
+        /// <summary>
+        /// 入料
+        /// </summary>
+        Input = 0,
+        /// <summary>
+        /// 出料
+        /// </summary>
+        Output = 1,
+        /// <summary>
+        /// 完成
+        /// </summary>
+        Complete = 2,
+        /// <summary>
+        /// NG
+        /// </summary>
+        NG = 3,
+    }
+
+    /// <summary>
+    /// Socket数据结构目的地描述
+    /// </summary>
+    public enum SocketMessageDestination
+    {
+        /// <summary>
+        /// 包装
+        /// </summary>
+        Packing = 0,
+        /// <summary>
+        /// 回流
+        /// </summary>
+        Reflow = 1,
+        /// <summary>
+        /// NG
+        /// </summary>
+        NG = 2,
+        /// <summary>
+        /// 无
+        /// </summary>
+        NA = 3
+    }
+
+
     internal class Program
     {
+
+        /// <summary>
+        /// 重定向架位编号
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private static string ConvertJWNumber(string input)
+        {
+            // 使用正则表达式提取数字部分
+            Match match = Regex.Match(input, @"JW-(\d+)-(\d+)");
+            if (!match.Success)
+                throw new ArgumentException("无效的编号格式");
+            int lastNumber = int.Parse(match.Groups[2].Value);
+            int column = lastNumber % 3;
+            if (column == 0) column = 3;
+            int row = (lastNumber - 1) / 3 + 1;
+            // 构造新编号
+            string newMiddle = column.ToString("D4");
+            string newLast = row.ToString("D2");
+            return $"JW-{newMiddle}-{newLast}";
+        }
+
+
+        private static void Handle(string info, Ike.Standard.Sockets.MessageType messageType)
+        {
+            info = DateTime.Now.ToString("HH:mm:ss.fff") + ": " + info;
+            switch (messageType)
+            {
+                case Ike.Standard.Sockets.MessageType.Error:
+                    Ike.Standard.Console.WriteLine(info, "#e94242");
+                    break;
+                case Ike.Standard.Sockets.MessageType.Receive:
+                    Ike.Standard.Console.WriteLine(info, "#a5cd71");
+                    break;
+                case Ike.Standard.Sockets.MessageType.Info:
+                    Ike.Standard.Console.WriteLine(info, "#006cc2");
+                    break;
+            }
+        }
+
+
+        /// <summary>
+        /// 处理接收的信息并且回复
+        /// </summary>
+        /// <param name="info">接收信息</param>
+        /// <returns></returns>
+        private static Task<string> ReplyHandle(string info)
+        {
+            var data = JsonConvert.DeserializeObject<RuninRequest>(info);
+            // 入库
+            if (data.Flag == SocketMessageActionFlag.Input)
+            {
+                string jw = ConvertJWNumber(data.Values.ShelfCode);
+                string query = $"[Query]{jw}";
+                string queryResult = Ike.Standard.Sockets.SendAndReceive("127.0.0.1", 16800, query, 2500);
+                var dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(queryResult);
+                bool isOK = dic[jw].Substring(0, 1).Equals("T");
+                data.Flag = isOK ? SocketMessageActionFlag.Complete : SocketMessageActionFlag.NG;
+            }
+            return Task.FromResult(JsonConvert.SerializeObject(data, Formatting.Indented, new JsonSerializerSettings { Converters = new List<JsonConverter> { new StringEnumConverter() } }));
+        }
+
+
+
         static void Main(string[] args)
         {
             Console.InputEncoding = Encoding.UTF8;
@@ -26,6 +247,19 @@ namespace Test.Framework
             Ike.Standard.WinMethod.EnableAnsiSupport();
             try
             {
+
+
+                //Ike.Standard.Ini.IniConfigManager<IniData> iniConfig = new Ike.Standard.Ini.IniConfigManager<IniData>(@"F:\Desktop\1.txt");
+
+
+
+
+
+                //iniConfig.Load();
+
+
+
+                //return;
 
 
                 //var client = new Ike.Standard.DataInteraction.NetworkSocket("127.0.0.1", 44444, 1082, 1);
@@ -40,23 +274,36 @@ namespace Test.Framework
                 //    Console.WriteLine("ReceiveEvent => " + s);
                 //    client.Send(s + "[OK]");
                 //};
+                
 
 
-                var client = new Ike.Standard.DataInteraction.NetworkSocket("127.0.0.1", 44444, 55555, 1,null);
-                client.LogEvent += (s) =>
-                {
-                    Console.WriteLine("LogEvent => " + s);
-                };
+                Ike.Standard.Sockets.SocketListen socketListen = new Ike.Standard.Sockets.SocketListen(16700,50, Handle, ReplyHandle);
+                Task.Run(socketListen.Start);
 
-                client.ReceiveEvent += (s) =>
-                {
-                    Console.WriteLine("ReceiveEvent => " + s);
-                };
-                bool r = client.WaitReceiveMessage(out string result,6000);
 
-                Console.WriteLine(r + "  :" + result);
 
-                client.Dispose();
+                Console.ReadLine();
+
+
+
+                //var client = new Ike.Standard.DataInteraction.NetworkSocket("127.0.0.1", 44444, 55555, 1,null);
+                //client.LogEvent += (s) =>
+                //{
+                //    Console.WriteLine("LogEvent => " + s);
+                //};
+
+                //client.ReceiveEvent += (s) =>
+                //{
+                //    Console.WriteLine("ReceiveEvent => " + s);
+                //};
+
+                //Console.ReadLine();
+
+                //bool r = client.WaitReceiveMessage(out string result,6000);
+
+                //Console.WriteLine(r + "  :" + result);
+
+                //client.Dispose();
 
 
                 //string dllPath = @"C:\Users\D21044623\source\repos\Ike.Lib\Ike.Standard\bin\Debug\netstandard2.0\Ike.Standard.dll";
