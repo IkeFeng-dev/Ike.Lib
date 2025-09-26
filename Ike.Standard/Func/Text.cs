@@ -11,6 +11,19 @@ namespace Ike.Standard
 	/// </summary>
 	public static class Text
 	{
+		/// <summary>
+		/// 解析包含日期时间变量的路径,格式{yyyy-MM-dd}=2025-09-16
+		/// </summary>
+		/// <param name="templatePath">动态路径</param>
+		/// <returns>返回解析后的路径</returns>
+		public static string ResolvePathWithDateTime(string templatePath)
+		{
+			if (string.IsNullOrEmpty(templatePath))
+				return templatePath;
+			string resolvedPath = Regex.Replace(templatePath, @"\{(\w+(-\w+)*)\}", m => DateTime.Now.ToString(m.Groups[1].Value));
+			return resolvedPath;
+		}
+
 
 		/// <summary>
 		/// 使用通配符匹配字符串['*','?']

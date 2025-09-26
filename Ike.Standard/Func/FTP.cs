@@ -718,6 +718,17 @@ namespace Ike.Standard
 
 
 		/// <summary>
+		/// 创建当前FTP目录
+		/// </summary>
+		/// <returns></returns>
+		public bool CreateDirectory()
+		{
+			return CreateDirectory(currentDirectory);
+		}
+
+
+
+		/// <summary>
 		/// 创建FTP目录
 		/// </summary>
 		/// <param name="ftpPath">目录名</param>

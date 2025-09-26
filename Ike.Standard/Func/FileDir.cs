@@ -18,16 +18,17 @@ namespace Ike.Standard
 	{
 
 
-		/// <summary>
-		/// 将程序内部镶嵌的资源文件保存包指定路径
-		/// </summary>
-		/// <param name="resPath">资源文件路径,格式为: [namespace.Res.source.png] 以'.'分割资源子级</param>
-		/// <param name="outputPath">资源文件保存到的路径</param>
-		/// <returns>写出后判断文件是否存在,存在则为<see langword="true"/>,反之为<see langword="false"/></returns>
-		/// <exception cref="FileNotFoundException"></exception>
-		public static bool GetResourceToFile(string resPath, string outputPath)
+        /// <summary>
+        /// 将程序内部镶嵌的资源文件保存包指定路径
+        /// </summary>
+        /// <param name="targetAssembly">资源所在的程序集,如果是当前程序资源可调用<see cref="Assembly.GetEntryAssembly()"/>获取资源对象</param>
+        /// <param name="resPath">资源文件路径,格式为: [namespace.Res.source.png] 以'.'分割资源子级</param>
+        /// <param name="outputPath">资源文件保存到的路径</param>
+        /// <returns>写出后判断文件是否存在,存在则为<see langword="true"/>,反之为<see langword="false"/></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public static bool GetResourceToFile(Assembly targetAssembly,string resPath, string outputPath)
 		{
-			using (Stream resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resPath))
+			using (Stream resourceStream = targetAssembly.GetManifestResourceStream(resPath))
 			{
 				if (resourceStream is null)
 				{

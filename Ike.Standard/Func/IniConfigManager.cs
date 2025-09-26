@@ -121,7 +121,7 @@ namespace Ike.Standard.Ini
         /// IP=127.0.0.1
         /// Port=8080
         /// Open=True
-        /// TestIntArr = 2,4,6,8,12,34,45,0,-1
+        /// TestIntArr=2|4|6|8|12|34|45|0|-1
         /// 
         /// [TestKey]
         /// KeyName=The Key in the file is KeyName
@@ -222,7 +222,7 @@ namespace Ike.Standard.Ini
             return mappings;
         }
 
-        
+
 
         /// <summary>
         /// 获取属性值并格式化为INI文件可接受的字符串
@@ -398,22 +398,21 @@ namespace Ike.Standard.Ini
         /// <param name="config">配置档实例对象</param>
         public void Save(T config)
         {
-            var sb = new StringBuilder();
-            // 按节分组属性
-            var sections = _sectionMappings.Keys.OrderBy(s => s);
-            foreach (var section in sections)
-            {
-                sb.AppendLine($"[{section}]");
+            File.WriteAllText(_filePath, AnalyseData(config), encoding);
+        }
 
-                var props = _sectionMappings[section];
-                foreach (var kvp in props)
-                {
-                    var value = GetPropertyValueForIni(kvp.Value, config);
-                    sb.AppendLine($"{kvp.Key}={value}");
-                }
-                sb.AppendLine();
-            }
-            File.WriteAllText(_filePath, sb.ToString(), encoding);
+
+        /// <summary>
+        /// 保存指定字符串格式配置档
+        /// </summary>
+        /// <param name="iniConfig">字符串ini配置档</param>
+        /// <remarks>
+        /// [<see langword="2025年9月26日10:31:50" />]
+        /// </remarks>
+        public void Save(string iniConfig)
+        {
+            LoadFromString(iniConfig);
+            Save(Data);
         }
 
 
@@ -425,21 +424,60 @@ namespace Ike.Standard.Ini
             Save(Data);
         }
 
+
+
         /// <summary>
-        /// 从指定INI文件加载配置
+        /// 解析实例数据
         /// </summary>
-        /// <param name="filePath">配置档路径</param>
-        /// <returns>配置档实例对象</returns>
-        /// <exception cref="FileNotFoundException"></exception>
-        public T Load(string filePath)
+        /// <param name="config">配置档实例对象</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// [<see langword="2025年9月26日13:24:17" />]
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"></exception>
+        public string AnalyseData(T config)
         {
-            if (!File.Exists(filePath))
+            if (config == null)
             {
-                throw new FileNotFoundException("INI file not found", filePath);
+                throw new ArgumentNullException(nameof(config));
             }
+            var sb = new StringBuilder();
+            // 按节分组属性
+            var sections = _sectionMappings.Keys.OrderBy(s => s);
+            foreach (var section in sections)
+            {
+                sb.AppendLine($"[{section}]");
+                var props = _sectionMappings[section];
+                foreach (var kvp in props)
+                {
+                    var value = GetPropertyValueForIni(kvp.Value, config);
+                    sb.AppendLine($"{kvp.Key}={value}");
+                }
+                sb.AppendLine();
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 解析INI数据
+        /// </summary>
+        /// <param name="iniText">INI字符串数据</param>
+        /// <returns>解析后的对象</returns>
+        public T AnalyseData(string iniText)
+        {
+            return AnalyseData(iniText.Replace("\r\n","\n").Split('\n'));
+        }
+
+
+        /// <summary>
+        /// 解析INI数据
+        /// </summary>
+        /// <param name="lines">以行加载的INI数据,如调用<see cref="File.ReadAllLines(string)"/>读取数据数据</param>
+        /// <returns>解析后的对象</returns>
+        public T AnalyseData(string[] lines)
+        {
             var config = new T();
             var currentSection = string.Empty;
-            var lines = File.ReadAllLines(filePath, encoding);
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
@@ -469,18 +507,62 @@ namespace Ike.Standard.Ini
                     SetPropertyValue(config, property, value);
                 }
             }
-
             return config;
+        }
+
+        /// <summary>
+        /// 从指定INI文件加载配置
+        /// </summary>
+        /// <param name="filePath">配置档路径</param>
+        /// <returns>配置档实例对象</returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public void Load(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException("INI file not found", filePath);
+            }
+            var lines = File.ReadAllLines(filePath, encoding);
+            Data = AnalyseData(lines);
         }
 
         /// <summary>
         /// 从当前绑定的INI文件加载配置
         /// </summary>
-        /// <returns></returns>
-        public T Load()
+        /// <returns>配置档实例对象</returns>
+        public void Load()
         {
-            Data = Load(_filePath);
-            return Data;
+           Load(_filePath);
+        }
+
+        /// <summary>
+        /// 加载指定实例数据
+        /// </summary>
+        /// <param name="config">实例数据</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <remarks>
+        /// [<see langword="2025年9月26日10:29:30" />]
+        /// </remarks>
+        public void Load(T config)
+        {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+           Data = config;
+        }
+
+        /// <summary>
+        /// 从指定INI格式字符串加载数据
+        /// </summary>
+        /// <param name="iniText">INI格式字符串</param>
+        /// <returns>配置档实例对象</returns>
+        /// <remarks>
+        /// [<see langword="2025年9月26日09:59:48" />]
+        /// </remarks>
+        public void LoadFromString (string iniText)
+        {
+            Data = AnalyseData(iniText);
         }
 
     }

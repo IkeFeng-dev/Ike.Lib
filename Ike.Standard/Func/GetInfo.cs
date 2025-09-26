@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Ike.Standard
@@ -9,6 +10,21 @@ namespace Ike.Standard
     /// </summary>
     public static class GetInfo
     {
+
+        /// <summary>
+        /// 获取指定模块中所有资源信息
+        /// </summary>
+        /// <param name="assembly">资源模块对象,可使用<see cref="Assembly.GetExecutingAssembly()"/>获取</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// [<see langword="2025年9月26日09:53:44" />]
+        /// </remarks>
+        public static string[] GetResourcesInfo(Assembly assembly) 
+        {
+            return assembly.GetManifestResourceNames();
+        }
+
+
         /// <summary>
         /// 返回表示所提供标志中显式设置的枚举值的字符串数组
         /// </summary>
