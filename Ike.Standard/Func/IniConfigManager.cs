@@ -161,7 +161,7 @@ namespace Ike.Standard.Ini
         /// configManager.Save();
         /// 
         ///  <para>4. 自动更新：</para>
-        ///  如果实例类实现了INotifyPropertyChanged接口,则更新字段时自动写入文档
+        ///  如果实例类实现了<see cref="INotifyPropertyChanged"/>接口,则更新字段时自动写入文档
         /// 
         /// </code>
         /// </example>
@@ -174,8 +174,10 @@ namespace Ike.Standard.Ini
             this.encoding = encoding ?? Encoding.UTF8;
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
             _sectionMappings = BuildSectionMappings();
-
-            Load();
+            if (File.Exists(filePath))
+            {
+                Load();
+            }
             // 如果T实现了INotifyPropertyChanged，注册事件
             if (Data is INotifyPropertyChanged notifyObj)
             {
