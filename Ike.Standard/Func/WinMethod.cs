@@ -84,18 +84,18 @@ namespace Ike.Standard
         /// <item>Windows 10 1607及以上版本原生支持</item>
         /// </list>
         /// </remarks>
-        /// <exception cref="InvalidOperationException"></exception>
-        public static void EnableAnsiSupport()
+        public static bool  EnableAnsiSupport()
         {
             var handle = WinAPI.GetStdHandle(WinMessages.STD_OUTPUT_HANDLE);
             if (handle != IntPtr.Zero)
             {
                 WinAPI.GetConsoleMode(handle, out uint mode);
                 WinAPI.SetConsoleMode(handle, mode | WinMessages.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                return true;
             }
             else
             {
-                throw new InvalidOperationException("Failed to obtain the standard output handle.");
+                return false;
             }
         }
 

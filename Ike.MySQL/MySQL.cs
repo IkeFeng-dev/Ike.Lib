@@ -16,13 +16,15 @@ namespace Ike
         /// <summary>
         /// DataAdapter锁
         /// </summary>
-
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         /// <summary>
         /// 数据库连接字符串
         /// </summary>
         private readonly string connectionString;
-
+        /// <summary>
+        /// 心跳包标志
+        /// </summary>
+        private bool StartHeartBeatFlag { get; set; } = false;
         /// <summary>
         /// 数据库的连接对象
         /// </summary>
@@ -88,6 +90,24 @@ namespace Ike
         }
 
         /// <summary>
+        /// 构造MySQL连接字符串,需调用<see cref="ChangeDatabase(string)"/>选定数据库,调用<see cref="Instantiation"/>方法实例化数据库对象
+        /// </summary>
+        /// <param name="server">数据库服务器地址</param>
+        /// <param name="user">数据库用户名</param>
+        /// <param name="password">数据库密码</param>
+        /// <param name="port">数据库端口号</param>
+        /// <param name="charset">字符集</param>
+        /// <param name="allowUserVariables">是否允许用户变量</param>
+        /// <param name="useCompression">是否使用压缩</param>
+        /// <param name="connectionTimeout">连接超时时间</param>
+        /// <param name="defaultCommandTimeout">命令执行超时时间</param>
+        /// <param name="sslMode">SSL 模式</param>
+        public MySQL(string server, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None)
+        {
+            connectionString = $"Server={server};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};";
+        }
+
+        /// <summary>
         /// 构造MySQL连接字符串,调用<see cref="Instantiation"/>方法实例化数据库对象
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
@@ -107,7 +127,7 @@ namespace Ike
         }
 
         /// <summary>
-        /// 实例化数据库连接对象,数据库使用完成后调用<see cref="Dispose"/>方法释放资源
+        /// 实例化数据库连接对象,数据库使用完成后调用<see cref="Dispose(bool)"/>方法释放资源
         /// </summary>
         public void Instantiation()
         {
@@ -121,14 +141,21 @@ namespace Ike
             }
         }
 
-        private bool startHeartBeatFlag = false;
+        /// <summary>
+        /// 停止心跳包保持连接
+        /// </summary>
+        public void StopHeartBeat()
+        {
+            StartHeartBeatFlag = false;
+        }
+
         /// <summary>
         /// 启动心跳包保持连接
         /// </summary>
         /// <param name="minuteInterval">间隔时间(分钟)</param>
         public void StartHeartBeat(int minuteInterval)
         {
-            if (startHeartBeatFlag)
+            if (StartHeartBeatFlag)
             {
                 return;
             }
@@ -138,7 +165,7 @@ namespace Ike
             }
             Task.Run(() =>
             {
-                while (true) 
+                while (StartHeartBeatFlag) 
                 {
                     try
                     {

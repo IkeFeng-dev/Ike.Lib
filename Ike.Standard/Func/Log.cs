@@ -152,6 +152,10 @@ namespace Ike.Standard
         public class LogStruct
         {
             /// <summary>
+            /// 日志时间
+            /// </summary>
+            public DateTime Time { get; set; }
+            /// <summary>
             /// 日志信息
             /// </summary>
             public string Info { get; set; }
@@ -190,7 +194,10 @@ namespace Ike.Standard
         public LOG(string logDirectory, int consoleMaxRow = 5000, string fileNameFormat = "yyyy-MM-dd", string timestamp = "yyyy-MM-dd HH:mm:ss", bool isOutThreadId = true, LogColors logColors = default)
         {
             isonsoleEnv = Console.IsConsoleEnv();
-            this.timestamp = timestamp;
+            this.timestamp = timestamp; if (isonsoleEnv)
+            {
+                WinMethod.EnableAnsiSupport();
+            }
             LogDirectory = logDirectory;
             this.consoleMaxRow = consoleMaxRow;
             this.fileNameFormat = fileNameFormat;
@@ -203,7 +210,6 @@ namespace Ike.Standard
             ErrorLogDirectory = Path.Combine(logDirectory, "Error");
             queue = new DynamicQueue<LogStruct>(OutLog);
             queue.StartConsuming();
-            WinMethod.EnableAnsiSupport();
         }
 
 
@@ -215,7 +221,7 @@ namespace Ike.Standard
         {
             try
             {
-                string time = DateTime.Now.ToString(timestamp);
+                string time = logStruct.Time.ToString(timestamp);
                 string typeStr = logStruct.LogType.ToString().Substring(0, 3).ToUpper();
                 if (logStruct.WriteToFile)
                 {
@@ -253,6 +259,7 @@ namespace Ike.Standard
             }
             queue.Add(new LogStruct()
             {
+                Time = DateTime.Now,
                 Info = info,
                 LogType = logType,
                 WriteToConsole = writeToConsole,
@@ -297,6 +304,40 @@ namespace Ike.Standard
             string filePath = Path.Combine(LogDirectory, DateTime.Now.ToString(fileNameFormat) + ".log");
             Directory.CreateDirectory(LogDirectory);
             File.AppendAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
+
+
+        /// <summary>
+        /// 写入控制台
+        /// </summary>
+        /// <param name="info">信息</param>
+        /// <param name="currentThreadID">当前线程ID</param>
+        /// <param name="typeStr">日志类型字符串</param>
+        /// <param name="time">时间戳</param>
+        /// <param name="hexColor">自定义输出颜色文本</param>
+        public void ToConsole(string info, int currentThreadID, string typeStr,string time,string hexColor)
+        {
+            if (!isonsoleEnv)
+            {
+                return;
+            }
+            if (consoleCount > consoleMaxRow)
+            {
+                System.Console.Clear();
+                consoleCount = 0;
+            }
+            string timeRGB = logColors.Verbose;
+            Console.Write(string.Format("{0} => [{1}]:  ",time, currentThreadID),timeRGB);
+            if (isOutThreadId)
+            {
+                Console.Write(string.Format("[{0}]  ", typeStr), logColors.Type);
+            }
+            else
+            {
+                Console.Write(string.Format("[{0}]  ", typeStr), logColors.Type);
+            }
+            Console.WriteLine(info, hexColor);
+            consoleCount++;
         }
 
 
@@ -374,11 +415,12 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Verbose(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Verbose(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Verbose, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Verbose, writeToConsole, writeToFile, writeToEvent);
         }
-        
+
 
         /// <summary>
         /// 输出<see cref="LogType.Debug"/>类型日志
@@ -386,9 +428,10 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Debug(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Debug(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Debug, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Debug, writeToConsole, writeToFile, writeToEvent);
         }
 
 
@@ -398,9 +441,10 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Info(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Info(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Info, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Info, writeToConsole, writeToFile, writeToEvent);
         }
 
 
@@ -410,9 +454,10 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Warning(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Warning(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Warning, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Warning, writeToConsole, writeToFile, writeToEvent);
         }
 
 
@@ -422,9 +467,10 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Success(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Success(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Success, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Success, writeToConsole, writeToFile, writeToEvent);
         }
 
 
@@ -434,9 +480,10 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Error(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Error(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Error, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Error, writeToConsole, writeToFile, writeToEvent);
         }
 
 
@@ -446,21 +493,28 @@ namespace Ike.Standard
         /// <param name="info">信息</param>
         /// <param name="writeToEvent">是否输出到UI页面</param>
         /// <param name="writeToConsole">是否输出到控制台</param>
-        public void Fatal(string info, bool writeToEvent = true, bool writeToConsole = true)
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Fatal(string info, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(info, LogType.Fatal, writeToConsole: writeToConsole, writeToFile: true, writeToEvent: writeToEvent);
+            Log(info, LogType.Fatal, writeToConsole, writeToFile, writeToEvent);
         }
+
 
 
         /// <summary>
-        /// 输出<see cref="System.Exception"/>异常信息
+        /// 
         /// </summary>
         /// <param name="exception">捕获异常</param>
-        public void Exception(Exception exception)
+        /// <param name="writeToEvent">是否输出到UI页面</param>
+        /// <param name="writeToConsole">是否输出到控制台</param>
+        /// <param name="writeToFile">是否输出到文件</param>
+        public void Exception(Exception exception, bool writeToEvent = true, bool writeToConsole = true, bool writeToFile = true)
         {
-            Log(exception.Message, LogType.Error, writeToConsole: true, writeToFile: true, writeToEvent: true);
+            Log(exception.Message, LogType.Error, writeToConsole, writeToFile, writeToEvent);
             RecordException(exception);
         }
+
+
 
 
         /// <summary>

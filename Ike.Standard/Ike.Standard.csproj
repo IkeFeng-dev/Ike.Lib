@@ -9,17 +9,19 @@
 	  <PackageIcon>ico.png</PackageIcon>
 	  <RepositoryType>git</RepositoryType>
 	  <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-	  <Version>3.0.2</Version>
-	  <AssemblyVersion>0.0.0.3</AssemblyVersion>
-	  <FileVersion>0.0.0.3</FileVersion>
+	  <Version>3.0.3</Version>
+	  <AssemblyVersion>0.0.0.4</AssemblyVersion>
+	  <FileVersion>0.0.0.4</FileVersion>
 	  <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 	  <RepositoryUrl>https://github.com/IkeFeng-dev/Ike.Lib</RepositoryUrl>
 	  <PackageProjectUrl>https://github.com/IkeFeng-dev/Ike.Lib</PackageProjectUrl>
-	  <Description>C# Standard2.0 通用标准库</Description>
-	  <Title>C# Standard2.0 通用标准库</Title>
-	  <PackageReleaseNotes>[2025年9月26日13:48:09]
-一,IniConfigManager结构调整优化
-二,FTP,Text,GetInfo,FileDir类新增方法</PackageReleaseNotes>
+	  <Description>C# Standard2.0 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
+	  <Title>C# Standard2.0 通用方法库</Title>
+	  <PackageReleaseNotes>[2025年12月12日20:11:46]
+一,LOG类新增重载方法ToConsole,新增LogStruct.Time储存日志当前时间
+二,WinMethod.EnableAnsiSupport() 取消直接抛出异常,使用bool代替</PackageReleaseNotes>
+	  <Copyright>© 2024 IkeFeng.  All rights reserved.</Copyright>
+	  <PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
