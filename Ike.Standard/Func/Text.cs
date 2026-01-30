@@ -11,6 +11,54 @@ namespace Ike.Standard
 	/// </summary>
 	public static class Text
 	{
+
+		/// <summary>
+		/// 对字符串进行填充或截断处理
+		/// </summary>
+		/// <param name="original">原始字符串</param>
+		/// <param name="paddingChar">用于填充的字符</param>
+		/// <param name="totalLength">目标长度</param>
+		/// <param name="padLeft"><see langword="true"/> =左侧填充，<see langword="false"/> =右侧填充</param>
+		/// <param name="overflowHandling">
+		///     溢出处理方式：<br/>
+		///     <see langword="1"/> = 从左侧截断（保留右侧字符）<br/>
+		///     <see langword="2"/> = 从右侧截断（保留左侧字符）<br/>
+		///     其余则全部保持原样不截断
+		/// </param>
+		/// <returns>处理后的字符串</returns>
+		/// <remarks>
+		/// [<see langword="2026年1月10日09:26:46" />]
+		/// </remarks>
+		public static string PadString(string original, char paddingChar, int totalLength, bool padLeft = false, int overflowHandling = 1)
+		{
+			if (original == null)
+			{
+				original = string.Empty;
+			}
+
+			// 处理字符串过长的情况
+			if (original.Length > totalLength)
+			{
+				switch (overflowHandling)
+				{
+					case 1: // 从左侧截断（保留右侧字符）
+						return original.Substring(original.Length - totalLength);
+					case 2: // 从右侧截断（保留左侧字符）
+						return original.Substring(0, totalLength);
+					case 3: // 保持原样不截断
+						return original;
+					default:
+						return original;
+				}
+			}
+
+			// 处理填充
+			return padLeft
+				? original.PadLeft(totalLength, paddingChar)
+				: original.PadRight(totalLength, paddingChar);
+		}
+
+
 		/// <summary>
 		/// 解析包含日期时间变量的路径,格式{yyyy-MM-dd}=2025-09-16
 		/// </summary>
@@ -70,6 +118,7 @@ namespace Ike.Standard
 			return GetAllCombinations(str1 + str2, distinct);
 		}
 
+
 		/// <summary>
 		/// 生成字符串的所有字符组合（全排列）
 		/// </summary>
@@ -110,7 +159,6 @@ namespace Ike.Standard
 			}
 			return distinct ? permutations.Distinct().ToArray() : permutations.ToArray();
 		}
-
 
 
 		/// <summary>
@@ -174,6 +222,7 @@ namespace Ike.Standard
 			return matches.ToArray();
 		}
 
+
 		/// <summary>
 		/// 复制字符串指定次数
 		/// </summary>
@@ -189,6 +238,7 @@ namespace Ike.Standard
 			}
 			return builder.ToString();
 		}
+
 
 		/// <summary>
 		/// 判断文本是否包含中文字符

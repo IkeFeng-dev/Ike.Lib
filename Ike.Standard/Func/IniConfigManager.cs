@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ike.Standard.Func;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -21,7 +22,7 @@ namespace Ike.Standard.Ini
         /// <summary>
         /// 定义节名特性
         /// </summary>
-        /// <param name="sectionName"></param>
+        /// <param name="sectionName">节点名称</param>
         public IniSectionAttribute(string sectionName)
         {
             SectionName = sectionName;
@@ -41,7 +42,7 @@ namespace Ike.Standard.Ini
         /// <summary>
         /// 重定向节点键名特性
         /// </summary>
-        /// <param name="keyName"></param>
+        /// <param name="keyName">键名</param>
         public IniKeyAttribute(string keyName)
         {
             KeyName = keyName;
@@ -55,9 +56,24 @@ namespace Ike.Standard.Ini
     public class IniConfigManager<T> where T : new()
     {
         /// <summary>
+        /// 数据对象
+        /// </summary>
+        private readonly T data = new T();
+        /// <summary>
         /// 配置档对象实例,每次调用<see cref="Load()"/>时会同步更新此实例,调用<see cref="Save()"/>则保持此实例到文件
         /// </summary>
-        public T Data { get; private set; }
+        public T Data
+        {
+            get { return data; }
+            private set
+            {
+                CopyProperties(value == null ? new T() : value, data);
+            }
+        }
+        /// <summary>
+        /// 防抖器
+        /// </summary>
+        private readonly Debouncer debouncer = new Debouncer("file", 500);
         /// <summary>
         /// 数组分隔符
         /// </summary>
@@ -111,6 +127,28 @@ namespace Ike.Standard.Ini
                 typeof(string[]),
                 typeof(Enum[]),
             };
+
+
+        /// <summary>
+        /// 复制属性值
+        /// </summary>
+        /// <param name="source">数据对象</param>
+        /// <param name="target">目标对象</param>
+        private void CopyProperties(T source, T target)
+        {
+            if (source == null || target == null) return;
+
+            var properties = typeof(T).GetProperties();
+            foreach (var property in properties)
+            {
+                if (property.CanRead && property.CanWrite)
+                {
+                    var value = property.GetValue(source, null);
+                    property.SetValue(target, value, null);
+                }
+            }
+        }
+
 
         /// <summary>
         /// INI配置管理器构造函数
@@ -167,9 +205,10 @@ namespace Ike.Standard.Ini
         /// </example>
         /// </summary>
         /// <param name="filePath">配置档路径</param>
+        /// <param name="autoUpdate">是否自动更新(如果ini文件被外部修改,那么此管理器将会同步更新修改的数据)</param>
         /// <param name="encoding">配置档读写编码,默认使用<see cref="Encoding.UTF8"/></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public IniConfigManager(string filePath, Encoding encoding = default)
+        public IniConfigManager(string filePath, bool autoUpdate, Encoding encoding = default)
         {
             this.encoding = encoding ?? Encoding.UTF8;
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
@@ -178,16 +217,48 @@ namespace Ike.Standard.Ini
             {
                 Load();
             }
+            else
+            {
+                Save();
+            }
+            debouncer.AddDebouncer("load", 500);
             // 如果T实现了INotifyPropertyChanged，注册事件
             if (Data is INotifyPropertyChanged notifyObj)
             {
+                // 属性变更时自动保存
                 notifyObj.PropertyChanged += (sender, args) =>
                 {
-                    // 属性变更时自动保存
-                    Save();
+                    if (debouncer.QueryDebouncer("load"))
+                    {
+                        Save();
+                    }
                 };
             }
-
+            // 判断监控文件修改
+            if (autoUpdate)
+            {
+                string dir = Path.GetDirectoryName(_filePath);
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                // 设置文件监控
+                var fileWatcher = new FileSystemWatcher
+                {
+                    Path = dir,
+                    Filter = Path.GetFileName(_filePath),
+                    NotifyFilter = NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true
+                };
+                fileWatcher.Changed += (sender, e) =>
+                {
+                    if (debouncer.QueryDebouncer() && File.Exists(_filePath))
+                    {
+                        Load();
+                        debouncer.TriggerDebouncer();
+                    }
+                };
+            }
         }
 
 
@@ -400,6 +471,7 @@ namespace Ike.Standard.Ini
         /// <param name="config">配置档实例对象</param>
         public void Save(T config)
         {
+            debouncer.TriggerDebouncer();
             File.WriteAllText(_filePath, AnalyseData(config), encoding);
         }
 
@@ -467,7 +539,7 @@ namespace Ike.Standard.Ini
         /// <returns>解析后的对象</returns>
         public T AnalyseData(string iniText)
         {
-            return AnalyseData(iniText.Replace("\r\n","\n").Split('\n'));
+            return AnalyseData(iniText.Replace("\r\n", "\n").Split('\n'));
         }
 
 
@@ -483,13 +555,12 @@ namespace Ike.Standard.Ini
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
-
                 // 跳过空行和注释
                 if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(";") || trimmedLine.StartsWith("#"))
                 {
                     continue;
                 }
-                // 处理节
+                // 处理节点
                 if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
                 {
                     currentSection = trimmedLine.Substring(1, trimmedLine.Length - 2);
@@ -526,6 +597,7 @@ namespace Ike.Standard.Ini
             }
             var lines = File.ReadAllLines(filePath, encoding);
             Data = AnalyseData(lines);
+
         }
 
         /// <summary>
@@ -534,7 +606,8 @@ namespace Ike.Standard.Ini
         /// <returns>配置档实例对象</returns>
         public void Load()
         {
-           Load(_filePath);
+            debouncer.TriggerDebouncer("load");
+            Load(_filePath);
         }
 
         /// <summary>
@@ -551,7 +624,7 @@ namespace Ike.Standard.Ini
             {
                 throw new ArgumentNullException(nameof(config));
             }
-           Data = config;
+            Data = config;
         }
 
         /// <summary>
@@ -562,7 +635,7 @@ namespace Ike.Standard.Ini
         /// <remarks>
         /// [<see langword="2025年9月26日09:59:48" />]
         /// </remarks>
-        public void LoadFromString (string iniText)
+        public void LoadFromString(string iniText)
         {
             Data = AnalyseData(iniText);
         }

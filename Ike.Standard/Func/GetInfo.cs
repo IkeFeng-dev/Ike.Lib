@@ -1,28 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
 
 namespace Ike.Standard
 {
     /// <summary>
-    /// 
+    /// 信息获取类
     /// </summary>
     public static class GetInfo
     {
+        /// <summary>
+        /// 获取应用程序工作目录(环境目录)
+        /// </summary>
+        public static string EnvDirectory { get { return Environment.CurrentDirectory; } }
 
         /// <summary>
-        /// 获取指定模块中所有资源信息
+        /// 获取应用程序根目录
         /// </summary>
-        /// <param name="assembly">资源模块对象,可使用<see cref="Assembly.GetExecutingAssembly()"/>获取</param>
-        /// <returns></returns>
-        /// <remarks>
-        /// [<see langword="2025年9月26日09:53:44" />]
-        /// </remarks>
-        public static string[] GetResourcesInfo(Assembly assembly) 
-        {
-            return assembly.GetManifestResourceNames();
-        }
+        public static string BaseDirectory { get { return AppDomain.CurrentDomain.BaseDirectory; } }
 
 
         /// <summary>
@@ -93,7 +87,42 @@ namespace Ike.Standard
         }
 
 
+        /// <summary>
+        /// 获取指定枚举类型下所有枚举值
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <returns>枚举值数组</returns>
+        /// <exception cref="ArgumentException">当T不是枚举类型时抛出</exception>
+        /// <remarks>
+        /// [<see langword="2025年12月25日10:30:58" />]
+        /// </remarks>
+        public static T[] GetAllEnumValues<T>() where T : Enum
+        {
+            if (!typeof(T).IsEnum)
+            {
+                throw new ArgumentException("T must be an enumerated type");
+            }
+            return (T[])Enum.GetValues(typeof(T));
+        }
 
+
+        /// <summary>
+        /// 获取指定枚举类型下所有枚举值的字符串表示形式
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <returns>枚举值字符串数组</returns>
+        /// <exception cref="ArgumentException">当T不是枚举类型时抛出</exception>
+        /// <remarks>
+        /// [<see langword="2025年12月25日10:31:03" />]
+        /// </remarks>
+        public static string[] GetAllEnumValuesToString<T>() where T : Enum
+        {
+            if (!typeof(T).IsEnum)
+            {
+                throw new ArgumentException("T must be an enumerated type");
+            }
+            return Enum.GetNames(typeof(T));
+        }
 
 
     }

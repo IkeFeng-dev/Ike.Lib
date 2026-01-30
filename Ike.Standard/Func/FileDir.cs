@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Reflection;
 
 namespace Ike.Standard
 {
@@ -16,32 +15,6 @@ namespace Ike.Standard
 	/// </summary>
 	public static class FileDir
 	{
-
-
-        /// <summary>
-        /// 将程序内部镶嵌的资源文件保存包指定路径
-        /// </summary>
-        /// <param name="targetAssembly">资源所在的程序集,如果是当前程序资源可调用<see cref="Assembly.GetEntryAssembly()"/>获取资源对象</param>
-        /// <param name="resPath">资源文件路径,格式为: [namespace.Res.source.png] 以'.'分割资源子级</param>
-        /// <param name="outputPath">资源文件保存到的路径</param>
-        /// <returns>写出后判断文件是否存在,存在则为<see langword="true"/>,反之为<see langword="false"/></returns>
-        /// <exception cref="FileNotFoundException"></exception>
-        public static bool GetResourceToFile(Assembly targetAssembly,string resPath, string outputPath)
-		{
-			using (Stream resourceStream = targetAssembly.GetManifestResourceStream(resPath))
-			{
-				if (resourceStream is null)
-				{
-					throw new FileNotFoundException(resPath);
-				}
-				using (FileStream fileStream = File.Create(outputPath))
-				{
-					resourceStream.CopyTo(fileStream);
-				}
-				return File.Exists(outputPath);
-			}
-		}
-
 
 		/// <summary>
 		/// 获取指定文件SHA256哈希值
@@ -411,55 +384,55 @@ namespace Ike.Standard
 		/// <param name="defAult">如果读取失败,则返回这个默认值</param>
 		/// <param name="iniPath">INI文件路径</param>
 		/// <returns>读取成功返回读取值,失败则返回默认值</returns>
-        public static string ReadIniValue(string section, string key,string defAult, string iniPath)
-        {
-            if (!File.Exists(iniPath))
-                return defAult;
+		public static string ReadIniValue(string section, string key,string defAult, string iniPath)
+		{
+			if (!File.Exists(iniPath))
+				return defAult;
 
-            string[] lines = File.ReadAllLines(iniPath);
+			string[] lines = File.ReadAllLines(iniPath);
 			// 如果未指定 section，则匹配所有键
-            bool inCorrectSection = (section == null); 
+			bool inCorrectSection = (section == null); 
 
-            foreach (string line in lines)
-            {
-                string trimmedLine = line.Trim();
+			foreach (string line in lines)
+			{
+				string trimmedLine = line.Trim();
 
-                // 检查是否是节标记（如 [Section]）
-                if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
-                {
-                    string currentSection = trimmedLine.Substring(1, trimmedLine.Length - 2);
-                    inCorrectSection = (section == null) || currentSection.Equals(section, StringComparison.OrdinalIgnoreCase);
-                    continue;
-                }
-                // 如果不在正确的节，跳过
-                if (!inCorrectSection)
-                    continue;
-                // 解析键值对
-                int equalSignIndex = line.IndexOf('=');
-                if (equalSignIndex > 0)
-                {
-                    string currentKey = line.Substring(0, equalSignIndex).Trim();
-                    if (currentKey.Equals(key, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return line.Substring(equalSignIndex + 1).Trim();
-                    }
-                }
-            }
+				// 检查是否是节标记（如 [Section]）
+				if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
+				{
+					string currentSection = trimmedLine.Substring(1, trimmedLine.Length - 2);
+					inCorrectSection = (section == null) || currentSection.Equals(section, StringComparison.OrdinalIgnoreCase);
+					continue;
+				}
+				// 如果不在正确的节，跳过
+				if (!inCorrectSection)
+					continue;
+				// 解析键值对
+				int equalSignIndex = line.IndexOf('=');
+				if (equalSignIndex > 0)
+				{
+					string currentKey = line.Substring(0, equalSignIndex).Trim();
+					if (currentKey.Equals(key, StringComparison.OrdinalIgnoreCase))
+					{
+						return line.Substring(equalSignIndex + 1).Trim();
+					}
+				}
+			}
 
-            return defAult;
-        }
+			return defAult;
+		}
 
-        /// <summary>
-        /// 指定编码格式读取INI中 <see cref="int"></see> 数据
-        /// </summary>
-        /// <param name="section">要检索的键所在的节名称</param>
-        /// <param name="key">要检索的项的名称</param>
-        /// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
-        /// <param name="filePath">INI 文件的完整路径</param>
-        /// <param name="encoding">指定编码读取</param>
-        /// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
-        /// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
-        public static int IniReadToInt(string section, string key, int def, string filePath, Encoding encoding, int bufferSize = 1024)
+		/// <summary>
+		/// 指定编码格式读取INI中 <see cref="int"></see> 数据
+		/// </summary>
+		/// <param name="section">要检索的键所在的节名称</param>
+		/// <param name="key">要检索的项的名称</param>
+		/// <param name="def">如果在文件中找不到指定的键，则返回的默认值</param>
+		/// <param name="filePath">INI 文件的完整路径</param>
+		/// <param name="encoding">指定编码读取</param>
+		/// <param name="bufferSize">缓冲区大小,用于保存返回的字符串,如果缓存区小于实际内容大小,则会返回不完整的内容</param>
+		/// <returns>从 INI 文件中检索到的字符串值,如果找不到指定的键,则返回默认值<paramref name="def"/></returns>
+		public static int IniReadToInt(string section, string key, int def, string filePath, Encoding encoding, int bufferSize = 1024)
 		{
 			if (encoding is null)
 			{

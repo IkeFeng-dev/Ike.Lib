@@ -25,33 +25,167 @@ using SevenZip;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using OpCodes = Mono.Cecil.Cil.OpCodes;
-
+using Ike.Standard.Ini;
+using System.Threading;
+using Ike.Standard.Func;
+using static Ike.Standard.Reflection;
+using Ike.Standard;
+using Console = System.Console;
 
 namespace Test.Framework
 {
 
     internal class Program
     {
+
+
+        public class Test : INotifyPropertyChanged
+        {
+            public Test() { }
+            private string _name;
+            private int _age;
+            private double[] _numbers;
+            private bool _flag;
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            [IniSection("TEST")]
+            public string Name
+            {
+                get => _name;
+                set
+                {
+                    if (_name != value)
+                    {
+                        _name = value;
+                        OnPropertyChanged();
+                    }
+                }
+            }
+
+            [IniSection("TEST")]
+            public int Age
+            {
+                get => _age;
+                set
+                {
+                    if (_age != value)
+                    {
+                        _age = value;
+                        OnPropertyChanged();
+                    }
+                }
+            }
+
+            [IniSection("TEST")]
+            public double[] Numbers
+            {
+                get => _numbers;
+                set
+                {
+                    if (_numbers != value)
+                    {
+                        _numbers = value;
+                        OnPropertyChanged();
+                    }
+                }
+            }
+
+            [IniSection("TEST")]
+            public bool Flag
+            {
+                get => _flag;
+                set
+                {
+                    if (_flag != value)
+                    {
+                        _flag = value;
+                        OnPropertyChanged();
+                    }
+                }
+            }
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+
+
         static void Main(string[] args)
         {
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
             Ike.Standard.WinMethod.EnableAnsiSupport();
+
             try
             {
 
-                // 设置 7z.dll 路径（必须）
-                SevenZipBase.SetLibraryPath(@"C:\Users\D21044623\source\repos\Ike.Lib\Test.Framework\bin\Release\x64\7z.dll");
-                // 压缩单个文件
-                var compressor = new SevenZipCompressor();
-                compressor.CompressFiles(@"F:\Desktop\archive.7z", @"F:\Desktop\常驻车辆登记表.xlsx", @"F:\Desktop\尼龙球验证\19.jpg");
 
-                // 压缩整个目录
-                compressor.CompressDirectory(@"F:\Desktop\folder.7z", @"F:\Desktop\尼龙球验证");
+                Test a = new Test()
+                {
+                    Name = "AAA",
+                    Age = 5,
+                    Flag = true,
+                    Numbers = new double[] { 1 }
+                };
 
-                // 自定义压缩级别（0-9，9 最高）
-                compressor.CompressionLevel = CompressionLevel.Ultra;
-                compressor.CompressDirectory(@"F:\Desktop\high_compression.7z", @"F:\Desktop\尼龙球验证");
+                Test b = new Test()
+                {
+                    Name = "csagre",
+                    Age = 45678,
+                    Flag = true,
+                    Numbers = new double[] { 1,165,198,18945,0.264,152.649,84.02 }
+                };
+
+
+                ObjectPropertyOperator.CopyPropertiesStrict(a, b);
+
+
+
+                if (a == b)
+                { 
+                
+                }
+
+
+                ReflectionUtility reflectionUtil = new ReflectionUtility{};
+                reflectionUtil.LoadAssembly(@"C:\Users\D21044623\source\repos\Ike.Lib\Ike.Standard\bin\Debug\netstandard2.0\Ike.Standard.dll");
+
+
+                // 获取泛型类型定义
+                Type genericTypeDef = reflectionUtil.GetTypeFromAssembly("Ike.Standard.Ini.IniConfigManager`1");
+
+                // 使用满足约束的类型参数创建具体类型
+                Type concreteType = genericTypeDef.MakeGenericType(typeof(Test));
+
+                // 获取类型详细信息
+                var typeDetails = reflectionUtil.GetTypeDetails(concreteType);
+
+                // 输出构造函数信息
+                Console.WriteLine("可用构造函数:");
+                foreach (var method in typeDetails.Methods.Where(m => m.Name == ".ctor"))
+                {
+                    Console.WriteLine($"- 参数: {string.Join(", ", method.Parameters.Select(p => $"{p.Type.Name} {p.Name}"))}");
+                }
+
+
+                if (a == b)
+                {
+
+                }
+                //// 设置 7z.dll 路径（必须）
+                //SevenZipBase.SetLibraryPath(@"C:\Users\D21044623\source\repos\Ike.Lib\Test.Framework\bin\Release\x64\7z.dll");
+                //// 压缩单个文件
+                //var compressor = new SevenZipCompressor();
+                //compressor.CompressFiles(@"F:\Desktop\archive.7z", @"F:\Desktop\常驻车辆登记表.xlsx", @"F:\Desktop\尼龙球验证\19.jpg");
+
+                //// 压缩整个目录
+                //compressor.CompressDirectory(@"F:\Desktop\folder.7z", @"F:\Desktop\尼龙球验证");
+
+                //// 自定义压缩级别（0-9，9 最高）
+                //compressor.CompressionLevel = CompressionLevel.Ultra;
+                //compressor.CompressDirectory(@"F:\Desktop\high_compression.7z", @"F:\Desktop\尼龙球验证");
 
 
 

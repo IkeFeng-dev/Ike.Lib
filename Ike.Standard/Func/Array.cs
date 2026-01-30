@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Ike.Standard
 {
@@ -26,7 +24,7 @@ namespace Ike.Standard
 		/// <summary>
 		/// 将多个相同类型的数组合并为一个数组
 		/// </summary>
-		/// <typeparam name="T">数组元素的类型。</typeparam>
+		/// <typeparam name="T">数组元素的类型</typeparam>
 		/// <param name="arrays">需要合并的数组集合，支持传递任意数量的数组</param>
 		/// <returns>
 		/// 返回包含所有输入数组元素的新数组，元素顺序与传入顺序保持一致

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -9,10 +8,12 @@ namespace Ike.Standard
 	/// <summary>
 	/// 进程相关
 	/// </summary>
-	public class Progress
+	public class Process
 	{
+
+
 		/// <summary>
-		/// 打开可执行程序,不等待程序结束,无法获取程序返回值
+		/// 打开可执行程序,不等待程序结束
 		/// </summary>
 		/// <param name="processPath">可执行程序路径</param>
 		/// <param name="argument">传递参数,没有则为""或<see cref="string.Empty"/> </param>
@@ -23,7 +24,7 @@ namespace Ike.Standard
 			{
 				throw new FileNotFoundException(processPath);
 			}
-			using (Process process = new Process())
+			using (System.Diagnostics.Process process = new System.Diagnostics.Process())
 			{
 				process.StartInfo = new ProcessStartInfo()
 				{
@@ -113,7 +114,7 @@ namespace Ike.Standard
 					isRead = true;
 					break;
 			}
-			using (Process process = new Process())
+			using (System.Diagnostics.Process process = new System.Diagnostics.Process())
 			{
 				process.StartInfo = info;
 				process.Start();
@@ -150,9 +151,9 @@ namespace Ike.Standard
 			}
 			if (outputHandler is null)
 			{ 
-			    throw new ArgumentNullException(nameof(outputHandler), "回调函数不能为null");
+				throw new ArgumentNullException(nameof(outputHandler), "回调函数不能为null");
 			}
-			using (Process process = new Process())
+			using (System.Diagnostics.Process process = new System.Diagnostics.Process())
 			{
 				ProcessStartInfo startInfo = new ProcessStartInfo
 				{

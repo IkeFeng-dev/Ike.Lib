@@ -3,14 +3,84 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace Ike.Standard
 {
     /// <summary>
-    /// 反射类
+    /// 反射相关操作类
     /// </summary>
-    public class Reflection
+    public class ReflectionUtility
     {
+
+        /// <summary>
+        /// 获取指定模块中所有资源信息
+        /// </summary>
+        /// <param name="assembly">资源模块对象,可使用<see cref="Assembly.GetExecutingAssembly()"/>获取</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// [<see langword="2025年12月28日10:19:31" />]
+        /// </remarks>
+        public static string[] GetResourcesInfo(Assembly assembly)
+        {
+            return assembly.GetManifestResourceNames();
+        }
+
+
+        /// <summary>
+        /// 从指定程序集的嵌入资源中读取文本文件内容
+        /// </summary>
+        /// <param name="assembly">包含资源的程序集,可使用<see cref="Assembly.GetExecutingAssembly()"/>获取</param>
+        /// <param name="resourcePath">资源路径</param>
+        /// <returns>文件内容字符串</returns>
+        /// <remarks>
+        /// [<see langword="2025年12月28日10:19:39" />]
+        /// </remarks>
+        public static string ReadEmbeddedResource(Assembly assembly, string resourcePath)
+        {
+            // 获取资源流
+            using (Stream stream = assembly.GetManifestResourceStream(resourcePath))
+            {
+                if (stream == null)
+                {
+                    throw new FileNotFoundException($"Embedded resources cannot be found: {resourcePath}");
+                }
+                // 读取流内容
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将程序内部镶嵌的资源文件保存包指定路径
+        /// </summary>
+        /// <param name="targetAssembly">资源所在的程序集,如果是当前程序资源可调用<see cref="Assembly.GetEntryAssembly()"/>获取资源对象</param>
+        /// <param name="resPath">资源文件路径,格式为: [namespace.Res.source.png] 以'.'分割资源子级</param>
+        /// <param name="outputPath">资源文件保存到的路径</param>
+        /// <returns>写出后判断文件是否存在,存在则为<see langword="true"/>,反之为<see langword="false"/></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <remarks>
+        /// [<see langword="2025年12月27日09:18:19" />]
+        /// </remarks>
+        public static bool GetResourceToFile(Assembly targetAssembly, string resPath, string outputPath)
+        {
+            using (Stream resourceStream = targetAssembly.GetManifestResourceStream(resPath))
+            {
+                if (resourceStream is null)
+                {
+                    throw new FileNotFoundException(resPath);
+                }
+                using (FileStream fileStream = File.Create(outputPath))
+                {
+                    resourceStream.CopyTo(fileStream);
+                }
+                return File.Exists(outputPath);
+            }
+        }
+
+
         #region  定义结构
         /// <summary>
         /// 表示方法的详细信息，包含方法名称、静态标识、返回类型和参数列表
@@ -50,7 +120,7 @@ namespace Ike.Standard
         /// </summary>
         /// <remarks>
         /// 此类封装了反射获取的类型元数据，提供对类型结构的完整描述
-        /// <para>示例用法参见 <see cref="ReflectionUtility.GetTypeDetails"/> 方法</para>
+        /// <para>示例用法参见 <see cref="Reflection.GetTypeDetails"/> 方法</para>
         /// </remarks>
         public class TypeDetails
         {
@@ -201,9 +271,8 @@ namespace Ike.Standard
         /// 
         /// 注意事项:<br/><br/>
         /// <see langword="typeName"></see> 表示完整的名称,包括命名空间以及类名,子类需要以<see langword="+"/>连接,如:namespace.class+class 
-        /// 
         /// </summary>
-        public class ReflectionUtility : IDisposable
+        public class Reflection : IDisposable
         {
             /// <summary>
             /// 当前程序集实例对象
@@ -325,34 +394,82 @@ namespace Ike.Standard
             }
 
             /// <summary>
-            /// 加载程序集,会占用文件句柄
+            /// 加载程序集,不占用文件句柄
             /// </summary>
             /// <param name="assemblyPath">程序集路径</param>
-            /// <exception cref="FileNotFoundException">找不到程序集</exception>
-            public Assembly LoadAssembly(string assemblyPath)
+            /// <param name="isOccupyHandle">是否占用文件句柄</param>
+            /// <returns>返回加载后的程序集</returns>
+            public Assembly LoadAssemblyFromFile(string assemblyPath, bool isOccupyHandle)
             {
                 if (!File.Exists(assemblyPath))
                 {
                     throw new FileNotFoundException("The assembly cannot be found.", nameof(assemblyPath));
                 }
-                AssemblyObject = Assembly.LoadFrom(assemblyPath);
+                if (isOccupyHandle)
+                {
+                    AssemblyObject = Assembly.LoadFrom(assemblyPath);
+                }
+                else
+                {
+                    byte[] bytes = File.ReadAllBytes(assemblyPath);
+                    AssemblyObject = Assembly.Load(bytes);
+                }
                 return AssemblyObject;
             }
 
             /// <summary>
-            /// 加载程序集,不占用文件句柄
+            /// 加载程序集
             /// </summary>
-            /// <param name="assemblyPath">程序集路径</param>
+            /// <param name="rawAssembly">程序集二进制内容</param>
             /// <returns></returns>
-            public Assembly LoadAssemblyFromMemory(string assemblyPath)
+            public Assembly LoadAssemblyByte(byte[] rawAssembly)
             {
-                if (!File.Exists(assemblyPath))
+                if (rawAssembly == null || rawAssembly.Length == 0)
                 {
-                    throw new FileNotFoundException("The assembly cannot be found.", nameof(assemblyPath));
+                    throw new ArgumentNullException(nameof(rawAssembly), "Assembly bytes cannot be null or empty");
                 }
-                byte[] bytes = File.ReadAllBytes(assemblyPath);
-                AssemblyObject = Assembly.Load(bytes);
+                AssemblyObject = Assembly.Load(rawAssembly);
                 return AssemblyObject;
+            }
+
+
+            /// <summary>
+            /// 获取程序集中所有类的完整类型名称（包括命名空间和嵌套类）
+            /// </summary>
+            /// <returns>包含所有类完整名称的字符串数组，格式为："命名空间.类名" 或 "命名空间.外部类+嵌套类"</returns>
+            public string[] GetAllClassTypeNames()
+            {
+                var types = AssemblyObject.GetTypes();
+                var classNames = new List<string>();
+
+                foreach (var type in types)
+                {
+                    // 只获取类类型，排除接口、值类型等
+                    if (type.IsClass)
+                    {
+                        classNames.Add(type.FullName);
+                    }
+                }
+
+                return classNames.ToArray();
+            }
+
+
+            /// <summary>
+            /// 获取泛型类型的约束条件
+            /// </summary>
+            /// <param name="genericType"></param>
+            /// <returns></returns>
+            /// <exception cref="ArgumentException"></exception>
+            public string[] GetGenericConstraints(Type genericType)
+            {
+                if (!genericType.IsGenericTypeDefinition)
+                    throw new ArgumentException("Type must be generic definition");
+
+                return genericType.GetGenericArguments()
+                    .SelectMany(t => t.GetGenericParameterConstraints())
+                    .Select(c => c.FullName)
+                    .ToArray();
             }
 
             /// <summary>
