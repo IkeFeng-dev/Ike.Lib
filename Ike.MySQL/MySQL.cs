@@ -1,8 +1,10 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -90,7 +92,7 @@ namespace Ike
         }
 
         /// <summary>
-        /// 构造MySQL连接字符串,需调用<see cref="ChangeDatabase(string)"/>选定数据库,调用<see cref="Instantiation"/>方法实例化数据库对象
+        /// 构造MySQL连接字符串,需调用<see cref="ChangeDatabase(string)"/>选定数据库,调用<see cref="Instantiation"/>或<see cref="Open"/>方法实例化数据库对象
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
         /// <param name="user">数据库用户名</param>
@@ -108,7 +110,7 @@ namespace Ike
         }
 
         /// <summary>
-        /// 构造MySQL连接字符串,调用<see cref="Instantiation"/>方法实例化数据库对象
+        /// 构造MySQL连接字符串,调用<see cref="Instantiation"/>或<see cref="Open"/>方法实例化数据库对象
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
         /// <param name="database">数据库名称</param>
@@ -163,13 +165,13 @@ namespace Ike
             {
                 throw new ArgumentException("参数值不能小于1", nameof(minuteInterval));
             }
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                while (StartHeartBeatFlag) 
+                while (StartHeartBeatFlag)
                 {
                     try
                     {
-                        Thread.Sleep(minuteInterval * 60 * 1000);
+                        await Task.Delay(minuteInterval * 60 * 1000);
                         ExecuteScalar("SELECT 'OK';");
                     }
                     catch { }
@@ -223,6 +225,10 @@ namespace Ike
         /// </summary>
         public void Open()
         {
+            if (MySQLConnection == null)
+            {
+                Instantiation();
+            }
             if (MySQLConnection.State == ConnectionState.Closed)
             {
                 MySQLConnection.Open();
@@ -234,6 +240,10 @@ namespace Ike
         /// </summary>
         public async Task OpenAsync()
         {
+            if (MySQLConnection == null)
+            {
+                Instantiation();
+            }
             if (MySQLConnection.State == ConnectionState.Closed)
             {
                 await MySQLConnection.OpenAsync();
@@ -421,6 +431,40 @@ namespace Ike
         }
 
         /// <summary>
+        /// 检查指定的数据库是否存在
+        /// </summary>
+        /// <param name="dataBaseName">数据库名</param>
+        /// <returns>是否存在</returns>
+        public bool DataBaseExists(string dataBaseName)
+        {
+            string query = $"SHOW DATABASES WHERE `Database` = @database;";
+            var parameters = new Dictionary<string, object> { { "@database", dataBaseName} };
+            var result = ExecuteScalar(query, parameters);
+            if (result == null)
+            {
+                return false;
+            }
+            return result.ToString().Equals(dataBaseName,StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 异步检查指定的数据库是否存在
+        /// </summary>
+        /// <param name="dataBaseName">数据库名</param>
+        /// <returns>是否存在</returns>
+        public async Task<bool> DataBaseExistsAsync(string dataBaseName)
+        {
+            string query = $"SHOW DATABASES WHERE `Database` = @database;";
+            var parameters = new Dictionary<string, object> { { "@database", dataBaseName } };
+            var result = await ExecuteScalarAsync(query, parameters);
+            if (result == null)
+            {
+                return false;
+            }
+            return result.ToString().Equals(dataBaseName, StringComparison.OrdinalIgnoreCase);
+        }
+
+         /// <summary>
         /// 检查指定的表是否存在
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -930,6 +974,505 @@ namespace Ike
             var result = await ExecuteScalarAsync(query, parameters);
             return result.ToString();
         }
+
+
+        /// <summary>
+        /// 获取映射对象值
+        /// </summary>
+        /// <param name="colMap">映射对象</param>
+        /// <param name="item">值数据</param>
+        /// <returns></returns>
+        private object GetValueFromMap(object colMap, object item)
+        {
+            if (colMap is PropertyInfo propertyInfo)
+            {
+                return propertyInfo.GetValue(item);
+            }
+            else if (colMap is FieldInfo fieldInfo)
+            {
+                return fieldInfo.GetValue(item);
+            }
+            else
+            {
+                return colMap;
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// 类结构集合数据批量插入到数据库
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 
+        /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
+        /// 示例："name", "age", "email", "created_time"<br/><br/>
+        /// 
+        /// 【值 (<see cref="object"/>)】：支持三种类型：<br/><br/>
+        /// 1. <see cref="PropertyInfo"/>：实体类属性反射对象，从数据对象中获取属性值<br/>
+        ///    示例：<see cref="Type.GetProperty(string)"/><br/>
+        ///     
+        /// 2. <see cref="FieldInfo"/>：实体类字段反射对象，从数据对象中获取字段值<br/>
+        ///    示例：<see cref="Type.GetField(string)"/><br/>
+        ///     
+        /// 3. 常量值 (<see cref="string"/>/<see cref="object"/>)：固定值，所有记录插入相同的值<br/>
+        ///    示例："<see  langword="默认值"/> "、<see cref="DateTime"/>、<see langword="123"/>、<see langword="true"/>、<see langword="null"/>等等数据库对应的类型<br/>
+        ///    用途：为所有插入记录设置相同的固定值<br/><br/>
+        ///     
+        /// 【使用示例】：<br/><br/>
+        /// 
+        /// 1. 映射实体属性到数据库字段：<br/>
+        /// <code>
+        /// <see langword=" var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword=" {"/><br/>
+        /// <see langword="     { &quot;name&quot;, typeof(Person).GetProperty(&quot;Name&quot;) },"/><br/>
+        /// <see langword="     { &quot;age&quot;, typeof(Person).GetProperty(&quot;Age&quot;) },"/><br/>
+        /// <see langword="     { &quot;email&quot;, typeof(Person).GetProperty(&quot;Email&quot;) },"/><br/>
+        /// <see langword="     { &quot;status&quot;, &quot;active&quot; },"/><br/>
+        /// <see langword="     { &quot;created_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword=" };"/><br/>
+        /// </code><br/><br/>
+        /// 
+        /// 2. 混合使用反射和常量值：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;user_name&quot;, typeof(User).GetProperty(&quot;UserName&quot;) },"/><br/>
+        /// <see langword="    { &quot;department&quot;, &quot;技术部&quot; },"/><br/>
+        /// <see langword="    { &quot;is_deleted&quot;, false },"/><br/>
+        /// <see langword="    { &quot;create_by&quot;, currentUserId },"/><br/>
+        /// <see langword="    { &quot;create_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword="};"/><br/>
+        /// 
+        /// </code><br/><br/>
+        /// 3. 使用 <see cref="FieldInfo"/>（适用于字段而非属性）：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;name&quot;, typeof(Person).GetField(&quot;name&quot;) },"/><br/>
+        /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
+        /// <see langword="};"/><br/>
+        /// </code>
+        /// </param>
+        /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
+        /// <returns>受影响的行数</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public int BatchInsert<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null)
+            {
+                throw new ArgumentNullException(nameof(datas));
+            }
+            if (columnTypeMap == null)
+            {
+                throw new ArgumentNullException(nameof(columnTypeMap));
+            }
+            if (columnTypeMap.Count == 0)
+            {
+                throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            }
+            if (!datas.Any())
+            {
+                return 0;
+            }
+            // 构建SQL第一部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                // 为当前数据项的每一列生成参数
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+
+                    // 生成唯一的参数名
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                // 添加 VALUES 子句
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            // 拼接所有VALUES子句
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            string sql = sqlBuilder.ToString();
+            return ExecuteNonQuery(sql, parameters);
+        }
+
+
+
+        /// <summary>
+        /// 异步执行类结构集合数据批量插入到数据库
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 
+        /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
+        /// 示例："name", "age", "email", "created_time"<br/><br/>
+        /// 
+        /// 【值 (<see cref="object"/>)】：支持三种类型：<br/><br/>
+        /// 1. <see cref="PropertyInfo"/>：实体类属性反射对象，从数据对象中获取属性值<br/>
+        ///    示例：<see cref="Type.GetProperty(string)"/><br/>
+        ///     
+        /// 2. <see cref="FieldInfo"/>：实体类字段反射对象，从数据对象中获取字段值<br/>
+        ///    示例：<see cref="Type.GetField(string)"/><br/>
+        ///     
+        /// 3. 常量值 (<see cref="string"/>/<see cref="object"/>)：固定值，所有记录插入相同的值<br/>
+        ///    示例："<see  langword="默认值"/> "、<see cref="DateTime"/>、<see langword="123"/>、<see langword="true"/>、<see langword="null"/>等等数据库对应的类型<br/>
+        ///    用途：为所有插入记录设置相同的固定值<br/><br/>
+        ///     
+        /// 【使用示例】：<br/><br/>
+        /// 
+        /// 1. 映射实体属性到数据库字段：<br/>
+        /// <code>
+        /// <see langword=" var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword=" {"/><br/>
+        /// <see langword="     { &quot;name&quot;, typeof(Person).GetProperty(&quot;Name&quot;) },"/><br/>
+        /// <see langword="     { &quot;age&quot;, typeof(Person).GetProperty(&quot;Age&quot;) },"/><br/>
+        /// <see langword="     { &quot;email&quot;, typeof(Person).GetProperty(&quot;Email&quot;) },"/><br/>
+        /// <see langword="     { &quot;status&quot;, &quot;active&quot; },"/><br/>
+        /// <see langword="     { &quot;created_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword=" };"/><br/>
+        /// </code><br/><br/>
+        /// 
+        /// 2. 混合使用反射和常量值：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;user_name&quot;, typeof(User).GetProperty(&quot;UserName&quot;) },"/><br/>
+        /// <see langword="    { &quot;department&quot;, &quot;技术部&quot; },"/><br/>
+        /// <see langword="    { &quot;is_deleted&quot;, false },"/><br/>
+        /// <see langword="    { &quot;create_by&quot;, currentUserId },"/><br/>
+        /// <see langword="    { &quot;create_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword="};"/><br/>
+        /// 
+        /// </code><br/><br/>
+        /// 3. 使用 <see cref="FieldInfo"/>（适用于字段而非属性）：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;name&quot;, typeof(Person).GetField(&quot;name&quot;) },"/><br/>
+        /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
+        /// <see langword="};"/><br/>
+        /// </code>
+        /// </param>
+        /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
+        /// <returns>受影响的行数</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task<int> BatchInsertAsync<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null)
+            {
+                throw new ArgumentNullException(nameof(datas));
+            }
+            if (columnTypeMap == null)
+            {
+                throw new ArgumentNullException(nameof(columnTypeMap));
+            }
+            if (columnTypeMap.Count == 0)
+            {
+                throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            }
+            if (!datas.Any())
+            {
+                return 0;
+            }
+            // 构建SQL第一部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                // 为当前数据项的每一列生成参数
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+
+                    // 生成唯一的参数名
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                // 添加 VALUES 子句
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            // 拼接所有VALUES子句
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            string sql = sqlBuilder.ToString();
+            return await ExecuteNonQueryAsync(sql, parameters);
+        }
+
+
+
+        /// <summary>
+        /// 类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 
+        /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
+        /// 示例："name", "age", "email", "created_time"<br/><br/>
+        /// 
+        /// 【值 (<see cref="object"/>)】：支持三种类型：<br/><br/>
+        /// 1. <see cref="PropertyInfo"/>：实体类属性反射对象，从数据对象中获取属性值<br/>
+        ///    示例：<see cref="Type.GetProperty(string)"/><br/>
+        ///     
+        /// 2. <see cref="FieldInfo"/>：实体类字段反射对象，从数据对象中获取字段值<br/>
+        ///    示例：<see cref="Type.GetField(string)"/><br/>
+        ///     
+        /// 3. 常量值 (<see cref="string"/>/<see cref="object"/>)：固定值，所有记录插入相同的值<br/>
+        ///    示例："<see  langword="默认值"/> "、<see cref="DateTime"/>、<see langword="123"/>、<see langword="true"/>、<see langword="null"/>等等数据库对应的类型<br/>
+        ///    用途：为所有插入记录设置相同的固定值<br/><br/>
+        ///     
+        /// 【使用示例】：<br/><br/>
+        /// 
+        /// 1. 映射实体属性到数据库字段：<br/>
+        /// <code>
+        /// <see langword=" var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword=" {"/><br/>
+        /// <see langword="     { &quot;name&quot;, typeof(Person).GetProperty(&quot;Name&quot;) },"/><br/>
+        /// <see langword="     { &quot;age&quot;, typeof(Person).GetProperty(&quot;Age&quot;) },"/><br/>
+        /// <see langword="     { &quot;email&quot;, typeof(Person).GetProperty(&quot;Email&quot;) },"/><br/>
+        /// <see langword="     { &quot;status&quot;, &quot;active&quot; },"/><br/>
+        /// <see langword="     { &quot;created_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword=" };"/><br/>
+        /// </code><br/><br/>
+        /// 
+        /// 2. 混合使用反射和常量值：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;user_name&quot;, typeof(User).GetProperty(&quot;UserName&quot;) },"/><br/>
+        /// <see langword="    { &quot;department&quot;, &quot;技术部&quot; },"/><br/>
+        /// <see langword="    { &quot;is_deleted&quot;, false },"/><br/>
+        /// <see langword="    { &quot;create_by&quot;, currentUserId },"/><br/>
+        /// <see langword="    { &quot;create_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword="};"/><br/>
+        /// 
+        /// </code><br/><br/>
+        /// 3. 使用 <see cref="FieldInfo"/>（适用于字段而非属性）：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;name&quot;, typeof(Person).GetField(&quot;name&quot;) },"/><br/>
+        /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
+        /// <see langword="};"/><br/>
+        /// </code>
+        /// </param>
+        /// <param name="datas">数据集合</param>
+        /// <returns>受影响的行数</returns>
+        public int BatchUpsert<T>(string tableName,Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null) throw new ArgumentNullException(nameof(datas));
+            if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
+            if (columnTypeMap.Count == 0) throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            if (!datas.Any()) return 0;
+
+            // 构建INSERT部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            // 构建UPDATE部分
+            sqlBuilder.Append(" ON DUPLICATE KEY UPDATE ");
+
+            var updateList = new List<string>();
+            var columnsToUpdate = columnTypeMap.Keys.ToList();
+
+            foreach (var columnName in columnsToUpdate)
+            {
+                updateList.Add($"`{columnName}` = VALUES(`{columnName}`)");
+            }
+
+            sqlBuilder.Append(string.Join(", ", updateList));
+
+            string sql = sqlBuilder.ToString();
+            return ExecuteNonQuery(sql, parameters);
+        }
+
+
+        
+        /// <summary>
+        /// 异步执行类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 
+        /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
+        /// 示例："name", "age", "email", "created_time"<br/><br/>
+        /// 
+        /// 【值 (<see cref="object"/>)】：支持三种类型：<br/><br/>
+        /// 1. <see cref="PropertyInfo"/>：实体类属性反射对象，从数据对象中获取属性值<br/>
+        ///    示例：<see cref="Type.GetProperty(string)"/><br/>
+        ///     
+        /// 2. <see cref="FieldInfo"/>：实体类字段反射对象，从数据对象中获取字段值<br/>
+        ///    示例：<see cref="Type.GetField(string)"/><br/>
+        ///     
+        /// 3. 常量值 (<see cref="string"/>/<see cref="object"/>)：固定值，所有记录插入相同的值<br/>
+        ///    示例："<see  langword="默认值"/> "、<see cref="DateTime"/>、<see langword="123"/>、<see langword="true"/>、<see langword="null"/>等等数据库对应的类型<br/>
+        ///    用途：为所有插入记录设置相同的固定值<br/><br/>
+        ///     
+        /// 【使用示例】：<br/><br/>
+        /// 
+        /// 1. 映射实体属性到数据库字段：<br/>
+        /// <code>
+        /// <see langword=" var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword=" {"/><br/>
+        /// <see langword="     { &quot;name&quot;, typeof(Person).GetProperty(&quot;Name&quot;) },"/><br/>
+        /// <see langword="     { &quot;age&quot;, typeof(Person).GetProperty(&quot;Age&quot;) },"/><br/>
+        /// <see langword="     { &quot;email&quot;, typeof(Person).GetProperty(&quot;Email&quot;) },"/><br/>
+        /// <see langword="     { &quot;status&quot;, &quot;active&quot; },"/><br/>
+        /// <see langword="     { &quot;created_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword=" };"/><br/>
+        /// </code><br/><br/>
+        /// 
+        /// 2. 混合使用反射和常量值：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;user_name&quot;, typeof(User).GetProperty(&quot;UserName&quot;) },"/><br/>
+        /// <see langword="    { &quot;department&quot;, &quot;技术部&quot; },"/><br/>
+        /// <see langword="    { &quot;is_deleted&quot;, false },"/><br/>
+        /// <see langword="    { &quot;create_by&quot;, currentUserId },"/><br/>
+        /// <see langword="    { &quot;create_time&quot;, DateTime.Now }"/><br/>
+        /// <see langword="};"/><br/>
+        /// 
+        /// </code><br/><br/>
+        /// 3. 使用 <see cref="FieldInfo"/>（适用于字段而非属性）：<br/>
+        /// <code>
+        /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
+        /// <see langword="{"/><br/>
+        /// <see langword="    { &quot;name&quot;, typeof(Person).GetField(&quot;name&quot;) },"/><br/>
+        /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
+        /// <see langword="};"/><br/>
+        /// </code>
+        /// </param>
+        /// <param name="datas">数据集合</param>
+        /// <returns>受影响的行数</returns>
+        public async Task<int> BatchUpsertAsync<T>(string tableName,Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null) throw new ArgumentNullException(nameof(datas));
+            if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
+            if (columnTypeMap.Count == 0) throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            if (!datas.Any()) return 0;
+
+            // 构建INSERT部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            // 构建UPDATE部分
+            sqlBuilder.Append(" ON DUPLICATE KEY UPDATE ");
+
+            var updateList = new List<string>();
+            var columnsToUpdate = columnTypeMap.Keys.ToList();
+
+            foreach (var columnName in columnsToUpdate)
+            {
+                updateList.Add($"`{columnName}` = VALUES(`{columnName}`)");
+            }
+
+            sqlBuilder.Append(string.Join(", ", updateList));
+
+            string sql = sqlBuilder.ToString();
+            return await ExecuteNonQueryAsync(sql, parameters);
+        }
+
+
+        
 
     }
 }

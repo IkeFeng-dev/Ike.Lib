@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName></AssemblyName>
     <RootNamespace>Ike</RootNamespace>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <DocumentationFile>obj\Release\netstandard2.0\Ike.MySQL.xml</DocumentationFile>
@@ -12,13 +12,13 @@
     <Title>MySQL 基础操作库</Title>
     <Authors>IkeFeng</Authors>
     <Description>MySQL 基础操作库</Description>
-    <Copyright>© 2025 IkeFeng.  All rights reserved.</Copyright>
+    <Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
     <PackageIcon>ico.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>MySQL 基础操作库</PackageReleaseNotes>
     <PackageTags>MYSQL</PackageTags>
-    <AssemblyVersion>0.0.0.1</AssemblyVersion>
-    <FileVersion>0.0.0.1</FileVersion>
+    <AssemblyVersion>0.0.0.2</AssemblyVersion>
+    <FileVersion>0.0.0.2</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
