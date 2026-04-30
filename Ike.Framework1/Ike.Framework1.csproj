@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+	<PropertyGroup>
+		<!-- 设置为多目标框架 -->
+		<TargetFrameworks>net461;net48;net6.0-windows;net8.0-windows</TargetFrameworks>
+
+		<!-- 启用 Windows Forms -->
+		<UseWindowsForms>true</UseWindowsForms>
+
+		<!-- NuGet 包相关配置 -->
+		<PackageId>Ike.Windows</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>IkeFeng</Authors>
+		<Company>Ike Company</Company>
+		<Description>Windows平台专用功能库，包含Windows Forms、注册表、Windows API等</Description>
+		<PackageTags>windows;winforms;registry;winapi;desktop</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/yourusername/Ike.Windows</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/yourusername/Ike.Windows.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+
+		<!-- 重要：启用包生成 -->
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+		<!-- 明确支持的操作系统 -->
+		<SupportedOSPlatforms>windows</SupportedOSPlatforms>
+	</PropertyGroup>
+
+	
+
+	<!-- .NET 6+ Windows 需要引用包 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0-windows' or '$(TargetFramework)' == 'net8.0-windows'">
+		<PackageReference Include="System.Windows.Forms" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+	</ItemGroup>
+
+</Project>

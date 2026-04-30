@@ -15,6 +15,41 @@ namespace Ike.Standard
 	/// </summary>
 	public static class FileDir
 	{
+		/// <summary>
+		/// 获取文件编码
+		/// </summary>
+		/// <param name="filename">文件完整路径</param>
+		/// <returns></returns>
+		public static Encoding GetFileEncodeType(string filename)
+		{
+			using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
+			{
+				byte[] Unicode = new byte[] { 0xFF, 0xFE, 0x41 };
+				byte[] UnicodeBIG = new byte[] { 0xFE, 0xFF, 0x00 };
+				byte[] UTF8 = new byte[] { 0xEF, 0xBB, 0xBF }; //带BOM 
+				Encoding reVal = Encoding.Default;
+				BinaryReader r = new BinaryReader(fs, Encoding.Default);
+				int.TryParse(fs.Length.ToString(), out int i);
+				byte[] ss = r.ReadBytes(i);
+				if (Validator.IsUTF8Bytes(ss) || (ss[0] == 0xEF && ss[1] == 0xBB && ss[2] == 0xBF))
+				{
+					reVal = Encoding.UTF8;
+				}
+				else if (ss[0] == 0xFE && ss[1] == 0xFF && ss[2] == 0x00)
+				{
+					reVal = Encoding.BigEndianUnicode;
+				}
+				else if (ss[0] == 0xFF && ss[1] == 0xFE && ss[2] == 0x41)
+				{
+					reVal = Encoding.Unicode;
+				}
+				r.Close();
+				return reVal;
+			}
+		}
+
+
+		
 
 		/// <summary>
 		/// 获取指定文件SHA256哈希值

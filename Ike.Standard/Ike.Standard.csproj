@@ -1,58 +1,112 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	  <TargetFramework>netstandard2.0</TargetFramework>
-	  <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-	  <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <PackageReadmeFile>README.md</PackageReadmeFile>
-	  <PackageIcon>ico.png</PackageIcon>
-	  <RepositoryType>git</RepositoryType>
-	  <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-	  <Version>3.0.4</Version>
-	  <AssemblyVersion>0.0.0.4</AssemblyVersion>
-	  <FileVersion>0.0.0.4</FileVersion>
-	  <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-	  <RepositoryUrl>https://github.com/IkeFeng-dev/Ike.Lib</RepositoryUrl>
-	  <PackageProjectUrl>https://github.com/IkeFeng-dev/Ike.Lib</PackageProjectUrl>
-	  <Description>C# Standard2.0 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
-	  <Title>C# Standard2.0 通用方法库</Title>
-	  <PackageReleaseNotes>
-		  [2025年12月28日10:22:14]
-		  一,新增防抖辅助类Debouncer,DebouncerExecute
-		  二,新增对象及属性操作类ObjectPropertyOperator
-		  三,IniConfigManager优化部分逻辑,新增支持监控文件内容变化后自动加载
-	  </PackageReleaseNotes>
-	  <Copyright>© 2024 IkeFeng.  All rights reserved.</Copyright>
-	  <PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net46;net461;net462;net47;net471;net472;net48;net481;netcoreapp3.1;net6.0</TargetFrameworks>
+		<!-- 根据不同框架启用不同特性 -->
+		<UseWindowsForms Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' or '$(TargetFramework)' == 'net6.0-windows'">true</UseWindowsForms>
+		<UseWPF Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' or '$(TargetFramework)' == 'net6.0-windows'">true</UseWPF>
+		
+		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>ico.png</PackageIcon>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<Version>5.0.0</Version>
+		<AssemblyVersion>0.0.0.5</AssemblyVersion>
+		<FileVersion>0.0.0.5</FileVersion>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<RepositoryUrl></RepositoryUrl>
+		<PackageProjectUrl></PackageProjectUrl>
+		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
+		<Title>C# 通用方法库</Title>
+		<PackageReleaseNotes>
+			[2026年4月27日20:29:54]
+			一,Ike.Standard.Ini.IniConfigManager类新增实现IDisposable接口
+		</PackageReleaseNotes>
+		<Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
+		<PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>
+		<RootNamespace>Ike</RootNamespace>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-	<DebugType>embedded</DebugType>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-	<DebugType>embedded</DebugType>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
 
-  <ItemGroup>
-	<None Include="..\ico.png">
-	  <Pack>True</Pack>
-	  <PackagePath>\</PackagePath>
-	</None>
-	<None Include="..\LICENSE.txt">
-	  <Pack>True</Pack>
-	  <PackagePath>\</PackagePath>
-	</None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\ico.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\LICENSE.txt">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 
-  <ItemGroup>
-	<None Update="README.md">
-	  <Pack>True</Pack>
-	  <PackagePath>\</PackagePath>
-	</None>
-  </ItemGroup>
+	</ItemGroup>
+
+	<!-- .NET Framework 4.6 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+		<PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+		<PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+		<PackageReference Include="System.Memory" Version="4.5.4" />
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Drawing" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+		<Reference Include="System.Windows.Forms.DataVisualization" />
+	</ItemGroup>
+
+	<!-- .NET Framework 4.6.1 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+		<PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Drawing" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+		<Reference Include="System.Windows.Forms.DataVisualization" />
+	</ItemGroup>
+	<!-- .NET Framework 4.6.2 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+		<PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+		<Reference Include="System.Windows.Forms.DataVisualization" />
+	</ItemGroup>
+	<!-- .NET Framework 4.7 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net47'">
+		<PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Drawing" />
+		<Reference Include="System.Windows.Forms.DataVisualization" />
+	</ItemGroup>
+	
+	<!-- .NET Framework 4.8 -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net48'">
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Drawing" />
+		<Reference Include="System.Windows.Forms.DataVisualization" />
+	</ItemGroup>
+	
+	<!-- netstandard2.0 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		
+	</ItemGroup>
+
+
+	<!-- netstandard2.1 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+		
+	</ItemGroup>
 
 </Project>

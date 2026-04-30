@@ -82,9 +82,9 @@ namespace Ike.Standard.DataInteraction
                 {
                     await socketListen.Start();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    throw ex;
+                    throw;
                 }
             });
         }

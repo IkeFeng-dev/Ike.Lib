@@ -8,18 +8,20 @@ namespace Ike.Framework
     /// <summary>
     /// 自动窗体大小适配器，用于在窗体大小改变时自动调整控件布局
     /// </summary>
-    public class AutoAdaptWindowsSize
+    public class AutoAdaptWindowsSize :IDisposable
     {
         /// <summary>
         /// 窗体原始宽度
         /// </summary>
         private double _formOriginalWidth;
-
         /// <summary>
         /// 窗体原始高度
         /// </summary>
         private double _formOriginalHeight;
-
+        /// <summary>
+        /// 是否已释放对象
+        /// </summary>
+        private bool disposed = false;
         /// <summary>
         /// 存储控件原始信息的字典
         /// Key: 控件名称
@@ -40,13 +42,16 @@ namespace Ike.Framework
         /// <summary>
         /// 最小允许的字体大小
         /// </summary>
-        private const float MinFontSize = 6f;
+        private readonly float minFontSize;
 
         /// <summary>
         /// 最大允许的字体大小
         /// </summary>
-        private const float MaxFontSize = 72f;
-
+        private readonly float maxFontSize;
+        /// <summary>
+        /// 表示是否自动更新的标志
+        /// </summary>
+        bool isUpdate = false;
         /// <summary>
         /// 水平方向缩放比例
         /// </summary>
@@ -57,18 +62,42 @@ namespace Ike.Framework
         /// </summary>
         public double ScaleY { get; private set; }
 
+
         /// <summary>
         /// 初始化自动适配器实例
         /// </summary>
         /// <param name="form">要适配的目标窗体</param>
+        /// <param name="minFontSize">最小字体字号</param>
+        /// <param name="maxFontSize">最大字体字号</param>
         /// <exception cref="ArgumentNullException">当传入的窗体为null时抛出</exception>
-        public AutoAdaptWindowsSize(Form form)
+        /// <exception cref="ArgumentException"></exception>
+        public AutoAdaptWindowsSize(Form form, float minFontSize = 6f,float maxFontSize = 72f)
         {
             _targetForm = form ?? throw new ArgumentNullException(nameof(form));
+
+            if(minFontSize <= 0 || maxFontSize <= 0 || minFontSize > maxFontSize)
+            {
+                throw new ArgumentException("字体大小参数校验失败");
+            }
+
+            this.minFontSize = minFontSize;
+            this.maxFontSize = maxFontSize;
 
             InitializeContainerPanel();
             MoveControlsToPanel();
             InitControlsInfo(_containerPanel);
+        }
+
+
+
+        /// <summary>
+        /// 窗体大小改变事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Form_SizeChanged_This(object sender, EventArgs e)
+        {
+            CalculateLayout();
         }
 
         /// <summary>
@@ -131,18 +160,6 @@ namespace Ike.Framework
             }
         }
 
-        /// <summary>
-        /// 窗体大小改变时调用此方法重新计算控件布局
-        /// </summary>
-        public void FormSizeChanged()
-        {
-            // 如果没有控件信息，直接返回
-            if (_controlsInfo.Count == 0) return;
-            // 计算缩放比例
-            CalculateScalingFactors(_containerPanel);
-            // 调整所有控件
-            AdjustControls(_containerPanel);
-        }
 
         /// <summary>
         /// 计算水平和垂直方向的缩放比例
@@ -202,7 +219,7 @@ namespace Ike.Framework
 
                 // 计算并限制新字体大小
                 float newFontSize = originalFontSize * minScale;
-                newFontSize = Math.Max(MinFontSize, Math.Min(MaxFontSize, newFontSize));
+                newFontSize = Math.Max(minFontSize, Math.Min(maxFontSize, newFontSize));
 
                 // 如果字体大小有变化，更新字体
                 if (Math.Abs(item.Font.Size - newFontSize) > float.Epsilon)
@@ -211,5 +228,75 @@ namespace Ike.Framework
                 }
             }
         }
+
+
+
+        /// <summary>
+        /// 析构函数（安全网）
+        /// </summary>
+        ~AutoAdaptWindowsSize()
+        {
+            Dispose(false);
+        }
+
+
+        /// <summary>
+        /// 实现 IDisposable,释放该对象资源
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// 释放改对象资源
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            if (disposing)
+            {
+                if (isUpdate)
+                {
+                    _targetForm.SizeChanged -= Form_SizeChanged_This;
+                }
+                _controlsInfo.Clear();
+            }
+            disposed = true;
+        }
+
+
+        /// <summary>
+        /// 计算控件布局
+        /// </summary>
+        public void CalculateLayout()
+        {
+            // 如果没有控件信息，直接返回
+            if (_controlsInfo.Count == 0) return;
+            // 计算缩放比例
+            CalculateScalingFactors(_containerPanel);
+            // 调整所有控件
+            AdjustControls(_containerPanel);
+        }
+
+
+
+
+        /// <summary>
+        /// 创建自动更新器,创建后无需外部调用<see cref="CalculateLayout"/>方法进行手动更新
+        /// </summary>
+        public void CreateAutoUpdater()
+        {
+            if (isUpdate)
+            {
+                return;
+            }
+            _targetForm.SizeChanged += Form_SizeChanged_This;
+            isUpdate = true;
+        }
+
     }
 }

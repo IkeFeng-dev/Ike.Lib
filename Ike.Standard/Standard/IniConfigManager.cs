@@ -53,7 +53,7 @@ namespace Ike.Standard.Ini
     /// Ini配置档读写器
     /// </summary>
     /// <typeparam name="T">配置档实例</typeparam>
-    public class IniConfigManager<T> where T : new()
+    public class IniConfigManager<T> : IDisposable where T : new()
     {
         /// <summary>
         /// 数据对象
@@ -70,6 +70,14 @@ namespace Ike.Standard.Ini
                 CopyProperties(value == null ? new T() : value, data);
             }
         }
+        /// <summary>
+        /// 用于委托更新输出事件,需要创建构造函数时启用了<see langword="autoUpdate"/>参数为<see langword="true"/>才会通知
+        /// </summary>
+        public event Action UpdateEvent;
+        /// <summary>
+        /// 是否已释放对象
+        /// </summary>
+        private bool disposed = false;
         /// <summary>
         /// 防抖器
         /// </summary>
@@ -90,6 +98,10 @@ namespace Ike.Standard.Ini
         /// 配置文档读写编码
         /// </summary>
         private readonly Encoding encoding;
+        /// <summary>
+        /// 文件监听对象
+        /// </summary>
+        private FileSystemWatcher fileWatcher;
         /// <summary>
         /// 支持的数据类型
         /// </summary>
@@ -243,7 +255,7 @@ namespace Ike.Standard.Ini
                     Directory.CreateDirectory(dir);
                 }
                 // 设置文件监控
-                var fileWatcher = new FileSystemWatcher
+                fileWatcher = new FileSystemWatcher
                 {
                     Path = dir,
                     Filter = Path.GetFileName(_filePath),
@@ -255,11 +267,57 @@ namespace Ike.Standard.Ini
                     if (debouncer.QueryDebouncer() && File.Exists(_filePath))
                     {
                         Load();
+                        UpdateEvent?.Invoke();
                         debouncer.TriggerDebouncer();
                     }
                 };
             }
         }
+
+        /// <summary>
+        /// 析构函数（安全网）
+        /// </summary>
+        ~IniConfigManager()
+        {
+            Dispose(false);
+        }
+
+
+        /// <summary>
+        /// 实现 IDisposable,释放该对象资源
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// 释放改对象资源
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            if (disposing)
+            {
+                // 移除事件订阅
+                if (UpdateEvent != null)
+                {
+                    UpdateEvent = null;
+                }
+                // 停止并释放 FileSystemWatcher
+                if (fileWatcher != null)
+                {
+                    fileWatcher.EnableRaisingEvents = false;
+                    fileWatcher.Dispose();
+                    fileWatcher = null;
+                }
+            }
+            disposed = true;
+        }
+
 
 
         /// <summary>

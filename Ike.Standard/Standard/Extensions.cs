@@ -189,5 +189,12 @@ namespace Ike.Standard
             return Interlocked.Add(ref location, value);
         }
 
+
+
+        /// <inheritdoc cref="Array.AddElementsToArray"/>
+        public static T[] AddElements<T>(this T[] originalArray, params T[] newElements)
+        {
+            return Array.AddElementsToArray(originalArray, newElements);
+        }
     }
 }

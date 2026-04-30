@@ -15,7 +15,7 @@ namespace Ike.Framework
 		/// <param name="fullPath">注册表完整路径</param>
 		/// <param name="subKeyPath">返回注册表根键下的子项路径</param>
 		/// <returns></returns>
-		public static RegistryKey GetRootKey(string fullPath,out string subKeyPath)
+		public RegistryKey GetRootKey(string fullPath,out string subKeyPath)
 		{
 			if (fullPath.Contains("/"))
 			{
@@ -63,7 +63,7 @@ namespace Ike.Framework
 		/// <param name="fullPath"><inheritdoc cref="GetRootKey" path="/param[@name='fullPath']"/></param>
 		/// <returns>指定路径下的的注册表对象,如果操作失败,则为<see langword="null"></see></returns>
 		/// <exception cref="ArgumentException">参数异常</exception>
-		public static RegistryKey OpenRegistryKey(string fullPath)
+		public RegistryKey OpenRegistryKey(string fullPath)
 		{
 			RegistryKey rootKey = GetRootKey(fullPath,out string subKeyPath);
 			return rootKey.OpenSubKey(subKeyPath);
@@ -75,7 +75,7 @@ namespace Ike.Framework
 		/// </summary>
 		/// <param name="fullPath"><inheritdoc cref="GetRootKey" path="/param[@name='fullPath']"/></param>
 		/// <returns></returns>
-		public static bool Exist(string fullPath)
+		public bool Exist(string fullPath)
 		{
 			RegistryKey registryKey = OpenRegistryKey(fullPath);
 			bool result = registryKey != null;
@@ -92,7 +92,7 @@ namespace Ike.Framework
 		/// </summary>
 		/// <param name="fullPath">注册表完整路径</param>
 		/// <returns></returns>
-		public static RegistryKey CreateRegistryKey(string fullPath)
+		public RegistryKey CreateRegistryKey(string fullPath)
 		{
 			RegistryKey rootKey = GetRootKey(fullPath,out string subKeyPath);
 			return rootKey.CreateSubKey(subKeyPath); 
@@ -104,7 +104,7 @@ namespace Ike.Framework
 		/// </summary>
 		/// <param name="fullPath"><inheritdoc cref="GetRootKey" path="/param[@name='fullPath']"/></param>
 		/// <returns>获取到的子项的字符串集合</returns>
-		public static string[] GetSubitemNames(string fullPath)
+		public string[] GetSubitemNames(string fullPath)
 		{
 			using (RegistryKey registryKey = OpenRegistryKey(fullPath))
 			{
@@ -117,7 +117,7 @@ namespace Ike.Framework
 		/// </summary>
 		/// <param name="fullPath"><inheritdoc cref="GetRootKey" path="/param[@name='fullPath']"/></param>
 		/// <returns>获取到的值名称的字符串集合</returns>
-		public static string[] GetGetValueNames(string fullPath)
+		public string[] GetGetValueNames(string fullPath)
 		{
 			using (RegistryKey registryKey = OpenRegistryKey(fullPath))
 			{
@@ -133,7 +133,7 @@ namespace Ike.Framework
 		/// <param name="name">值名称</param>
 		/// <param name="defaultValue">如果未找到指定内容,则返回这个默认值</param>
 		/// <returns></returns>
-		public static object GetValue(string fullPath, string name, string defaultValue)
+		public object GetValue(string fullPath, string name, string defaultValue)
 		{
 			using (RegistryKey key = OpenRegistryKey(fullPath))
 			{
@@ -150,7 +150,7 @@ namespace Ike.Framework
 		/// <param name="name">键名称</param>
 		/// <param name="value">写入值</param>
 		/// <param name="valueKind">写入的数据类型</param>
-		public static void SetValue(string fullPath,string name,object value, RegistryValueKind valueKind)
+		public void SetValue(string fullPath,string name,object value, RegistryValueKind valueKind)
 		{
 			using (RegistryKey rootKey = GetRootKey(fullPath, out string subKey))
 			{
@@ -168,7 +168,7 @@ namespace Ike.Framework
 		/// <param name="name">菜单名称</param>
 		/// <param name="iconPath">图标路径,ico或可执行程序路径</param>
 		/// <param name="command">右键打开文件菜单时打开的程序文件路径,可执行文件需要完整路径</param>
-		public static void CreateFileRightMenu(string name, string iconPath, string command)
+		public void CreateFileRightMenu(string name, string iconPath, string command)
 		{
 			if (iconPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 			{
@@ -195,7 +195,7 @@ namespace Ike.Framework
 		/// 删除文件右键菜单
 		/// </summary>
 		/// <param name="name">菜单名称</param>
-		public static void DeleteFileRightMenu(string name)
+		public void DeleteFileRightMenu(string name)
 		{
 			using (RegistryKey registry = OpenRegistryKey(Paths.FileRightKeyShell + "\\" + name))
 			{
@@ -215,7 +215,7 @@ namespace Ike.Framework
 		/// <param name="name">菜单名称</param>
 		/// <param name="iconPath">图标路径,ico或可执行程序路径</param>
 		/// <param name="command">启动菜单时打开的程序传递右键时目录路径,可执行文件需要完整路径</param>
-		public static void CreateEmptyRightMenu(string name, string iconPath, string command)
+		public void CreateEmptyRightMenu(string name, string iconPath, string command)
 		{
 			if (iconPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 			{
@@ -244,7 +244,7 @@ namespace Ike.Framework
 		/// 删除空白处右键菜单
 		/// </summary>
 		/// <param name="name">菜单名称</param>
-		public static void DeleteEmptyRightMenu(string name)
+		public void DeleteEmptyRightMenu(string name)
 		{
 			using (RegistryKey registry = OpenRegistryKey(Paths.EmptyRightKeyShell + "\\" + name))
 			{
@@ -268,7 +268,7 @@ namespace Ike.Framework
 		/// <param name="name">菜单名称</param>
 		/// <param name="iconPath">图标路径,ico或可执行程序路径</param>
 		/// <param name="command">启动菜单时打开的程序传递右键时目录路径,可执行文件需要完整路径</param>
-		public static void CreateDirectoryRightMenu(string name, string iconPath, string command)
+		public void CreateDirectoryRightMenu(string name, string iconPath, string command)
 		{
 			if (iconPath.ToLower().EndsWith(".exe")) iconPath = "\"" + iconPath + "\",0";
 			if (command.ToLower().EndsWith(".exe") && File.Exists(command)) command = "\"" + command + "\"" + " %L";
@@ -289,7 +289,7 @@ namespace Ike.Framework
 		/// 删除文件夹右键菜单
 		/// </summary>
 		/// <param name="name">菜单名称</param>
-		public static void DeleteDirectoryRightMenu(string name)
+		public void DeleteDirectoryRightMenu(string name)
 		{
 			using (RegistryKey registry = OpenRegistryKey(Paths.DirectoryRightKeyShell + "\\" + name))
 			{
@@ -308,7 +308,7 @@ namespace Ike.Framework
 		/// <param name="suffixName">文件后缀</param>
 		/// <param name="keyName">注册表项名称</param>
 		/// <param name="operationSoftPath">打开此后缀文件的程序(完整路径)</param>
-		public static void BindFileOpenMethod(string suffixName, string keyName, string operationSoftPath)
+		public void BindFileOpenMethod(string suffixName, string keyName, string operationSoftPath)
 		{
 			// 确保后缀名以"."开始
 			if (!suffixName.StartsWith("."))
@@ -351,7 +351,7 @@ namespace Ike.Framework
 		/// </summary>
 		/// <param name="suffixName">文件后缀</param>
 		/// <param name="keyName">注册表项名称</param>
-		public static void UnbindFileOpenMethod(string suffixName, string keyName)
+		public void UnbindFileOpenMethod(string suffixName, string keyName)
 		{
 			// 确保后缀名以"."开始
 			if (!suffixName.StartsWith("."))

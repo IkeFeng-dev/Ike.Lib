@@ -13,23 +13,43 @@ namespace Ike.Standard
 	{
 
 		/// <summary>
-		/// 对字符串进行填充或截断处理
+		/// 特殊字符集
 		/// </summary>
-		/// <param name="original">原始字符串</param>
-		/// <param name="paddingChar">用于填充的字符</param>
-		/// <param name="totalLength">目标长度</param>
-		/// <param name="padLeft"><see langword="true"/> =左侧填充，<see langword="false"/> =右侧填充</param>
-		/// <param name="overflowHandling">
-		///     溢出处理方式：<br/>
-		///     <see langword="1"/> = 从左侧截断（保留右侧字符）<br/>
-		///     <see langword="2"/> = 从右侧截断（保留左侧字符）<br/>
-		///     其余则全部保持原样不截断
-		/// </param>
-		/// <returns>处理后的字符串</returns>
-		/// <remarks>
-		/// [<see langword="2026年1月10日09:26:46" />]
-		/// </remarks>
-		public static string PadString(string original, char paddingChar, int totalLength, bool padLeft = false, int overflowHandling = 1)
+		public static readonly char[] SpecialCharacters = new char[] {
+				'£','¢','¡','฿','¿','$','¥','﹉','△','○','□',
+				'Ͱ','ͱ','Ͳ','ͳ','Ͷ','ͼ','ͽ','Ή', 'Ί','Ό','Ύ','Ώ','ΐ',
+				'Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ',
+				'Ā','ā','Ă','ă','Ą','ą','Ć','ć','Ĉ','ĉ','Ċ','ċ','Č','č','Ď','ď','Đ','đ','Ē','ē','Ĕ','ĕ','Ė','ė','Ę','ę','Ě','ě','Ĝ',
+				'ɐ','ɑ','ɒ','ɓ','ɔ','ɕ','ɖ','ɗ','ɘ','ə','ɚ','ɛ','ɜ','ɝ','ɞ','ɟ','ɠ','ɡ','ɢ','ɣ','ɤ','ɥ','ɦ','ɧ','ɨ',
+				'Ѐ','Ё','Ђ','Ѓ','Є','Ѕ','І','Ї','Ј','Љ','Њ','Ћ','Ќ','Ѝ','Ў','Џ','А','Б','В','Г','Д','Е','Ж','З',
+				'Ա','Բ','Գ','Դ','Ե','Զ','Է','Ը','Թ','Ժ','Ի','Լ','Խ','Ծ','Կ','Հ','Ձ','Ղ','Ճ','Մ','Յ','Ն','Շ','Ո','Չ','Պ',
+				'Ⴥ','ა','ბ','გ','დ','ე','ვ','ზ','თ','ი','კ','ლ','მ','ნ','ო','პ','ჟ','რ','ს','ტ','უ','ფ','ქ','ღ','ყ','შ','ჩ','ც','ძ','წ',
+				'Ꭰ','Ꭱ','Ꭲ','Ꭳ','Ꭴ','Ꭸ','Ꭹ','Ꭺ','Ꭻ','Ꭼ','Ꭽ','Ꭾ','Ꭿ','Ꮀ','Ꮁ',
+				'ᴥ','ᴦ','ᴧ','ᴨ','ᴩ','ᴪ','ᴫ','ᴬ','ᴭ','ᴮ','ᴯ','ᴰ','ᴱ','ᴲ','ᴳ','ᴴ','ᴵ','ᵃ','ᵄ','ᵅ','ᵆ','ᵇ','ᵈ','ᵉ','ᵊ','ᵋ','ᵌ','ᵢ','ᵣ','ᵤ','ᵥ','ᵦ','ᵧ','ᵨ','ᵩ','ᵪ',
+				'ἀ','ἁ','ἂ','ἃ','ἄ','ἅ','ἆ','ἇ','Ἀ','Ἁ','Ἂ','Ἃ',
+				'Ⲁ','ⲁ','Ⲃ','ⲃ','Ⲅ','ⲅ','Ⲉ','ⲉ','Ⲋ','ⲋ','Ⲍ','ⲍ','Ⲏ','ⲏ','Ⲑ','ⲑ','Ⲓ','ⲓ','Ⲕ','ⲕ'
+		};
+            
+        
+
+        /// <summary>
+        /// 对字符串进行填充或截断处理
+        /// </summary>
+        /// <param name="original">原始字符串</param>
+        /// <param name="paddingChar">用于填充的字符</param>
+        /// <param name="totalLength">目标长度</param>
+        /// <param name="padLeft"><see langword="true"/> =左侧填充，<see langword="false"/> =右侧填充</param>
+        /// <param name="overflowHandling">
+        ///     溢出处理方式：<br/>
+        ///     <see langword="1"/> = 从左侧截断（保留右侧字符）<br/>
+        ///     <see langword="2"/> = 从右侧截断（保留左侧字符）<br/>
+        ///     其余则全部保持原样不截断
+        /// </param>
+        /// <returns>处理后的字符串</returns>
+        /// <remarks>
+        /// [<see langword="2026年1月10日09:26:46" />]
+        /// </remarks>
+        public static string PadString(string original, char paddingChar, int totalLength, bool padLeft = false, int overflowHandling = 1)
 		{
 			if (original == null)
 			{

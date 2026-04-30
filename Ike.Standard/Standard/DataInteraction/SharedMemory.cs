@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if NETFRAMEWORK
+
+using System;
 using System.Collections.Generic;
 using System.IO.MemoryMappedFiles;
 using System.Text;
@@ -392,3 +394,4 @@ namespace Ike.Standard.DataInteraction
 
     }
 }
+#endif
