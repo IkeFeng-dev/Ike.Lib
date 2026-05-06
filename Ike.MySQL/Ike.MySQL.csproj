@@ -1,25 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName></AssemblyName>
+    <!-- 只保留支持的框架 -->
+    <TargetFrameworks>netstandard2.0;net48</TargetFrameworks>
     <RootNamespace>Ike</RootNamespace>
-    <Version>0.0.2</Version>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageId>Ike.MySQL</PackageId>
+    <AssemblyName>Ike.MySQL</AssemblyName>
+    <Version>0.0.3</Version>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
-    <DocumentationFile>obj\Release\netstandard2.0\Ike.MySQL.xml</DocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Title>MySQL 基础操作库</Title>
     <Authors>IkeFeng</Authors>
     <Description>MySQL 基础操作库</Description>
-    <Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
+    <Copyright>© 2026 IkeFeng. All rights reserved.</Copyright>
     <PackageIcon>ico.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>MySQL 基础操作库</PackageReleaseNotes>
+    <PackageReleaseNotes>
+     [2026年5月6日15:22:40]
+     一,新增批量插入方法
+    </PackageReleaseNotes>
     <PackageTags>MYSQL</PackageTags>
     <AssemblyVersion>0.0.0.2</AssemblyVersion>
     <FileVersion>0.0.0.2</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    
+    
+  </PropertyGroup>
+
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(TargetFramework)'=='net48'">
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -45,8 +60,9 @@
     </None>
   </ItemGroup>
 
+  <!-- 统一使用 MySQL 8.4.0 -->
   <ItemGroup>
     <PackageReference Include="MySql.Data" Version="8.4.0" />
   </ItemGroup>
-
+  
 </Project>

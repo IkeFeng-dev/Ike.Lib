@@ -12,10 +12,13 @@ namespace Ike.Standard
 	public static class Text
 	{
 
-		/// <summary>
-		/// 特殊字符集
-		/// </summary>
-		public static readonly char[] SpecialCharacters = new char[] {
+        /// <summary>
+        /// 特殊字符集
+        /// </summary>
+        /// <remarks>
+        /// [<see langword="2026年5月5日14:51:33" />]
+        /// </remarks>
+        public static readonly char[] SpecialCharacters = new char[] {
 				'£','¢','¡','฿','¿','$','¥','﹉','△','○','□',
 				'Ͱ','ͱ','Ͳ','ͳ','Ͷ','ͼ','ͽ','Ή', 'Ί','Ό','Ύ','Ώ','ΐ',
 				'Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ',

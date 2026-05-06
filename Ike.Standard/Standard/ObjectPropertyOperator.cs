@@ -15,6 +15,23 @@ namespace Ike.Standard.Func
     {
 
         /// <summary>
+        /// 判断数据类型是否为整数
+        /// </summary>
+        /// <param name="type">数据类型</param>
+        /// <returns></returns>
+        public static bool IsIntegerType(Type type)
+        {
+            return type == typeof(sbyte) ||
+                   type == typeof(byte) ||
+                   type == typeof(short) ||
+                   type == typeof(ushort) ||
+                   type == typeof(int) ||
+                   type == typeof(uint) ||
+                   type == typeof(long) ||
+                   type == typeof(ulong);
+        }
+
+        /// <summary>
         /// 比较两个对象的所有属性值是否相同
         /// </summary>
         /// <typeparam name="T">对象类型</typeparam>

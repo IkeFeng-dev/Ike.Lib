@@ -1,34 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DiffPlex;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
-using FluentFTP;
-using Iced.Intel;
 using Ike.Standard.Ini;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using SevenZip;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Common;
-using OpCodes = Mono.Cecil.Cil.OpCodes;
-using Ike.Standard.Ini;
-using System.Threading;
-using Ike.Standard.Func;
-using Ike.Standard;
 using Console = System.Console;
 
 namespace Test.Framework
@@ -120,7 +99,10 @@ namespace Test.Framework
             try
             {
 
-
+               int v = Ike.Standard.Cryption.XOREncryption(1234,2225);
+                int c = Ike.Standard.Cryption.XOREncryption(v, 2225);
+                byte f = 224;
+                var d = Ike.Standard.Cryption.XOREncryption(f, (double)112);
 
 
                 Ike.Standard.Console.WriteLine("=>OK", "#80c342");

@@ -764,9 +764,67 @@ namespace Ike.Standard
 		/// </remarks>
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool GetProcessTimes(IntPtr hProcess, out long lpCreationTime, out long lpExitTime, out long lpKernelTime, out long lpUserTime);
-	
-	
 		
-	
-	}
+		/// <summary>
+		/// 获取当前正在使用的电源方案<see cref="Guid"/>
+		/// </summary>
+		/// <param name="RootPowerKey">电源设置的根键，通常传入<see cref="IntPtr.Zero"/></param>
+		/// <param name="p_ActivePolicyGuid">用于接收当前激活的电源方案<see cref="Guid"/>的指针</param>
+		/// <returns>成功返回0，失败返回错误代码</returns>
+		/// <remarks>调用后需要释放<paramref name="p_ActivePolicyGuid"/>指向的内存</remarks>
+		[DllImport("PowrProf.dll")]
+		public static extern uint PowerGetActiveScheme(IntPtr RootPowerKey, ref IntPtr p_ActivePolicyGuid);
+
+		/// <summary>
+		/// 读取电源方案的名称
+		/// </summary>
+		/// <param name="RootPowerKey">电源设置的根键，通常传入<see cref="IntPtr.Zero"/></param>
+		/// <param name="SchemeGuid">要查询的电源方案<see cref="Guid"/></param>
+		/// <param name="SubGroupOfPowerSettingGuid">电源设置子组的<see cref="Guid"/>，获取方案名称时传入<see cref="IntPtr.Zero"/></param>
+		/// <param name="PowerSettingGuid">电源设置的<see cref="Guid"/>，获取方案名称时传入<see cref="IntPtr.Zero"/></param>
+		/// <param name="Buffer">接收名称的缓冲区指针</param>
+		/// <param name="BufferSize">缓冲区大小（传入时是最大大小，传出时是实际大小）</param>
+		/// <returns>成功返回0，缓冲区不足返回122，失败返回其他错误代码</returns>
+		/// <remarks>通常需要调用两次：第一次获取所需缓冲区大小，第二次获取实际名称</remarks>
+		[DllImport("PowrProf.dll")]
+		public static extern uint PowerReadFriendlyName(IntPtr RootPowerKey, ref Guid SchemeGuid, IntPtr SubGroupOfPowerSettingGuid, IntPtr PowerSettingGuid, IntPtr Buffer, ref UInt32 BufferSize);
+
+        /// <summary>
+        /// 获取文件或文件夹的图标和类型信息
+        /// </summary>
+        /// <param name="pszPath">文件路径、文件夹路径或文件扩展名（如".txt"）</param>
+        /// <param name="dwFileAttributes">文件属性标志，如FILE_ATTRIBUTE_NORMAL（0x80）表示普通文件</param>
+        /// <param name="psfi">接收图标和文件信息的SHFILEINFO结构体</param>
+        /// <param name="cbFileInfo">SHFILEINFO结构体的大小（字节）</param>
+        /// <param name="uFlags">指定要获取的信息类型的标志组合</param>
+        /// <returns>成功返回非零值，失败返回0</returns>
+        [DllImport("Shell32.dll", CharSet = CharSet.Auto)]
+        public static extern int SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        /// <summary>
+        /// 文件信息结构体，用于获取图标和文件类型信息
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public struct SHFILEINFO
+        {
+            /// <summary>图标句柄（hIcon）</summary>
+            public IntPtr hIcon;
+
+            /// <summary>系统映像列表中的图标索引（iIcon）</summary>
+            public int iIcon;
+
+            /// <summary>文件属性标志（dwAttributes）</summary>
+            public uint dwAttributes;
+
+            /// <summary>文件的显示名称（szDisplayName）</summary>
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+
+            /// <summary>文件类型描述（szTypeName）</summary>
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+
+
+    }
 }

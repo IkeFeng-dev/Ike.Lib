@@ -22,8 +22,9 @@
 		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
 		<Title>C# 通用方法库</Title>
 		<PackageReleaseNotes>
-			[2026年4月27日20:29:54]
-			一,Ike.Standard.Ini.IniConfigManager类新增实现IDisposable接口
+			[2026年5月6日16:02:20]
+			一,新增Ike.Framework.Forms多个操作类
+			二,优化多个类
 		</PackageReleaseNotes>
 		<Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
 		<PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>

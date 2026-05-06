@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ike.Standard.Func;
+using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -11,16 +12,29 @@ namespace Ike.Standard
 	/// </summary>
 	public class Cryption
 	{
-		/// <summary>
-		/// 异或数字,使用同一个方法进行加解密
-		/// </summary>
-		/// <param name="value">加密/解密值</param>
-		/// <param name="key">加密/解密<see  langword="key"></see></param>
-		/// <returns></returns>
-		public static long XOREncryption(long value, long key)
-		{
-			return value ^ key;
-		}
+
+        /// <summary>
+        /// 异或加密解密整数类型
+        /// </summary>
+        /// <typeparam name="T">只能是整数类型</typeparam>
+        /// <param name="number">加解密整数内容</param>
+        /// <param name="key">加解密秘钥</param>
+        /// <returns></returns>
+        public static T XOREncryption<T>(T number,T key) where T : unmanaged, IConvertible
+        {
+			if (!ObjectPropertyOperator.IsIntegerType(typeof(T)))
+			{
+				throw new ArgumentException("T 不是整数类型");
+			}
+            // 转换为 long 进行异或操作
+            long value = System.Convert.ToInt64(number);
+            long k = System.Convert.ToInt64(key);
+            long result = value ^ k;
+
+            // 转换回原始类型
+            return (T)System.Convert.ChangeType(result, typeof(T));
+        }
+
 
 		/// <summary>
 		/// 生成随机种子

@@ -1,4 +1,7 @@
 ﻿using System;
+using static Ike.Standard.WinAPI;
+using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Ike.Standard
 {
@@ -7,6 +10,65 @@ namespace Ike.Standard
     /// </summary>
     public static class WinMethod
     {
+
+#if NETFRAMEWORK
+        /// <summary>
+        /// 获取文件或扩展名关联的图标
+        /// </summary>
+        /// <param name="fileNameOrSuffixName">文件路径或后缀名</param>
+        /// <param name="iconSizeIsMax">获取的大小选择,<see langword="true"/>表示大图标,反之返回小图标</param>
+        /// <returns></returns>
+        public static Icon GetFileAssociatedIcon(string fileNameOrSuffixName, bool iconSizeIsMax)
+        {
+            //272为小图标,273为大图标
+            uint siz = 272;
+            if (iconSizeIsMax)
+            {
+                siz = 273;
+            }
+            SHFILEINFO fi = new SHFILEINFO();
+            Icon ic = null;
+            int iTotal = (int)SHGetFileInfo(fileNameOrSuffixName, 100, ref fi, 0, siz);
+            if (iTotal > 0)
+            {
+                ic = Icon.FromHandle(fi.hIcon);
+            }
+            return ic;
+        }
+
+#endif
+
+
+        /// <summary>
+        /// 获取当前使用的电源方案
+        /// </summary>
+        /// <returns></returns>
+        public static string GetPowerScheme()
+        {
+            string powerSchemeName = "";
+            var p_ActivePolicyGuid = IntPtr.Zero;
+            var aa = PowerGetActiveScheme(IntPtr.Zero, ref p_ActivePolicyGuid);
+            if (aa == 0)
+            {
+                Guid guid = (Guid)Marshal.PtrToStructure(p_ActivePolicyGuid, typeof(Guid));
+                uint sizeName = 1024;
+                IntPtr pSizeName = Marshal.AllocHGlobal((int)sizeName);
+                try
+                {
+                    PowerReadFriendlyName(IntPtr.Zero, ref guid, IntPtr.Zero, IntPtr.Zero, pSizeName, ref sizeName);
+                    powerSchemeName = Marshal.PtrToStringUni(pSizeName);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(pSizeName);
+                }
+            }
+            return powerSchemeName;
+        }
+
+
+
+
         /// <summary>
         /// 查找指定窗体句柄
         /// </summary>
