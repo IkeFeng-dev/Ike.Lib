@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -179,21 +180,99 @@ namespace Ike.Framework
             {
                 object value = item.MapPropertyInfo.GetValue(Data);
 
-                // 检查是否需要跨线程调用
-                if (item.Control.InvokeRequired)
+                // 获取控件属性需要的类型
+                Type targetType = item.ControlpPropertyInfo.PropertyType;
+
+                // 如果已经是目标类型，直接赋值
+                if (value != null && targetType.IsAssignableFrom(value.GetType()))
                 {
-                    // 在 UI 线程上执行设置操作
-                    item.Control.Invoke(new Action(() =>
-                    {
-                        item.ControlpPropertyInfo.SetValue(item.Control, value);
-                    }));
+                    SetPropertyValue(item.Control, item.ControlpPropertyInfo, value);
+                    continue;
                 }
-                else
+
+                // 转换值到目标类型
+                object convertedValue = ConvertValueToType(value, targetType);
+
+                // 设置转换后的值
+                SetPropertyValue(item.Control, item.ControlpPropertyInfo, convertedValue);
+            }
+        }
+
+
+        /// <summary>
+        /// 调用UI线程设置控件属性值
+        /// </summary>
+        /// <param name="control">控件</param>
+        /// <param name="property">属性</param>
+        /// <param name="value">值</param>
+        private void SetPropertyValue(Control control, PropertyInfo property, object value)
+        {
+            if (control.InvokeRequired)
+            {
+                control.Invoke(new Action(() => property.SetValue(control, value)));
+            }
+            else
+            {
+                property.SetValue(control, value);
+            }
+        }
+
+
+        /// <summary>
+        /// 转换值类型
+        /// </summary>
+        /// <param name="value">值</param>
+        /// <param name="targetType">目标类型</param>
+        /// <returns>转换后的值</returns>
+        private object ConvertValueToType(object value, Type targetType)
+        {
+            if (value == null)
+            {
+                // 处理null值
+                if (targetType.IsValueType && !IsNullableType(targetType))
                 {
-                    // 如果已经在 UI 线程，直接设置
-                    item.ControlpPropertyInfo.SetValue(item.Control, value);
+                    // 值类型的默认值
+                    return Activator.CreateInstance(targetType); 
+                }
+                return null;
+            }
+
+            // 特殊处理：字符串类型
+            if (targetType == typeof(string))
+            {
+                return value.ToString();
+            }
+
+            // 处理可空类型
+            if (IsNullableType(targetType))
+            {
+                var underlyingType = Nullable.GetUnderlyingType(targetType);
+                if (underlyingType != null)
+                {
+                    // 如果值是空字符串，返回null
+                    if (value is string strValue && string.IsNullOrEmpty(strValue))
+                    {
+                        return null;
+                    }
+
+                    // 尝试转换到可空类型的底层类型
+                    return Convert.ChangeType(value, underlyingType);
                 }
             }
+
+            // 尝试通用的类型转换（这里会抛出异常如果转换失败）
+            return Convert.ChangeType(value, targetType);
+        }
+
+
+        /// <summary>
+        /// 判断可空类型
+        /// </summary>
+        /// <param name="type">类型</param>
+        /// <returns>返回是否为可空类型</returns>
+        private bool IsNullableType(Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
         }
 
 
@@ -206,32 +285,111 @@ namespace Ike.Framework
         {
             foreach (var item in maps)
             {
-                if (ReferenceEquals(control, item.Control))
+                if (!ReferenceEquals(control, item.Control))
+                    continue;
+
+                object controlValue = GetControlValue(item);
+
+                if (controlValue == null)
                 {
-                    object value = string.Empty;
-                    // 检查是否需要跨线程调用
-                    if (item.Control.InvokeRequired)
+                    // 根据目标属性类型处理null值
+                    if (item.MapPropertyInfo.PropertyType.IsValueType && !IsNullableType(item.MapPropertyInfo.PropertyType))
                     {
-                        // 在 UI 线程上执行设置操作
-                        item.Control.Invoke(new Action(() =>
-                        {
-                            value = item.ControlpPropertyInfo.GetValue(item.Control);
-                        }));
+                        // 对于非可空值类型，使用默认值
+                        controlValue = Activator.CreateInstance(item.MapPropertyInfo.PropertyType);
                     }
-                    else
-                    {
-                        // 如果已经在 UI 线程，直接设置
-                        value = item.ControlpPropertyInfo.GetValue(item.Control);
-                    }
-                    if (value == null)
-                    {
-                        throw new Exception($"获取控件属性值'{item.ControlpPropertyInfo.Name}'为null");
-                    }
-                    item.MapPropertyInfo.SetValue(Data, value);
-                    return;
+                }
+                else
+                {
+                    // 如果需要类型转换
+                    controlValue = ConvertValueToPropertyType(controlValue, item.MapPropertyInfo.PropertyType);
                 }
 
+                item.MapPropertyInfo.SetValue(Data, controlValue);
+                return;
             }
+        }
+
+
+        /// <summary>
+        /// 获取控件属性的值,处理跨线程调用
+        /// </summary>
+        /// <param name="item">结构对象</param>
+        /// <returns>获取的数据</returns>
+        private object GetControlValue(IniMapStructure item)
+        {
+            object value = null;
+
+            if (item.Control.InvokeRequired)
+            {
+                item.Control.Invoke(new Action(() =>
+                {
+                    value = item.ControlpPropertyInfo.GetValue(item.Control);
+                }));
+            }
+            else
+            {
+                value = item.ControlpPropertyInfo.GetValue(item.Control);
+            }
+
+            return value;
+        }
+
+
+
+        /// <summary>
+        /// 将值转换为数据属性的类型
+        /// </summary>
+        /// <param name="value">值</param>
+        /// <param name="targetType">目标类型</param>
+        /// <returns>转换后的值</returns>
+        /// <exception cref="InvalidCastException"></exception>
+        private object ConvertValueToPropertyType(object value, Type targetType)
+        {
+            if (value == null)
+                return null;
+
+            Type valueType = value.GetType();
+
+            // 如果类型兼容，直接返回
+            if (targetType.IsAssignableFrom(valueType))
+                return value;
+
+            // 特殊处理：字符串到其他类型
+            if (value is string strValue)
+            {
+                // 处理空字符串
+                if (string.IsNullOrEmpty(strValue))
+                {
+                    if (IsNullableType(targetType))
+                        return null;
+
+                    if (targetType == typeof(string))
+                        return string.Empty;
+
+                    if (targetType.IsValueType)
+                        throw new InvalidCastException($"无法将空字符串转换为值类型: {targetType.Name}");
+                }
+                // 尝试使用TypeConverter转换
+                var converter = TypeDescriptor.GetConverter(targetType);
+                if (converter.CanConvertFrom(typeof(string)))
+                {
+                    return converter.ConvertFrom(strValue);
+                }
+            }
+
+            // 处理可空类型
+            if (IsNullableType(targetType))
+            {
+                Type underlyingType = Nullable.GetUnderlyingType(targetType);
+                if (underlyingType != null)
+                {
+                    object innerValue = Convert.ChangeType(value, underlyingType);
+                    return Activator.CreateInstance(targetType, innerValue);
+                }
+            }
+            // 通用转换
+            return Convert.ChangeType(value, targetType);
         }
 
 

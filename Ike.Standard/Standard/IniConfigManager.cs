@@ -1,5 +1,4 @@
-﻿using Ike.Standard.Func;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -530,6 +529,14 @@ namespace Ike.Standard.Ini
         public void Save(T config)
         {
             debouncer.TriggerDebouncer();
+            if (_filePath.Split('\\').Length > 1)
+            { 
+               string dir = Path.GetDirectoryName(_filePath);
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+            }
             File.WriteAllText(_filePath, AnalyseData(config), encoding);
         }
 

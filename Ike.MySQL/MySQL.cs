@@ -950,9 +950,9 @@ namespace Ike
         }
 
         /// <summary>
-        /// 获取指定表的存储引擎
+        /// 获取指定表的存储引擎 
         /// </summary>
-        /// <param name="tableName">表名</param>
+        /// <param name="tableName">表名 </param>
         /// <returns>存储引擎</returns>
         public string GetTableEngine(string tableName)
         {
@@ -1002,12 +1002,9 @@ namespace Ike
 
 
         /// <summary>
-        /// 类结构集合数据批量插入到数据库
-        /// </summary>
-        /// <typeparam name="T">数据类型</typeparam>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnTypeMap">
-        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 类结构集合数据批量插入到数据库<br/><br/><br/><br/>
+        /// <example>
+        /// <paramref name="columnTypeMap"/>参数的说明如下:<br/><br/>
         /// 
         /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
         /// 示例："name", "age", "email", "created_time"<br/><br/>
@@ -1026,7 +1023,6 @@ namespace Ike
         /// 【使用示例】：<br/><br/>
         /// 
         /// 1. 映射实体属性到数据库字段：<br/>
-        /// <code>
         /// <see langword=" var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
         /// <see langword=" {"/><br/>
         /// <see langword="     { &quot;name&quot;, typeof(Person).GetProperty(&quot;Name&quot;) },"/><br/>
@@ -1035,10 +1031,9 @@ namespace Ike
         /// <see langword="     { &quot;status&quot;, &quot;active&quot; },"/><br/>
         /// <see langword="     { &quot;created_time&quot;, DateTime.Now }"/><br/>
         /// <see langword=" };"/><br/>
-        /// </code><br/><br/>
+        /// <br/><br/>
         /// 
         /// 2. 混合使用反射和常量值：<br/>
-        /// <code>
         /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
         /// <see langword="{"/><br/>
         /// <see langword="    { &quot;user_name&quot;, typeof(User).GetProperty(&quot;UserName&quot;) },"/><br/>
@@ -1048,16 +1043,18 @@ namespace Ike
         /// <see langword="    { &quot;create_time&quot;, DateTime.Now }"/><br/>
         /// <see langword="};"/><br/>
         /// 
-        /// </code><br/><br/>
+        /// <br/><br/>
         /// 3. 使用 <see cref="FieldInfo"/>（适用于字段而非属性）：<br/>
-        /// <code>
         /// <see langword="var columnMap = new Dictionary&lt;string, object&gt;"/><br/>
         /// <see langword="{"/><br/>
         /// <see langword="    { &quot;name&quot;, typeof(Person).GetField(&quot;name&quot;) },"/><br/>
         /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
         /// <see langword="};"/><br/>
-        /// </code>
-        /// </param>
+        /// </example>
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">数据库字段与数据类型的映射字典</param>
         /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
         /// <returns>受影响的行数</returns>
         /// <exception cref="ArgumentNullException"></exception>
@@ -1122,12 +1119,8 @@ namespace Ike
 
 
         /// <summary>
-        /// 异步执行类结构集合数据批量插入到数据库
-        /// </summary>
-        /// <typeparam name="T">数据类型</typeparam>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnTypeMap">
-        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 异步执行类结构集合数据批量插入到数据库<br/><br/><br/><br/>
+        /// <paramref name="columnTypeMap"/>参数的说明如下:<br/><br/>
         /// 
         /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
         /// 示例："name", "age", "email", "created_time"<br/><br/>
@@ -1177,6 +1170,11 @@ namespace Ike
         /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
         /// <see langword="};"/><br/>
         /// </code>
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典
         /// </param>
         /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
         /// <returns>受影响的行数</returns>
@@ -1242,12 +1240,8 @@ namespace Ike
 
 
         /// <summary>
-        /// 类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入
-        /// </summary>
-        /// <typeparam name="T">数据类型</typeparam>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnTypeMap">
-        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入<br/><br/><br/><br/>
+        /// <paramref name="columnTypeMap"/>参数的说明如下:<br/><br/>
         /// 
         /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
         /// 示例："name", "age", "email", "created_time"<br/><br/>
@@ -1297,6 +1291,11 @@ namespace Ike
         /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
         /// <see langword="};"/><br/>
         /// </code>
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典
         /// </param>
         /// <param name="datas">数据集合</param>
         /// <returns>受影响的行数</returns>
@@ -1356,14 +1355,11 @@ namespace Ike
         }
 
 
-        
+
         /// <summary>
-        /// 异步执行类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入
-        /// </summary>
-        /// <typeparam name="T">数据类型</typeparam>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnTypeMap">
-        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/>
+        /// 异步执行类结构集合数据批量插入或更新到数据库,数据结构中需要有对应主键才能更新,否则只会将插入<br/><br/><br/><br/>
+        /// <paramref name="columnTypeMap"/>参数的说明如下:<br/><br/>
+        /// <example>
         /// 
         /// 【键 (<see cref="string"/>)】：数据库实际字段名<br/>
         /// 示例："name", "age", "email", "created_time"<br/><br/>
@@ -1413,7 +1409,12 @@ namespace Ike
         /// <see langword="    { &quot;age&quot;, typeof(Person).GetField(&quot;age&quot;) }"/><br/>
         /// <see langword="};"/><br/>
         /// </code>
-        /// </param>
+        /// </example>
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">
+        /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/></param>
         /// <param name="datas">数据集合</param>
         /// <returns>受影响的行数</returns>
         public async Task<int> BatchUpsertAsync<T>(string tableName,Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class

@@ -35,12 +35,20 @@ namespace FrameworkUI
             iniMap = new Ike.Framework.IniMap<DataStruct>(@"F:\Desktop\temp.ini", true);
             //iniMap.Binding(textBox1,nameof(TextBox.Text),nameof(DataStruct.Name), nameof(TextChanged));
             //iniMap.Binding(checkBox1,nameof(CheckBox.Checked), nameof(DataStruct.Select), nameof(CheckBox.CheckedChanged));
-             iniMap.Binding(textBox1,nameof(TextBox.Text),nameof(DataStruct.Name), null);
-            iniMap.Binding(checkBox1,nameof(CheckBox.Checked), nameof(DataStruct.Select), null);
+             iniMap.Binding(textBox1,nameof(TextBox.Text),nameof(DataStruct.Name), nameof(TextChanged));
+            iniMap.Binding(checkBox1,nameof(CheckBox.Checked), nameof(DataStruct.Select), nameof(CheckBox.CheckedChanged));
             iniMap.Binding(listBox1, nameof(ListBox.DataSource), nameof(DataStruct.Items), null);
+            iniMap.Binding(textBox2, nameof(TextBox.Text), nameof(DataStruct.Port), nameof(TextChanged));
 
 
-            
+
+            Ike.MySQL mysql = new Ike.MySQL("10.62.201.200", "root", "123456");
+
+
+          
+
+
+            //Ike.Standard.Ini.IniConfigManager<DataStruct> iniConfig = new Ike.Standard.Ini.IniConfigManager<DataStruct>()
 
             //Dictionary<string,Type> keyValues = new Dictionary<string, Type>()
             //{
@@ -74,6 +82,9 @@ namespace FrameworkUI
         public string Name { get; set; }
 
         public bool Select { get; set; }
+
+
+        public int Port { get; set; }
 
         public string[] Items { get; set; }
 

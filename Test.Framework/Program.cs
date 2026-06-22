@@ -99,10 +99,10 @@ namespace Test.Framework
             try
             {
 
-               int v = Ike.Standard.Cryption.XOREncryption(1234,2225);
-                int c = Ike.Standard.Cryption.XOREncryption(v, 2225);
-                byte f = 224;
-                var d = Ike.Standard.Cryption.XOREncryption(f, (double)112);
+               
+
+
+
 
 
                 Ike.Standard.Console.WriteLine("=>OK", "#80c342");
