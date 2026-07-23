@@ -15,7 +15,7 @@ namespace Ike.Standard
     /// <summary>
     /// FTP 操作类
     /// </summary>
-    public class Ftp
+    public partial class Ftp
     {
         string ftpServerIP;
         string ftpUserID;
@@ -23,33 +23,7 @@ namespace Ike.Standard
         string currentDirectory = "/";
         FtpWebRequest reqFTP;
 
-        /// <summary>
-        /// 资源信息结构
-        /// </summary>
-        public struct ResponseInfo
-        {
-            /// <summary>
-            /// 是否文件
-            /// </summary>
-            public bool IsFile;
-            /// <summary>
-            /// 权限
-            /// </summary>
-            public string Limits;
-            /// <summary>
-            /// 大小
-            /// </summary>
-            public long Size;
-            /// <summary>
-            /// 修改时间
-            /// </summary>
-            public DateTime Modification;
-            /// <summary>
-            /// 名称
-            /// </summary>
-            public string Name;
-        }
-
+        
         /// <summary>
         /// 初始化
         /// </summary>
@@ -873,9 +847,6 @@ namespace Ike.Standard
             }
         }
 
-
-
-        //各方法的当前目录下操作逻辑
 
     }
 }

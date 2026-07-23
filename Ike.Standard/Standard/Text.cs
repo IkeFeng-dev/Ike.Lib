@@ -12,13 +12,13 @@ namespace Ike.Standard
 	public static class Text
 	{
 
-        /// <summary>
-        /// 特殊字符集
-        /// </summary>
-        /// <remarks>
-        /// [<see langword="2026年5月5日14:51:33" />]
-        /// </remarks>
-        public static readonly char[] SpecialCharacters = new char[] {
+		/// <summary>
+		/// 特殊字符集
+		/// </summary>
+		/// <remarks>
+		/// [<see langword="2026年5月5日14:51:33" />]
+		/// </remarks>
+		public static readonly char[] SpecialCharacters = new char[] {
 				'£','¢','¡','฿','¿','$','¥','﹉','△','○','□',
 				'Ͱ','ͱ','Ͳ','ͳ','Ͷ','ͼ','ͽ','Ή', 'Ί','Ό','Ύ','Ώ','ΐ',
 				'Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ',
@@ -32,27 +32,27 @@ namespace Ike.Standard
 				'ἀ','ἁ','ἂ','ἃ','ἄ','ἅ','ἆ','ἇ','Ἀ','Ἁ','Ἂ','Ἃ',
 				'Ⲁ','ⲁ','Ⲃ','ⲃ','Ⲅ','ⲅ','Ⲉ','ⲉ','Ⲋ','ⲋ','Ⲍ','ⲍ','Ⲏ','ⲏ','Ⲑ','ⲑ','Ⲓ','ⲓ','Ⲕ','ⲕ'
 		};
-            
-        
 
-        /// <summary>
-        /// 对字符串进行填充或截断处理
-        /// </summary>
-        /// <param name="original">原始字符串</param>
-        /// <param name="paddingChar">用于填充的字符</param>
-        /// <param name="totalLength">目标长度</param>
-        /// <param name="padLeft"><see langword="true"/> =左侧填充，<see langword="false"/> =右侧填充</param>
-        /// <param name="overflowHandling">
-        ///     溢出处理方式：<br/>
-        ///     <see langword="1"/> = 从左侧截断（保留右侧字符）<br/>
-        ///     <see langword="2"/> = 从右侧截断（保留左侧字符）<br/>
-        ///     其余则全部保持原样不截断
-        /// </param>
-        /// <returns>处理后的字符串</returns>
-        /// <remarks>
-        /// [<see langword="2026年1月10日09:26:46" />]
-        /// </remarks>
-        public static string PadString(string original, char paddingChar, int totalLength, bool padLeft = false, int overflowHandling = 1)
+
+
+		/// <summary>
+		/// 对字符串进行填充或截断处理
+		/// </summary>
+		/// <param name="original">原始字符串</param>
+		/// <param name="paddingChar">用于填充的字符</param>
+		/// <param name="totalLength">目标长度</param>
+		/// <param name="padLeft"><see langword="true"/> =左侧填充，<see langword="false"/> =右侧填充</param>
+		/// <param name="overflowHandling">
+		///     溢出处理方式：<br/>
+		///     <see langword="1"/> = 从左侧截断（保留右侧字符）<br/>
+		///     <see langword="2"/> = 从右侧截断（保留左侧字符）<br/>
+		///     其余则全部保持原样不截断
+		/// </param>
+		/// <returns>处理后的字符串</returns>
+		/// <remarks>
+		/// [<see langword="2026年1月10日09:26:46" />]
+		/// </remarks>
+		public static string PadString(string original, char paddingChar, int totalLength, bool padLeft = false, int overflowHandling = 1)
 		{
 			if (original == null)
 			{
@@ -269,7 +269,7 @@ namespace Ike.Standard
 		/// <param name="input">输入字符</param>
 		/// <param name="chinesePunctuation">是否检查包含中文状态的标点符号</param>
 		/// <returns></returns>
-		public static bool ContainsChinese(string input,bool chinesePunctuation)
+		public static bool ContainsChinese(string input, bool chinesePunctuation)
 		{
 			foreach (char c in input)
 			{
@@ -281,13 +281,59 @@ namespace Ike.Standard
 						return true;
 					}
 				}
-				else if(checkChinese)
+				else if (checkChinese)
 				{
 					return true;
 				}
 			}
 			return false;
 		}
+
+
+		/// <summary>
+		/// 提取字符串中的纯数字
+		/// </summary>
+		/// <param name="text">要提取的原字符串</param>
+		/// <returns>提取内容</returns>
+		public static string ExtractNumber(string text)
+		{
+			return Regex.Replace(text, @"[^0-9]+", "");
+		}
+
+
+		/// <summary>
+		/// 提取字符串中的小写字母
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		public static string ExtractLowerLetter(string text)
+		{
+			return Regex.Replace(text, @"[^a-z]+", "");
+		}
+
+
+		/// <summary>
+		/// 提取字符串中的大写字母
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		public static string ExtractUpperLetter(string text)
+		{
+			return Regex.Replace(text, @"[^A-Z]+", "");
+		}
+
+
+		/// <summary>
+		/// 提取字符串中的字母
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		public static string ExtractLetter(string text)
+		{
+			return Regex.Replace(text, @"[^A-Za-z]+", "");
+		}
+
+
 
 	}
 }

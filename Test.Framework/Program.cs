@@ -99,13 +99,15 @@ namespace Test.Framework
             try
             {
 
-               
+               Ike.Standard.MouseHook mouseHook = new Ike.Standard.MouseHook();
 
+                mouseHook.InstallHook();
 
+                mouseHook.MouseEvents += (key, msg) =>
+                {
+                    Console.WriteLine($"{key} => {msg.pt} | {msg.time} | {msg.mouseData} | {msg.flags} | {msg.dwExtraInfo}");
+                };
 
-
-
-                Ike.Standard.Console.WriteLine("=>OK", "#80c342");
                 Console.ReadLine();
 
 

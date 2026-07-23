@@ -3,16 +3,96 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Ike.Standard.Func
+namespace Ike.Standard
 {
     /// <summary>
-    /// 对象属性操作类
+    /// 对象属性相关操作
     /// </summary>
     /// <remarks>
     /// [<see langword="2025年12月26日10:11:17" />]
     /// </remarks>
-    public static class ObjectPropertyOperator
+    public static partial class ObjectProperty
     {
+
+        /// <summary>
+        /// 获取异常行号
+        /// </summary>
+        /// <param name="exception">异常信息</param>
+        /// <returns></returns>
+        public static int GetExceptionLine(Exception exception)
+        {
+            var st = new System.Diagnostics.StackTrace(exception, true);
+            var frame = st.GetFrame(st.FrameCount - 1);
+            return frame.GetFileLineNumber();
+        }
+
+
+        /// <summary>
+        /// 获取函数的信息
+        /// </summary>
+        /// <returns></returns>
+        public static LibraryInfo GetMethodInfo()
+        {
+            System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace(true);
+            return GetMethodInfo(stackTrace.GetFrame(1).GetMethod());
+        }
+
+
+        /// <summary>
+        /// 获取指定调用链函数的信息
+        /// </summary>
+        /// <param name="frame">调用链<br/>
+        /// <see langword="0"/>表示函数本身<br/>
+        /// <see langword="1"/>表示表用处<br/>
+        /// <see langword="2"/>表示调用处上一层<br/>
+        /// 以此类推 </param>
+        /// <returns></returns>
+        public static LibraryInfo GetMethodInfo(int frame = 1)
+        {
+            System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace(true);
+            return GetMethodInfo(stackTrace.GetFrame(frame).GetMethod());
+        }
+
+
+        /// <summary>
+        /// 获取函数的信息
+        /// </summary>
+        /// <param name="methodHandle">方法内部元数据表示的句柄[通过GetMethodInfo()的无参重载方法可获取到方法句柄]</param>
+        /// <returns></returns>
+        public static LibraryInfo GetMethodInfo(RuntimeMethodHandle methodHandle)
+        {
+            return GetMethodInfo(MethodBase.GetMethodFromHandle(methodHandle));
+        }
+
+        /// <summary>
+        /// 获取函数的信息
+        /// </summary>
+        /// <param name="methodBase">提供有关方法和构造函数的信息</param>
+        /// <returns></returns>
+        public static LibraryInfo GetMethodInfo(MethodBase methodBase)
+        {
+            LibraryInfo libraryInfo = new LibraryInfo
+            {
+                IsFinal = methodBase.IsFinal,
+                IsStatic = methodBase.IsStatic,
+                IsPublic = methodBase.IsPublic,
+                IsPrivate = methodBase.IsPrivate,
+                IsIsVirtual = methodBase.IsVirtual,
+                MethodName = methodBase.Name,
+                IsConstructor = methodBase.IsConstructor,
+                MethodHandle = methodBase.MethodHandle,
+                MetadataToken = methodBase.MetadataToken,
+                ClassName = methodBase.DeclaringType.Name,
+                ClassFullName = methodBase.DeclaringType.FullName,
+                NamespaceName = methodBase.DeclaringType.Namespace,
+                Base = methodBase
+            };
+            return libraryInfo;
+        }
+
+
+
+
 
         /// <summary>
         /// 判断数据类型是否为整数
@@ -193,6 +273,113 @@ namespace Ike.Standard.Func
             return realTargetType.IsAssignableFrom(realSourceType) || (realTargetType.IsPrimitive && realSourceType.IsPrimitive);
         }
 
+
+
+
+        /// <summary>
+        /// 返回表示所提供标志中显式设置的枚举值的字符串数组
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <param name="enumValue">一个或多个枚举值的组合[使用位运算功能,定义为标志位枚举，并显式赋值]</param>
+        /// <returns>一个字符串数组，对应于显式设置的枚举值</returns>
+        /// <exception cref="ArgumentException">如果T不是枚举类型</exception>
+        public static string[] GetEnumFlagsAsStringArray<T>(T enumValue) where T : Enum
+        {
+            // 确保输入是一个有效的枚举类型
+            if (!typeof(T).IsEnum)
+                throw new ArgumentException("T must be an enum type.");
+
+            // 创建一个列表存储显式设置的枚举值
+            var resultList = new List<string>();
+
+            // 遍历枚举的所有值
+            foreach (T value in Enum.GetValues(typeof(T)))
+            {
+                // 转换为数值进行位运算
+                var intValue = System.Convert.ToInt64(value);
+                var intEnumValue = System.Convert.ToInt64(enumValue);
+
+                // 检查是否显式设置了当前值
+                if ((intEnumValue & intValue) == intValue && intValue != 0)
+                {
+                    resultList.Add(value.ToString());
+                }
+            }
+
+            return resultList.ToArray();
+        }
+
+
+        /// <summary>
+        /// 返回表示所提供标志中显式设置的枚举值的枚举数组
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <param name="enumValue">一个或多个枚举值的组合[使用位运算功能,定义为标志位枚举，并显式赋值]</param>
+        /// <returns>一个枚举数组，对应于显式设置的枚举值</returns>
+        /// <exception cref="ArgumentException">如果T不是枚举类型</exception>
+        public static T[] GetEnumFlagsAsEnumArray<T>(T enumValue) where T : Enum
+        {
+            // 确保输入是一个有效的枚举类型
+            if (!typeof(T).IsEnum)
+                throw new ArgumentException("T must be an enum type.");
+
+            // 创建一个列表存储显式设置的枚举值
+            var resultList = new List<T>();
+
+            // 遍历枚举的所有值
+            foreach (T value in Enum.GetValues(typeof(T)))
+            {
+                // 转换为数值进行位运算
+                var intValue = System.Convert.ToInt64(value);
+                var intEnumValue = System.Convert.ToInt64(enumValue);
+
+                // 检查是否显式设置了当前值
+                if ((intEnumValue & intValue) == intValue && intValue != 0)
+                {
+                    resultList.Add(value);
+                }
+            }
+
+            return resultList.ToArray();
+        }
+
+
+        /// <summary>
+        /// 获取指定枚举类型下所有枚举值
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <returns>枚举值数组</returns>
+        /// <exception cref="ArgumentException">当T不是枚举类型时抛出</exception>
+        /// <remarks>
+        /// [<see langword="2025年12月25日10:30:58" />]
+        /// </remarks>
+        public static T[] GetAllEnumValues<T>() where T : Enum
+        {
+            if (!typeof(T).IsEnum)
+            {
+                throw new ArgumentException("T must be an enumerated type");
+            }
+            return (T[])Enum.GetValues(typeof(T));
+        }
+
+
+        /// <summary>
+        /// 获取指定枚举类型下所有枚举值的字符串表示形式
+        /// </summary>
+        /// <typeparam name="T">枚举类型</typeparam>
+        /// <returns>枚举值字符串数组</returns>
+        /// <exception cref="ArgumentException">当T不是枚举类型时抛出</exception>
+        /// <remarks>
+        /// [<see langword="2025年12月25日10:31:03" />]
+        /// </remarks>
+        public static string[] GetAllEnumValuesToString<T>() where T : Enum
+        {
+            if (!typeof(T).IsEnum)
+            {
+                throw new ArgumentException("T must be an enumerated type");
+            }
+            return Enum.GetNames(typeof(T));
+        }
 
     }
 }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace Ike.Framework
+namespace Ike.Standard
 {
 
     /// <summary>
@@ -78,7 +78,7 @@ namespace Ike.Framework
         /// <summary>
         /// 配置当操作对象
         /// </summary>
-        private readonly Standard.Ini.IniConfigManager<T> iniConfig;
+        private readonly IniConfigManager<T> iniConfig;
         /// <summary>
         /// 数据映射对象关联
         /// </summary>
@@ -90,7 +90,7 @@ namespace Ike.Framework
         /// <summary>
         /// 获取配置档操作对象实例
         /// </summary>
-        public Standard.Ini.IniConfigManager<T> IniConfigManager { get { return iniConfig; } }
+        public IniConfigManager<T> IniConfigManager { get { return iniConfig; } }
         /// <summary>
         /// 构造映射操作对象
         /// </summary>
@@ -99,7 +99,7 @@ namespace Ike.Framework
         public IniMap(string iniPath, bool fileAutoUpdate)
         {
             maps = new List<IniMapStructure>();
-            iniConfig = new Standard.Ini.IniConfigManager<T>(iniPath, fileAutoUpdate);
+            iniConfig = new IniConfigManager<T>(iniPath, fileAutoUpdate);
             if (!File.Exists(iniPath))
             { 
                iniConfig.Save();
@@ -256,12 +256,12 @@ namespace Ike.Framework
                     }
 
                     // 尝试转换到可空类型的底层类型
-                    return Convert.ChangeType(value, underlyingType);
+                    return System.Convert.ChangeType(value, underlyingType);
                 }
             }
 
             // 尝试通用的类型转换（这里会抛出异常如果转换失败）
-            return Convert.ChangeType(value, targetType);
+            return System.Convert.ChangeType(value, targetType);
         }
 
 
@@ -384,12 +384,12 @@ namespace Ike.Framework
                 Type underlyingType = Nullable.GetUnderlyingType(targetType);
                 if (underlyingType != null)
                 {
-                    object innerValue = Convert.ChangeType(value, underlyingType);
+                    object innerValue = System.Convert.ChangeType(value, underlyingType);
                     return Activator.CreateInstance(targetType, innerValue);
                 }
             }
             // 通用转换
-            return Convert.ChangeType(value, targetType);
+            return System.Convert.ChangeType(value, targetType);
         }
 
 

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
 namespace Ike.Standard
 {
@@ -27,6 +24,54 @@ namespace Ike.Standard
 
             // 使用平均 ticks 创建平均时间
             return new DateTime(averageTicks);
+        }
+
+
+
+
+        /// <summary>
+        /// 比较时间是否在指定时间段内
+        /// </summary>
+        /// <param name="time">比较的时间</param>
+        /// <param name="startTime">开始时间</param>
+        /// <param name="endTime">结束时间</param>
+        /// <returns></returns>
+        public static bool CompareTime(DateTime time, DateTime startTime, DateTime endTime)
+        {
+            return DateTime.Compare(startTime, time) == DateTime.Compare(time, endTime);
+        }
+
+
+
+        /// <summary>
+        /// 计算百分比
+        /// </summary>
+        /// <param name="total">总数</param>
+        /// <param name="number">计算数</param>
+        /// <param name="decimal">保留位数</param>
+        /// <returns></returns>
+        public static double CalculationPercentage(int total, int number, byte @decimal = 2)
+        {
+            return CalculationPercentage((double)total, (double)number, @decimal);
+        }
+
+
+
+        /// <summary>
+        /// 计算百分比
+        /// </summary>
+        /// <param name="total">总数</param>
+        /// <param name="number">计算数</param>
+        /// <param name="decimal">保留位数</param>
+        /// <returns></returns>
+        public static double CalculationPercentage(double total, double number, byte @decimal = 2)
+        {
+            double value = Math.Round((1 - number / total) * 100, @decimal);
+            if (value.ToString() == "NaN")
+            {
+                value = 0;
+            }
+            return value;
         }
 
     }

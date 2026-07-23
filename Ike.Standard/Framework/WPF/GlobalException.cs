@@ -4,7 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace Ike.Framework.WPF
+namespace Ike.Standard.WPF
 {
     /// <summary>
     /// 全局异常捕获

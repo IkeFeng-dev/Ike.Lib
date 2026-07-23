@@ -8,22 +8,8 @@ namespace Ike.Standard
     /// 动态队列类，支持用户自定义类型和消费逻辑,基于<see  cref="System.Collections.Concurrent.BlockingCollection{T}"/>实现
     /// </summary>
     /// <typeparam name="T">队列中的元素类型</typeparam>
-    public class DynamicQueue<T>
+    public partial class DynamicQueue<T>
     {
-        /// <summary>
-        /// 队列行为
-        /// </summary>
-        public enum Type
-        {
-            /// <summary>
-            /// 先进先出，即先添加的元素会先被移除
-            /// </summary>
-            FIFO,
-            /// <summary>
-            /// 后进先出，即后添加的元素会先被移除
-            /// </summary>
-            LIFO
-        }
         /// <summary>
         /// 队列对象
         /// </summary>

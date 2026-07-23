@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace Ike.Framework.Forms
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// 全局异常捕获

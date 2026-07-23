@@ -6,48 +6,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Ike.Standard.Ini
+namespace Ike.Standard
 {
-    /// <summary>
-    /// 定义节名特性
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class IniSectionAttribute : Attribute
-    {
-        /// <summary>
-        /// 节点名称
-        /// </summary>
-        public string SectionName { get; }
-        /// <summary>
-        /// 定义节名特性
-        /// </summary>
-        /// <param name="sectionName">节点名称</param>
-        public IniSectionAttribute(string sectionName)
-        {
-            SectionName = sectionName;
-        }
-    }
-
-    /// <summary>
-    /// 重定向节点键名特性
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class IniKeyAttribute : Attribute
-    {
-        /// <summary>
-        /// 键名称
-        /// </summary>
-        public string KeyName { get; }
-        /// <summary>
-        /// 重定向节点键名特性
-        /// </summary>
-        /// <param name="keyName">键名</param>
-        public IniKeyAttribute(string keyName)
-        {
-            KeyName = keyName;
-        }
-    }
-
     /// <summary>
     /// Ini配置档读写器
     /// </summary>

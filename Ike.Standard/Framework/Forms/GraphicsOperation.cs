@@ -5,12 +5,12 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace Ike.Framework.Forms
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// 图像绘制类相关操作
     /// </summary>
-    public static class GraphicsOperation
+    public static partial class GraphicsOperation
     {
 
         /// <summary>

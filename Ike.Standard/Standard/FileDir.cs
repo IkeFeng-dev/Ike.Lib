@@ -13,7 +13,7 @@ namespace Ike.Standard
 	/// <summary>
 	/// 文件及目录相关
 	/// </summary>
-	public static class FileDir
+	public static partial class FileDir
 	{
 		/// <summary>
 		/// 获取文件编码

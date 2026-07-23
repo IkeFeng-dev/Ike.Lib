@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Ike.Standard
 {
@@ -10,6 +11,93 @@ namespace Ike.Standard
 	/// </summary>
 	public static class Array
 	{
+
+		/// <summary>
+		/// 多个CSV文件加载到二维数组中
+		/// </summary>
+		/// <param name="files">文件路径数组</param>
+		/// <param name="encoding">文件编码</param>
+		/// <returns>CSV二维数组</returns>
+		public static string[,] MultipleCsvFilePathToArray(string[] files, Encoding encoding)
+		{
+			StringBuilder sb = new StringBuilder(files.Length * 10000);
+			if (files.Length > 0)
+			{
+				for (int i = 0; i < files.Length; i++)
+				{
+					sb.Append(File.ReadAllText(files[i]).Trim() + "\r\n");
+				}
+				return CsvToArray(sb.ToString(), false, encoding);
+			}
+			return new string[,] { };
+		}
+
+
+		/// <summary>
+		/// 加载CSV文件或者逗号分隔符文件/文本到二维数组
+		/// </summary>
+		/// <param name="filePathAndStr">内容</param>
+		/// <param name="encoding">文件编码</param>
+		/// <param name="stringIsPath">参数是否为路径</param>
+		/// <returns></returns>
+		public static string[,] CsvToArray(string filePathAndStr, bool stringIsPath, Encoding encoding)
+		{
+			return CsvToArray(filePathAndStr, 0, stringIsPath, encoding);
+		}
+
+
+		/// <summary>
+		/// 加载逗号分隔符的CSV文件/文本到二维数组
+		/// </summary>
+		/// <param name="filePathAndStr">内容</param>
+		/// <param name="maxLength">用于行长度不规格处使用,此处填写最长一行长度即可</param>
+		/// <param name="stringIsPath">参数是否为路径</param>
+		/// <param name="encoding">文件编码</param>
+		/// <returns></returns>
+		public static string[,] CsvToArray(string filePathAndStr, byte maxLength, bool stringIsPath, Encoding encoding)
+		{
+			string str = filePathAndStr;
+			if (stringIsPath)
+			{
+				str = File.ReadAllText(filePathAndStr, encoding);
+			}
+			if (str.Contains(","))
+			{
+				char replace = Text.SpecialCharacters[4];
+				string[] temp = str.Replace("\r\n", replace.ToString()).Replace("\n", replace.ToString()).Split(replace);
+				if (temp.Length > 0)
+				{
+					if (maxLength == 0)
+					{
+						string[] line = temp[0].Split(',');
+						maxLength = (byte)line.Length;
+					}
+					string[,] ret = new string[temp.Length, maxLength];
+					for (int i = 0; i < temp.Length; i++)
+					{
+						string[] line = temp[i].Split(',');
+						byte length = (byte)line.Length;
+						for (int j = 0; j < maxLength; j++)
+						{
+							if (j < length)
+							{
+								ret[i, j] = line[j];
+							}
+							else
+							{
+								ret[i, j] = string.Empty;
+							}
+						}
+					}
+					return ret;
+				}
+			}
+			return new string[,] { };
+		}
+
+
+
+
 		/// <summary>
 		/// 泛型数组转换
 		/// </summary>
@@ -260,92 +348,92 @@ namespace Ike.Standard
 		}
 
 
-        /// <summary>
-        /// 获取两个数组中不相同的内容（对称差集）
-        /// </summary>
-        /// <param name="arrayA">数组A</param>
-        /// <param name="arrayB">数组B</param>
-        /// <returns>两个数组中不相同的内容</returns>
-        public static T[] CompareArrayDifferentContent<T>(T[] arrayA, T[] arrayB)
-        {
-            if (arrayA == null) throw new ArgumentNullException(nameof(arrayA));
-            if (arrayB == null) throw new ArgumentNullException(nameof(arrayB));
+		/// <summary>
+		/// 获取两个数组中不相同的内容（对称差集）
+		/// </summary>
+		/// <param name="arrayA">数组A</param>
+		/// <param name="arrayB">数组B</param>
+		/// <returns>两个数组中不相同的内容</returns>
+		public static T[] CompareArrayDifferentContent<T>(T[] arrayA, T[] arrayB)
+		{
+			if (arrayA == null) throw new ArgumentNullException(nameof(arrayA));
+			if (arrayB == null) throw new ArgumentNullException(nameof(arrayB));
 
-            if (arrayA.Length == 0 && arrayB.Length == 0)
-                return System.Array.Empty<T>();
+			if (arrayA.Length == 0 && arrayB.Length == 0)
+				return System.Array.Empty<T>();
 
-            // 使用 HashSet 提高性能
-            var setA = new HashSet<T>(arrayA);
-            var setB = new HashSet<T>(arrayB);
-            var diff = new HashSet<T>();
+			// 使用 HashSet 提高性能
+			var setA = new HashSet<T>(arrayA);
+			var setB = new HashSet<T>(arrayB);
+			var diff = new HashSet<T>();
 
-            foreach (var item in setA)
-                if (!setB.Contains(item))
-                    diff.Add(item);
+			foreach (var item in setA)
+				if (!setB.Contains(item))
+					diff.Add(item);
 
-            foreach (var item in setB)
-                if (!setA.Contains(item))
-                    diff.Add(item);
+			foreach (var item in setB)
+				if (!setA.Contains(item))
+					diff.Add(item);
 
-            return diff.ToArray();
-        }
-
-
-
-
-        /// <summary>
-        /// 获取在 <paramref name="getDifferentContentArr"/> 中存在，但在 <paramref name="sourceArr"/> 中不存在的内容（差集）
-        /// </summary>
-        /// <param name="sourceArr">原数组</param>
-        /// <param name="getDifferentContentArr">获取不同内容的数组</param>
-        /// <returns>在 <paramref name="getDifferentContentArr"/> 中但不在 <paramref name="sourceArr"/> 中的元素</returns>
-        public static T[] GetArrayDifferentContent<T>(T[] sourceArr, T[] getDifferentContentArr)
-        {
-            if (sourceArr == null) throw new ArgumentNullException(nameof(sourceArr));
-            if (getDifferentContentArr == null) throw new ArgumentNullException(nameof(getDifferentContentArr));
-
-            if (getDifferentContentArr.Length == 0)
-                return System.Array.Empty<T>();
-
-            // 使用 HashSet 提高查找性能
-            var sourceSet = new HashSet<T>(sourceArr, EqualityComparer<T>.Default);
-            var differentList = new List<T>();
-
-            foreach (var item in getDifferentContentArr)
-            {
-                if (!sourceSet.Contains(item))
-                {
-                    differentList.Add(item);
-                }
-            }
-
-            return differentList.ToArray();
-        }
+			return diff.ToArray();
+		}
 
 
 
 
-        /// <summary>
-        /// 找到数组中指定内容的索引
-        /// </summary>
-        /// <param name="arr">数组</param>
-        /// <param name="findContent">查找内容</param>
-        /// <returns>找到的索引，未找到返回 -1</returns>
-        public static int FindContentIndex<T>(T[] arr, T findContent)
-        {
-            if (arr == null) throw new ArgumentNullException(nameof(arr));
+		/// <summary>
+		/// 获取在 <paramref name="getDifferentContentArr"/> 中存在，但在 <paramref name="sourceArr"/> 中不存在的内容（差集）
+		/// </summary>
+		/// <param name="sourceArr">原数组</param>
+		/// <param name="getDifferentContentArr">获取不同内容的数组</param>
+		/// <returns>在 <paramref name="getDifferentContentArr"/> 中但不在 <paramref name="sourceArr"/> 中的元素</returns>
+		public static T[] GetArrayDifferentContent<T>(T[] sourceArr, T[] getDifferentContentArr)
+		{
+			if (sourceArr == null) throw new ArgumentNullException(nameof(sourceArr));
+			if (getDifferentContentArr == null) throw new ArgumentNullException(nameof(getDifferentContentArr));
 
-            // 使用 EqualityComparer<T>.Default 来正确比较值
-            var comparer = EqualityComparer<T>.Default;
-            for (int i = 0; i < arr.Length; i++)
-            {
-                if (comparer.Equals(arr[i], findContent))
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
+			if (getDifferentContentArr.Length == 0)
+				return System.Array.Empty<T>();
+
+			// 使用 HashSet 提高查找性能
+			var sourceSet = new HashSet<T>(sourceArr, EqualityComparer<T>.Default);
+			var differentList = new List<T>();
+
+			foreach (var item in getDifferentContentArr)
+			{
+				if (!sourceSet.Contains(item))
+				{
+					differentList.Add(item);
+				}
+			}
+
+			return differentList.ToArray();
+		}
+
+
+
+
+		/// <summary>
+		/// 找到数组中指定内容的索引
+		/// </summary>
+		/// <param name="arr">数组</param>
+		/// <param name="findContent">查找内容</param>
+		/// <returns>找到的索引，未找到返回 -1</returns>
+		public static int FindContentIndex<T>(T[] arr, T findContent)
+		{
+			if (arr == null) throw new ArgumentNullException(nameof(arr));
+
+			// 使用 EqualityComparer<T>.Default 来正确比较值
+			var comparer = EqualityComparer<T>.Default;
+			for (int i = 0; i < arr.Length; i++)
+			{
+				if (comparer.Equals(arr[i], findContent))
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
 
 
 

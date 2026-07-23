@@ -1,14 +1,9 @@
 ﻿#if NETFRAMEWORK
 
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Ike.Framework
+namespace Ike.Standard
 {
     /// <summary>
     /// 图像处理

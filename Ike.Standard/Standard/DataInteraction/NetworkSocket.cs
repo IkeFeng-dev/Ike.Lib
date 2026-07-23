@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Ike.Standard.Sockets;
 
-namespace Ike.Standard.DataInteraction
+namespace Ike.Standard
 {
     /// <summary>
     /// 局域网网络通讯

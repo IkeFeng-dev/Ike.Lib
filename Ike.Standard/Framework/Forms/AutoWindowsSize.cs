@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Ike.Framework.Forms
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// 自动窗体大小适配器，用于在窗体大小改变时自动调整控件布局

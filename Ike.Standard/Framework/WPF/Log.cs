@@ -7,7 +7,7 @@ using System.Windows.Media;
 using System.Threading;
 
 
-namespace Ike.Framework.WPF
+namespace Ike.Standard.WPF
 {
 	/// <summary>
 	/// WPF控件日志输出类

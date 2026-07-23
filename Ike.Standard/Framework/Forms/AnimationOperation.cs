@@ -5,59 +5,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Ike.Framework.Forms
+namespace Ike.Standard
 {
     /// <summary>
     /// 控件动画
     /// </summary>
-    public class AnimationOperation
+    public partial class AnimationOperation
     {
 
         /// <summary>
         /// 控件执行内容记录,防止动画未执行完毕重复执行
         /// </summary>
         public static List<string> controlState = new List<string>();
-
-        /// <summary>
-        /// 控件缩放类型
-        /// </summary>
-        public enum ZoomSelect
-        {
-            /// <summary>
-            /// 扩大
-            /// </summary>
-            Enlarge,
-            /// <summary>
-            /// 缩小
-            /// </summary>
-            Narrow,
-            /// <summary>
-            /// 大到小
-            /// </summary>
-            LargeToSmall,
-            /// <summary>
-            /// 小到大
-            /// </summary>
-            SmallToLarge
-        }
-        /// <summary>
-        /// 控件边
-        /// </summary>
-        public enum ZoomEdge
-        {
-            /// <summary>
-            /// 宽
-            /// </summary>
-            Width,
-            /// <summary>
-            /// 高
-            /// </summary>
-            Height,
-            /// <summary>
-            /// 宽和高
-            /// </summary>
-            WidthAndHeight
-        }
 
 
         /// <summary>
@@ -313,32 +272,7 @@ namespace Ike.Framework.Forms
             controlState.Clear();
         }
 
-        /// <summary>
-        /// 点击样式
-        /// </summary>
-        public enum ClickSelect
-        {
-            /// <summary>
-            /// 快的
-            /// </summary>
-            Fast,
-            /// <summary>
-            /// 慢的
-            /// </summary>
-            Slow,
-            /// <summary>
-            /// 强调的
-            /// </summary>
-            Emphatic,
-            /// <summary>
-            /// 毫不费力的
-            /// </summary>
-            Effortlessly,
-            /// <summary>
-            /// 迅速的
-            /// </summary>
-            Rapidly,
-        }
+       
         /// <summary>
         /// 点击控件动画
         /// </summary>

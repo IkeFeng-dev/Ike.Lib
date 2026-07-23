@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows;
 
-namespace Ike.Framework.WPF
+namespace Ike.Standard.WPF
 {
     /// <summary>
     /// 控件操作类

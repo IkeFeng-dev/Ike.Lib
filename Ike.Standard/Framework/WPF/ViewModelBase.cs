@@ -4,15 +4,15 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
-namespace Ike.Standard
-{
+namespace Ike.Standard.WPF
+{ 
     /// <summary>
-    /// WPF MVVM 模式,实现<see cref="INotifyPropertyChanged"/>, <see cref="ICommand"/>接口的基类
+    /// WPF <see langword="MVVM" /> 模式,实现<see cref="INotifyPropertyChanged"/>, <see cref="ICommand"/>接口的基类
     /// </summary>
     public class ViewModelBase : INotifyPropertyChanged
     {
         /// <summary>
-        /// 实现INotifyPropertyChanged接口,用于通知属性更新事件
+        /// 实现<see cref="INotifyPropertyChanged"/>接口,用于通知属性更新事件
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -54,9 +54,11 @@ namespace Ike.Standard
             OnPropertyChanged(propertyName);
         }
 
+
+
         /// <summary>
         /// 命令系统
-        /// MVVM模式中，RelayCommand允许将命令的处理逻辑从视图模型中分离出来，使得视图模型不需要知道命令的具体执行逻辑，从而实现了视图模型和命令处理逻辑的解耦
+        /// <see langword="MVVM" />模式中，<see cref="RelayCommand"/>允许将命令的处理逻辑从视图模型中分离出来，使得视图模型不需要知道命令的具体执行逻辑，从而实现了视图模型和命令处理逻辑的解耦
         /// </summary>
         public class RelayCommand : ICommand
         {
@@ -83,7 +85,7 @@ namespace Ike.Standard
 
             /// <summary>
             /// <see cref="ICommand.CanExecute(object)"/> 方法通常用于确定命令是否可以执行
-            /// 当命令绑定到UI元素（如Button）时，WPF 会自动调用 CanExecute 方法来确定该UI元素（如按钮）是否应该被启用（IsEnabled 属性为 true）或禁用（IsEnabled 属性为 false）
+            /// 当命令绑定到UI元素（如Button）时，WPF 会自动调用 <see cref="CanExecute"/> 方法来确定该UI元素（如按钮）是否应该被启用（IsEnabled 属性为 true）或禁用（IsEnabled 属性为 false）
             /// </summary>
             /// <param name="parameter">此参数通常由 UI 元素传递，用于在执行命令时提供额外的上下文信息</param>
             /// <returns></returns>

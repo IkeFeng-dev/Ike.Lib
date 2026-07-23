@@ -1,15 +1,88 @@
-﻿using System;
-using System.Diagnostics;
+﻿#if NETFRAMEWORK
+using System;
 using System.IO;
 using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Ike.Standard
 {
 	/// <summary>
 	/// 进程相关
 	/// </summary>
-	public class Process
+	public partial class Process
 	{
+		/// <summary>
+		/// 获取指定进程运行数
+		/// </summary>
+		/// <param name="processName">进程名称</param>
+		/// <returns></returns>
+		public static System.Diagnostics.Process[] GetProcesses(string processName)
+		{
+			if (processName.ToLower().EndsWith(".exe"))
+			{
+				processName = processName.Remove(processName.Length - 4, 4);
+			}
+			List<System.Diagnostics.Process> process = new List<System.Diagnostics.Process>();
+			foreach (var item in System.Diagnostics.Process.GetProcesses())
+			{
+				if (item.ProcessName == processName)
+				{
+					process.Add(item);
+				}
+			}
+			return process.ToArray();
+		}
+
+
+		/// <summary>
+		/// 结束所有指定名称的程序进程
+		/// </summary>
+		/// <param name="processName">进程名称</param>
+		public static bool KillProcess(string processName)
+		{
+			System.Diagnostics.Process[] myproc = GetProcesses(processName);
+
+			foreach (System.Diagnostics.Process item in myproc)
+			{
+				if (item.ProcessName == processName)
+				{
+					item.Kill();
+				}
+			}
+			return true;
+		}
+
+
+
+		/// <summary>
+		/// 获取指定进程运行状态
+		/// </summary>
+		/// <param name="processName">进程名称</param>
+		/// <returns>返回进程知否在运行中</returns>
+		public static bool GetProcessState(string processName)
+		{
+			if (GetProcessNumber(processName) > 0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+
+		/// <summary>
+		/// 获取指定进程运行个数
+		/// </summary>
+		/// <param name="processName">进程名称</param>
+		/// <returns></returns>
+		public static int GetProcessNumber(string processName)
+		{
+			return GetProcesses(processName).Length;
+		}
+
 
 
 		/// <summary>
@@ -37,32 +110,6 @@ namespace Ike.Standard
 			}
 		}
 
-		/// <summary>
-		/// CMD命令执行类型
-		/// </summary>
-		public enum RunCmdType
-		{
-			/// <summary>
-			/// 启用新窗口独立运行这个命令,返回<see cref="string.Empty"/>
-			/// </summary>
-			IndependentOperation,
-			/// <summary>
-			/// 启用新窗口独立运行这个命令,显示这个窗口,按任意键关闭它,返回<see cref="string.Empty"/>
-			/// </summary>
-			ShowWindow,
-			/// <summary>
-			/// 获取输出文本
-			/// </summary>
-			GetOutputText,
-			/// <summary>
-			/// 结果直接输出到调用程序控制台中,返回<see cref="string.Empty"/>
-			/// </summary>
-			Association,
-			/// <summary>
-			/// 后台执行,不输出结果,不显示窗体,返回<see cref="string.Empty"/>
-			/// </summary>
-			BackgroundExecution,
-		}
 
 		/// <summary>
 		/// 运行CMD命令
@@ -180,3 +227,6 @@ namespace Ike.Standard
 		}
 	}
 }
+
+
+#endif

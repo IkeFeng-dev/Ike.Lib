@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ike.Standard.DataInteraction
+namespace Ike.Standard
 {
     /// <summary>
     /// 共享内存通讯
@@ -37,7 +37,7 @@ namespace Ike.Standard.DataInteraction
         /// <summary>
         /// 表示是否等启用进程互斥
         /// </summary>
-        private bool isMutexApp = false;
+        private readonly bool isMutexApp = false;
         /// <summary>
         /// 当前客户端身份标志
         /// </summary>

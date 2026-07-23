@@ -37,15 +37,6 @@ namespace Ike.Standard
 				G = g;
 				B = b;
 			}
-
-			/// <summary>
-			/// 转十六进制格式
-			/// </summary>
-			/// <returns></returns>
-			public string ToHex()
-			{
-				return Convert.RgbToHex(R,G,B);
-			}
 		}
 
 
@@ -71,6 +62,23 @@ namespace Ike.Standard
 			/// 下坐标
 			/// </summary>
 			public int Bottom;
+		}
+
+
+		/// <summary>
+		/// 矩形坐标结构
+		/// </summary>
+		[StructLayout(LayoutKind.Sequential)]
+		public struct Point
+        {
+			/// <summary>
+			/// X坐标
+			/// </summary>
+			public int X;
+			/// <summary>
+			/// Y坐标
+			/// </summary>
+			public int Y;
 		}
 
 

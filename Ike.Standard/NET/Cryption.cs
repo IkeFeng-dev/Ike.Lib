@@ -3,12 +3,12 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Ike.NET
+namespace Ike.Standard
 {
 	/// <summary>
 	/// 加密解密类
 	/// </summary>
-	public class Cryption
+	public partial class Cryption
 	{
 		/// <summary>
 		/// RSA秘钥

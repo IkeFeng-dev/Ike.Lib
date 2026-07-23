@@ -9,7 +9,7 @@ namespace Ike.Standard
     /// <summary>
     /// 日志输出
     /// </summary>
-    public class LOG
+    public partial class LOG
     {
         /// <summary>
         /// 是否为控制台环境
@@ -111,75 +111,6 @@ namespace Ike.Standard
             public string Success = "#87d7af";
         }
 
-        /// <summary>
-        /// 表示日志的类型，帮助区分不同的日志级别或类别。
-        /// </summary>
-        public enum LogType
-        {
-            /// <summary>
-            /// 详细信息,记录详细的调试信息或其他较为冗长的输出
-            /// </summary>
-            Verbose,
-            /// <summary>
-            /// 一般调试信息
-            /// </summary>
-            Debug,
-            /// <summary>
-            /// 信息日志
-            /// </summary>
-            Info,
-            /// <summary>
-            /// 警告日志
-            /// </summary>
-            Warning,
-            /// <summary>
-            /// 错误日志
-            /// </summary>
-            Error,
-            /// <summary>
-            /// 致命错误日志
-            /// </summary>
-            Fatal,
-            /// <summary>
-            /// 成功信息
-            /// </summary>
-            Success
-        }
-
-        /// <summary>
-        /// 日志队列结构
-        /// </summary>
-        public class LogStruct
-        {
-            /// <summary>
-            /// 日志时间
-            /// </summary>
-            public DateTime Time { get; set; }
-            /// <summary>
-            /// 日志信息
-            /// </summary>
-            public string Info { get; set; }
-            /// <summary>
-            /// 日志类型
-            /// </summary>
-            public LogType LogType { get; set; }
-            /// <summary>
-            /// 是否输出到控制台
-            /// </summary>
-            public bool WriteToConsole { get; set; }
-            /// <summary>
-            /// 是否输出到文件
-            /// </summary>
-            public bool WriteToFile { get; set; }
-            /// <summary>
-            /// 是否输出到事件
-            /// </summary>
-            public bool WriteToEvent { get; set; }
-            /// <summary>
-            /// 线程ID
-            /// </summary>
-            public int ThreadID { get; set; }
-        }
 
         /// <summary>
         /// 构造日志实例,如需订阅输出事件,可通过<see cref="LogEvent"/>进行订阅
