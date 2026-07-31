@@ -45,6 +45,7 @@ namespace FrameworkUI
             Ike.MySQL mysql = new Ike.MySQL("10.62.201.200", "root", "123456");
 
 
+          
 
 
 
@@ -99,7 +100,7 @@ namespace FrameworkUI
         {
 
 
-           
+
         }
     }
 
@@ -107,7 +108,7 @@ namespace FrameworkUI
 
 
     public class DataStruct
-    { 
+    {
         public string Name { get; set; }
 
         public bool Select { get; set; }

@@ -3,7 +3,7 @@
 using System.Drawing;
 using System.Windows.Forms.DataVisualization.Charting;
 
-namespace Ike.Standard
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// 图表控件操作

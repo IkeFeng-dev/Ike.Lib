@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace Ike.Standard.Forms
 {
     /// <summary>
-    /// 全局异常捕获
+    /// WinForms 全局异常捕获
     /// </summary>
     public static class GlobalException
     {
@@ -22,14 +22,21 @@ namespace Ike.Standard.Forms
         private static string _logDirectory = null;
 
         /// <summary>
+        /// 是否显示异常弹窗
+        /// </summary>
+        private static bool _showError = false;
+
+        /// <summary>
         /// 初始化全局异常处理
         /// </summary>
         /// <param name="logDirectory">日志目录（null表示使用当前目录）</param>
-        public static void Initialize(string logDirectory = null)
+        /// <param name="showError">是否显示异常弹窗</param>
+        public static void Initialize(string logDirectory = null,bool showError = false)
         {
             if (_initialized) return;
 
             _logDirectory = logDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
+            _showError = showError;
 
             // 设置全局异常处理
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -77,6 +84,10 @@ namespace Ike.Standard.Forms
                     Directory.CreateDirectory(_logDirectory);
                 }
                 File.AppendAllText(logFile, logContent);
+                if (_showError)
+                {
+                    MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch {}
         }

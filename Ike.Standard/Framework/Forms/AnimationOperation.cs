@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Ike.Standard
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// 控件动画

@@ -1,5 +1,5 @@
 ﻿#if NETFRAMEWORK
-namespace Ike.Standard
+namespace Ike.Standard.Forms
 {
     public partial class Layout
     {

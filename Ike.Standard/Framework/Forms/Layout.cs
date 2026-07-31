@@ -3,7 +3,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Ike.Standard
+namespace Ike.Standard.Forms
 {
     /// <summary>
     /// <see cref="System.Windows.Forms"/> UI 布局操作

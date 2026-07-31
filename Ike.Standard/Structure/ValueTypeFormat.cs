@@ -1,6 +1,6 @@
 ﻿#if NETFRAMEWORK && !(NET471 || NET472 || NET481)
 
-namespace Ike.Standard
+namespace Ike.Standard.Forms
 {
     public partial class ChartOperation
     {
