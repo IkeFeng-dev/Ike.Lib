@@ -6,7 +6,7 @@
     <RootNamespace>Ike</RootNamespace>
     <PackageId>Ike.MySQL</PackageId>
     <AssemblyName>Ike.MySQL</AssemblyName>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
@@ -17,12 +17,13 @@
     <PackageIcon>ico.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>
-     [2026年5月6日15:22:40]
-     一,新增批量插入方法
+     [2026年8月4日14:13:49]
+     一,构造函数新增线程池参数
+	 二,新增短连接方式
     </PackageReleaseNotes>
     <PackageTags>MYSQL</PackageTags>
-    <AssemblyVersion>0.0.0.2</AssemblyVersion>
-    <FileVersion>0.0.0.2</FileVersion>
+    <AssemblyVersion>0.0.0.4</AssemblyVersion>
+    <FileVersion>0.0.0.4</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     
     

@@ -83,7 +83,7 @@ namespace Ike
         }
 
         /// <summary>
-        /// 通过连接字符串构造,调用<see cref="Instantiation"/>方法实例化数据库对象
+        /// 通过连接字符串构造
         /// </summary>
         /// <param name="connectionString">连接字符串</param>
         public MySQL(string connectionString)
@@ -92,7 +92,7 @@ namespace Ike
         }
 
         /// <summary>
-        /// 构造MySQL连接字符串,需调用<see cref="ChangeDatabase(string)"/>选定数据库,调用<see cref="Instantiation"/>或<see cref="Open"/>方法实例化数据库对象
+        /// 构造MySQL连接字符串,不指定连接数据库
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
         /// <param name="user">数据库用户名</param>
@@ -104,13 +104,17 @@ namespace Ike
         /// <param name="connectionTimeout">连接超时时间</param>
         /// <param name="defaultCommandTimeout">命令执行超时时间</param>
         /// <param name="sslMode">SSL 模式</param>
-        public MySQL(string server, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None)
+        /// <param name="pooling">是否开启连接池</param>
+        /// <param name="maxPoolSize">连接池允许创建的最大连接数</param>
+        /// <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
+
+        public MySQL(string server, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 0)
         {
-            connectionString = $"Server={server};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};";
+            connectionString = $"Server={server};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};Pooling={pooling};Max Pool Size={maxPoolSize};Min Pool Size={minPoolSize};";
         }
 
         /// <summary>
-        /// 构造MySQL连接字符串,调用<see cref="Instantiation"/>或<see cref="Open"/>方法实例化数据库对象
+        /// 构造MySQL连接字符串
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
         /// <param name="database">数据库名称</param>
@@ -123,9 +127,12 @@ namespace Ike
         /// <param name="connectionTimeout">连接超时时间</param>
         /// <param name="defaultCommandTimeout">命令执行超时时间</param>
         /// <param name="sslMode">SSL 模式</param>
-        public MySQL(string server, string database, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None)
+        /// <param name="pooling">是否开启连接池</param>
+        /// <param name="maxPoolSize">连接池允许创建的最大连接数</param>
+        /// <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
+        public MySQL(string server, string database, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 10)
         {
-            connectionString = $"Server={server};Database={database};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};";
+            connectionString = $"Server={server};Database={database};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};Pooling={pooling};Max Pool Size={maxPoolSize};Min Pool Size={minPoolSize};";
         }
 
         /// <summary>
@@ -374,7 +381,7 @@ namespace Ike
         public DataTable ExecuteQuery(string query, Dictionary<string, object> parameters = null)
         {
             // 使用 SemaphoreSlim 来同步数据库访问
-            _semaphore.Wait();  
+            _semaphore.Wait();
             try
             {
                 using (var command = new MySqlCommand(query, MySQLConnection))
@@ -391,7 +398,7 @@ namespace Ike
             finally
             {
                 // 释放锁
-                _semaphore.Release();  
+                _semaphore.Release();
             }
         }
 
@@ -405,7 +412,7 @@ namespace Ike
         public async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters = null)
         {
             // 异步等待锁
-            await _semaphore.WaitAsync();  
+            await _semaphore.WaitAsync();
             try
             {
                 using (var command = new MySqlCommand(query, MySQLConnection))
@@ -418,7 +425,7 @@ namespace Ike
                         // 使调用者返回到调用线程，以避免阻塞
                         await Task.Yield();
                         // 仍然是同步方法
-                        adapter.Fill(dataTable);  
+                        adapter.Fill(dataTable);
                         return dataTable;
                     }
                 }
@@ -426,7 +433,7 @@ namespace Ike
             finally
             {
                 // 释放锁
-                _semaphore.Release();  
+                _semaphore.Release();
             }
         }
 
@@ -438,13 +445,13 @@ namespace Ike
         public bool DataBaseExists(string dataBaseName)
         {
             string query = $"SHOW DATABASES WHERE `Database` = @database;";
-            var parameters = new Dictionary<string, object> { { "@database", dataBaseName} };
+            var parameters = new Dictionary<string, object> { { "@database", dataBaseName } };
             var result = ExecuteScalar(query, parameters);
             if (result == null)
             {
                 return false;
             }
-            return result.ToString().Equals(dataBaseName,StringComparison.OrdinalIgnoreCase);
+            return result.ToString().Equals(dataBaseName, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -464,7 +471,7 @@ namespace Ike
             return result.ToString().Equals(dataBaseName, StringComparison.OrdinalIgnoreCase);
         }
 
-         /// <summary>
+        /// <summary>
         /// 检查指定的表是否存在
         /// </summary>
         /// <param name="tableName">表名</param>
@@ -1299,7 +1306,7 @@ namespace Ike
         /// </param>
         /// <param name="datas">数据集合</param>
         /// <returns>受影响的行数</returns>
-        public int BatchUpsert<T>(string tableName,Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        public int BatchUpsert<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
         {
             if (datas == null) throw new ArgumentNullException(nameof(datas));
             if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
@@ -1417,7 +1424,7 @@ namespace Ike
         /// 数据库字段与数据类型的映射字典，键值对含义如下：<br/><br/></param>
         /// <param name="datas">数据集合</param>
         /// <returns>受影响的行数</returns>
-        public async Task<int> BatchUpsertAsync<T>(string tableName,Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        public async Task<int> BatchUpsertAsync<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
         {
             if (datas == null) throw new ArgumentNullException(nameof(datas));
             if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
@@ -1473,7 +1480,432 @@ namespace Ike
         }
 
 
-        
+
+
+        #region ========== 短连接执行模式（每次新建连接，执行完自动关闭）==========
+
+        /// <summary>
+        /// 使用短连接执行非查询SQL命令（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>受影响的行数</returns>
+        public int ExecuteNonQueryShort(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 异步使用短连接执行非查询SQL命令（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>受影响的行数</returns>
+        public async Task<int> ExecuteNonQueryShortAsync(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    return await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 使用短连接执行标量SQL命令（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL 查询语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>查询结果的第一行第一列的值</returns>
+        public object ExecuteScalarShort(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    return command.ExecuteScalar();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 异步使用短连接执行标量SQL命令（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL 查询语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>查询结果的第一行第一列的值</returns>
+        public async Task<object> ExecuteScalarShortAsync(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    return await command.ExecuteScalarAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 使用短连接执行查询SQL命令并返回<see cref="DataTable"/>数据表（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL 查询语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>查询结果的<see cref="DataTable"/></returns>
+        public DataTable ExecuteQueryShort(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    using (var adapter = new MySqlDataAdapter(command))
+                    {
+                        var dataTable = new DataTable();
+                        adapter.Fill(dataTable);
+                        return dataTable;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 异步使用短连接执行查询SQL命令并返回<see cref="DataTable"/>数据表（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <param name="query">SQL 查询语句</param>
+        /// <param name="parameters">参数字典, 可为null</param>
+        /// <returns>查询结果的<see cref="DataTable"/></returns>
+        public async Task<DataTable> ExecuteQueryShortAsync(string query, Dictionary<string, object> parameters = null)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    AddParameters(command, parameters);
+                    using (var adapter = new MySqlDataAdapter(command))
+                    {
+                        var dataTable = new DataTable();
+                        await Task.Yield();
+                        adapter.Fill(dataTable);
+                        return dataTable;
+                    }
+                }
+            }
+        }
+
+
+
+
+        #region ========== 短连接批量插入/更新（每次新建连接，执行完自动关闭）==========
+
+        /// <summary>
+        /// 使用短连接批量插入数据到数据库（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">数据库字段与数据类型的映射字典</param>
+        /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
+        /// <returns>受影响的行数</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public int BatchInsertShort<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null)
+            {
+                throw new ArgumentNullException(nameof(datas));
+            }
+            if (columnTypeMap == null)
+            {
+                throw new ArgumentNullException(nameof(columnTypeMap));
+            }
+            if (columnTypeMap.Count == 0)
+            {
+                throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            }
+            if (!datas.Any())
+            {
+                return 0;
+            }
+
+            // 构建SQL
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+            string sql = sqlBuilder.ToString();
+
+            // 短连接执行
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    AddParameters(command, parameters);
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 异步使用短连接批量插入数据到数据库（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">数据库字段与数据类型的映射字典</param>
+        /// <param name="datas">要插入的数据集合,数据类型只能是<see langword="class"/></param>
+        /// <returns>受影响的行数</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task<int> BatchInsertShortAsync<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null)
+            {
+                throw new ArgumentNullException(nameof(datas));
+            }
+            if (columnTypeMap == null)
+            {
+                throw new ArgumentNullException(nameof(columnTypeMap));
+            }
+            if (columnTypeMap.Count == 0)
+            {
+                throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            }
+            if (!datas.Any())
+            {
+                return 0;
+            }
+
+            // 构建SQL
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+            string sql = sqlBuilder.ToString();
+
+            // 短连接异步执行
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    AddParameters(command, parameters);
+                    return await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 使用短连接批量插入或更新数据到数据库（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">数据库字段与数据类型的映射字典</param>
+        /// <param name="datas">数据集合</param>
+        /// <returns>受影响的行数</returns>
+        public int BatchUpsertShort<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null) throw new ArgumentNullException(nameof(datas));
+            if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
+            if (columnTypeMap.Count == 0) throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            if (!datas.Any()) return 0;
+
+            // 构建INSERT部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            // 构建UPDATE部分
+            sqlBuilder.Append(" ON DUPLICATE KEY UPDATE ");
+
+            var updateList = new List<string>();
+            var columnsToUpdate = columnTypeMap.Keys.ToList();
+
+            foreach (var columnName in columnsToUpdate)
+            {
+                updateList.Add($"`{columnName}` = VALUES(`{columnName}`)");
+            }
+
+            sqlBuilder.Append(string.Join(", ", updateList));
+            string sql = sqlBuilder.ToString();
+
+            // 短连接执行
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    AddParameters(command, parameters);
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 异步使用短连接批量插入或更新数据到数据库（每次新建连接，执行完自动关闭）
+        /// </summary>
+        /// <typeparam name="T">数据类型</typeparam>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnTypeMap">数据库字段与数据类型的映射字典</param>
+        /// <param name="datas">数据集合</param>
+        /// <returns>受影响的行数</returns>
+        public async Task<int> BatchUpsertShortAsync<T>(string tableName, Dictionary<string, object> columnTypeMap, IEnumerable<T> datas) where T : class
+        {
+            if (datas == null) throw new ArgumentNullException(nameof(datas));
+            if (columnTypeMap == null) throw new ArgumentNullException(nameof(columnTypeMap));
+            if (columnTypeMap.Count == 0) throw new ArgumentException($"'{nameof(columnTypeMap)}' 列映射的长度不能为0");
+            if (!datas.Any()) return 0;
+
+            // 构建INSERT部分
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append($"INSERT INTO `{tableName}` (");
+            sqlBuilder.Append(string.Join(", ", columnTypeMap.Keys.Select(col => $"`{col}`")));
+            sqlBuilder.Append(") VALUES ");
+
+            var parameters = new Dictionary<string, object>();
+            var valueStatements = new List<string>();
+            int itemIndex = 0;
+
+            foreach (var item in datas)
+            {
+                var paramList = new List<string>();
+
+                foreach (var kv in columnTypeMap)
+                {
+                    string columnName = kv.Key;
+                    object colMap = kv.Value;
+                    string paramName = $"@p_{itemIndex}_{columnName}";
+                    paramList.Add(paramName);
+
+                    object value = GetValueFromMap(colMap, item);
+                    parameters[paramName] = value ?? DBNull.Value;
+                }
+
+                valueStatements.Add($"({string.Join(", ", paramList)})");
+                itemIndex++;
+            }
+
+            sqlBuilder.Append(string.Join(", ", valueStatements));
+
+            // 构建UPDATE部分
+            sqlBuilder.Append(" ON DUPLICATE KEY UPDATE ");
+
+            var updateList = new List<string>();
+            var columnsToUpdate = columnTypeMap.Keys.ToList();
+
+            foreach (var columnName in columnsToUpdate)
+            {
+                updateList.Add($"`{columnName}` = VALUES(`{columnName}`)");
+            }
+
+            sqlBuilder.Append(string.Join(", ", updateList));
+            string sql = sqlBuilder.ToString();
+
+            // 短连接异步执行
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    AddParameters(command, parameters);
+                    return await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        #endregion
+
+        #endregion
+
 
     }
 }

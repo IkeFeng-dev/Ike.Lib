@@ -86,7 +86,7 @@ namespace Ike.Standard.Forms
                 File.AppendAllText(logFile, logContent);
                 if (_showError)
                 {
-                    MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(logContent, "捕获到未处理的异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch {}
