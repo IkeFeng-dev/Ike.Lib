@@ -132,7 +132,7 @@ namespace Ike.Standard
         }
 
         /// <summary>
-        /// 析构函数（安全网）
+        /// 析构函数
         /// </summary>
         ~IniMap()
         {
@@ -141,7 +141,7 @@ namespace Ike.Standard
 
 
         /// <summary>
-        /// 实现 IDisposable,释放该对象资源
+        /// 实现 <see cref="IDisposable"/>,释放该对象资源
         /// </summary>
         public void Dispose()
         {
