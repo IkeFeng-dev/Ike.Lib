@@ -82,15 +82,32 @@ namespace Ike.Standard
             }
         }
 
+
         /// <summary>
-        /// 查询防抖器状态
+        /// 查询第一个防抖器
         /// </summary>
-        /// <param name="id">防抖器ID,默认查询第一个</param>
         /// <returns>
         /// <see langword="true"/>: 可以触发(不在防抖时间内) <br/>
         /// <see langword="false"/>: 不可触发(在防抖时间内)
         /// </returns>
-        public bool QueryDebouncer(string id = default)
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:46:49" />]
+        /// </remarks>
+        public bool QueryDebouncer()
+        {
+            return QueryDebouncer(default);
+        }
+
+
+        /// <summary>
+        /// 查询防抖器状态
+        /// </summary>
+        /// <param name="id">防抖器ID</param>
+        /// <returns>
+        /// <see langword="true"/>: 可以触发(不在防抖时间内) <br/>
+        /// <see langword="false"/>: 不可触发(在防抖时间内)
+        /// </returns>
+        public bool QueryDebouncer(string id)
         {
             lock (_lock)
             {
@@ -108,11 +125,23 @@ namespace Ike.Standard
         }
 
         /// <summary>
+        /// 触发第一个防抖器(重置计时)
+        /// </summary>
+        /// <returns><see langword="true"/> 表示触发成功，<see langword="false"/>表示ID不存在</returns>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:45:04" />]
+        /// </remarks>
+        public bool TriggerDebouncer()
+        {
+           return TriggerDebouncer(default);
+        }
+
+        /// <summary>
         /// 触发防抖器(重置计时)
         /// </summary>
-        /// <param name="id">防抖器ID,默认使用触发第一个</param>
-        /// <returns>true表示触发成功，false表示ID不存在</returns>
-        public bool TriggerDebouncer(string id = default)
+        /// <param name="id">防抖器ID</param>
+        /// <returns><see langword="true"/> 表示触发成功，<see langword="false"/>表示ID不存在</returns>
+        public bool TriggerDebouncer(string id)
         {
             lock (_lock)
             {

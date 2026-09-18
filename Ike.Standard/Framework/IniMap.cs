@@ -92,10 +92,17 @@ namespace Ike.Standard
         /// </summary>
         public IniConfigManager<T> IniConfigManager { get { return iniConfig; } }
         /// <summary>
+        /// 防止控件事件与文件更新互相触发的重入锁
+        /// </summary>
+        private volatile bool _isUpdatingFromFile = false;
+        /// <summary>
         /// 构造映射操作对象
         /// </summary>
         /// <param name="iniPath">配置档路径</param>
         /// <param name="fileAutoUpdate">是否检测配置档外部修改自动更新</param>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:50:14" />]
+        /// </remarks>
         public IniMap(string iniPath, bool fileAutoUpdate)
         {
             maps = new List<IniMapStructure>();
@@ -108,8 +115,18 @@ namespace Ike.Standard
             if (fileAutoUpdate)
             {
                 // 监听修改并更新到UI
-                iniConfig.UpdateEvent += () => {
-                    MapToControl();
+                iniConfig.UpdateEvent += () =>
+                {
+                    // 标记是来自文件更新，避免控件事件回调触发Save
+                    _isUpdatingFromFile = true;
+                    try
+                    {
+                        MapToControl();
+                    }
+                    finally
+                    {
+                        _isUpdatingFromFile = false;
+                    }
                 };
             }
         }
@@ -207,14 +224,28 @@ namespace Ike.Standard
         /// <param name="value">值</param>
         private void SetPropertyValue(Control control, PropertyInfo property, object value)
         {
-            if (control.InvokeRequired)
+            // 控件已释放则跳过
+            if (control == null || control.IsDisposed) return;
+            try
             {
-                control.Invoke(new Action(() => property.SetValue(control, value)));
+                if (control.InvokeRequired)
+                {
+                    // 使用 BeginInvoke 异步调用，避免死锁
+                    control.BeginInvoke(new Action(() =>
+                    {
+                        if (!control.IsDisposed)
+                        {
+                            property.SetValue(control, value);
+                        }
+                    }));
+                }
+                else
+                {
+                    property.SetValue(control, value);
+                }
             }
-            else
-            {
-                property.SetValue(control, value);
-            }
+            catch (ObjectDisposedException) { /* 控件已释放，忽略 */ }
+            catch (InvalidOperationException) { /* 句柄未创建，忽略 */ }
         }
 
 
@@ -316,22 +347,30 @@ namespace Ike.Standard
         /// </summary>
         /// <param name="item">结构对象</param>
         /// <returns>获取的数据</returns>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:49:42" />]
+        /// </remarks>
         private object GetControlValue(IniMapStructure item)
         {
-            object value = null;
+            if (item.Control == null || item.Control.IsDisposed) return null;
 
-            if (item.Control.InvokeRequired)
+            object value = null;
+            try
             {
-                item.Control.Invoke(new Action(() =>
+                if (item.Control.InvokeRequired)
+                {
+                    item.Control.Invoke(new Action(() =>
+                    {
+                        if (!item.Control.IsDisposed)
+                            value = item.ControlpPropertyInfo.GetValue(item.Control);
+                    }));
+                }
+                else
                 {
                     value = item.ControlpPropertyInfo.GetValue(item.Control);
-                }));
+                }
             }
-            else
-            {
-                value = item.ControlpPropertyInfo.GetValue(item.Control);
-            }
-
+            catch (ObjectDisposedException) { /* 忽略 */ }
             return value;
         }
 
@@ -404,6 +443,9 @@ namespace Ike.Standard
         /// <param name="eventName">控件值修改触的事件名称,使用<see  langword="nameof()"/> 获取事件属性名,如果传递空字符串或者<see langword="null"/> 时不会进行控件事件监听,则无法实现即时更新数据到配置档,并且事件源只能为<see cref="EventInfo"/></param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:55:47" />]
+        /// </remarks>
         public void Binding(Control control, string controlPropertyName, string mapPropertyName, string eventName)
         {
             if (string.IsNullOrWhiteSpace(controlPropertyName))
@@ -428,7 +470,7 @@ namespace Ike.Standard
             }
             Type type = typeof(T);
             PropertyInfo mapPropertyInfo = type.GetProperty(mapPropertyName) ?? throw new Exception($"'{mapPropertyName}'属性对象获取为null");
-           
+
             IniMapStructure item = new IniMapStructure()
             {
                 Control = control,
@@ -449,11 +491,12 @@ namespace Ike.Standard
                     // 创建事件处理程序
                     EventHandler handler = (sender, e) =>
                     {
+                        // 文件更新触发UI时，忽略控件事件
+                        if (_isUpdatingFromFile) return;  
+
                         if (sender is Control eventControl && !eventControl.IsDisposed)
                         {
-                            //映射控件数据到数据类中
                             MapToData(eventControl);
-                            //保存数据类修改到配置档文件
                             iniConfig.Save();
                         }
                     };

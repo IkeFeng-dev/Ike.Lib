@@ -13,18 +13,17 @@
 		<PackageIcon>ico.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-		<Version>6.0.0</Version>
-		<AssemblyVersion>6.0.0.0</AssemblyVersion>
-		<FileVersion>6.0.0.0</FileVersion>
+		<Version>6.0.1</Version>
+		<AssemblyVersion>6.0.0.1</AssemblyVersion>
+		<FileVersion>6.0.0.1</FileVersion>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<RepositoryUrl></RepositoryUrl>	
 		<PackageProjectUrl></PackageProjectUrl>
 		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
 		<Title>C# 通用方法库</Title>
 		<PackageReleaseNotes>
-			[2026-7-23 09:23:31]
-			一,优化整个类结构
-			二,新增GetInfo类,获取程序,设备信息等
+			[2026-9-18 10:56:27]
+			一,优化IniMap类卡死UI
 		</PackageReleaseNotes>
 		<Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
 		<PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>

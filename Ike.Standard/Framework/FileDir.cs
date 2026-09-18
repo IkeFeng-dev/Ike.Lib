@@ -2,18 +2,47 @@
 using System.Windows.Forms;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
+using System;
 
 namespace Ike.Standard
 {
 	public static partial class FileDir
 	{
 
-		/// <summary>
-		/// 加载本地文件到剪切板中
-		/// </summary>
-		/// <param name="targetFile">文件路径</param>
-		/// <returns></returns>
-		public static bool LoadFileToClipboard(string targetFile)
+
+        /// <summary>
+        /// 获取指定层级深度的所有子目录
+        /// </summary>
+        /// <param name="basePath">基础路径</param>
+        /// <param name="depth">相对基础层级路径深度</param>
+        /// <returns>符合层级的目录路径列表</returns>
+        /// <remarks>
+        /// [<see langword="2026-9-3 14:51:24" />]
+        /// </remarks>
+        public static string[] GetDirectoriesByDepth(string basePath, int depth)
+        {
+            int baseDepth = basePath.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries).Length;
+            // ✅ 目标深度 = 基础路径深度 + 相对层级
+            int targetDepth = baseDepth + depth;
+            var targetDirectories = Directory
+                .GetDirectories(basePath, "*", SearchOption.AllDirectories)
+                .Where(dir =>
+                {
+                    int dirDepth = dir.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries).Length;
+                    // ✅ 与 targetDepth 比较
+                    return dirDepth == targetDepth;
+                })
+                .ToArray();
+            return targetDirectories;
+        }
+
+        /// <summary>
+        /// 加载本地文件到剪切板中
+        /// </summary>
+        /// <param name="targetFile">文件路径</param>
+        /// <returns></returns>
+        public static bool LoadFileToClipboard(string targetFile)
 		{
 			if (File.Exists(targetFile))
 			{

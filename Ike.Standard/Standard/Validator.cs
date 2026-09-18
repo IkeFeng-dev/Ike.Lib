@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Ike.Standard
@@ -10,11 +11,48 @@ namespace Ike.Standard
 	public static class Validator
 	{
 
-		/// <summary>
-		/// 判断文件名中字符是否合法
-		/// </summary>
-		/// <param name="FileName">文件名称</param>
-		public static bool IsValidFileChars(string FileName)
+        /// <summary>
+        /// 判断文件名是否合法
+        /// </summary>
+        /// <param name="fileName">文件名</param>
+        /// <param name="checkReservedKeyword">是否检查Windows保留关键字</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// [<see langword="2026-8-27 13:30:17" />]
+        /// </remarks>
+        public static bool IsValidFileName(string fileName,bool checkReservedKeyword = false)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            // 检查是否包含非法字符
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            if (fileName.IndexOfAny(invalidChars) >= 0)
+                return false;
+
+			// 检查保留设备名（Windows）
+			if (checkReservedKeyword)
+			{
+				string[] reservedNames = { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
+
+				string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName).ToUpper();
+				if (reservedNames.Contains(nameWithoutExt))
+					return false;
+			}
+            // 检查是否以点或空格结尾（Windows 不允许）
+            if (fileName.EndsWith(".") || fileName.EndsWith(" "))
+                return false;
+
+            return true;
+        }
+
+
+
+        /// <summary>
+        /// 判断文件名中字符是否合法
+        /// </summary>
+        /// <param name="FileName">文件名称</param>
+        public static bool IsValidFileChars(string FileName)
 		{
 			char[] invalidFileChars = Path.GetInvalidFileNameChars();
 			char[] NameChar = FileName.ToCharArray();

@@ -1,4 +1,4 @@
-﻿using MySql.Data.MySqlClient;
+﻿using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -31,6 +31,10 @@ namespace Ike
         /// 数据库的连接对象
         /// </summary>
         public MySqlConnection MySQLConnection { get; private set; }
+        /// <summary>
+        /// 销毁标志
+        /// </summary>
+        private bool disposed = false;
 
         /// <summary>
         /// 表示 MySQL 数据库的字符集
@@ -91,35 +95,14 @@ namespace Ike
             this.connectionString = connectionString;
         }
 
-        /// <summary>
-        /// 构造MySQL连接字符串,不指定连接数据库
-        /// </summary>
-        /// <param name="server">数据库服务器地址</param>
-        /// <param name="user">数据库用户名</param>
-        /// <param name="password">数据库密码</param>
-        /// <param name="port">数据库端口号</param>
-        /// <param name="charset">字符集</param>
-        /// <param name="allowUserVariables">是否允许用户变量</param>
-        /// <param name="useCompression">是否使用压缩</param>
-        /// <param name="connectionTimeout">连接超时时间</param>
-        /// <param name="defaultCommandTimeout">命令执行超时时间</param>
-        /// <param name="sslMode">SSL 模式</param>
-        /// <param name="pooling">是否开启连接池</param>
-        /// <param name="maxPoolSize">连接池允许创建的最大连接数</param>
-        /// <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
-
-        public MySQL(string server, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 0)
-        {
-            connectionString = $"Server={server};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};Pooling={pooling};Max Pool Size={maxPoolSize};Min Pool Size={minPoolSize};";
-        }
 
         /// <summary>
         /// 构造MySQL连接字符串
         /// </summary>
         /// <param name="server">数据库服务器地址</param>
-        /// <param name="database">数据库名称</param>
         /// <param name="user">数据库用户名</param>
         /// <param name="password">数据库密码</param>
+        /// <param name="database">数据库名称,默认<see langword="null"/>表示不选中数据库进行连接,连接后使用<see cref="ChangeDatabase(string)"/>进行数据库选择</param>
         /// <param name="port">数据库端口号</param>
         /// <param name="charset">字符集</param>
         /// <param name="allowUserVariables">是否允许用户变量</param>
@@ -130,9 +113,79 @@ namespace Ike
         /// <param name="pooling">是否开启连接池</param>
         /// <param name="maxPoolSize">连接池允许创建的最大连接数</param>
         /// <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
-        public MySQL(string server, string database, string user, string password, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 10)
+        public MySQL(string server, string user, string password, string database = null, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 10)
         {
-            connectionString = $"Server={server};Database={database};User={user};Password={password};Port={port};Charset={charset};AllowUserVariables={allowUserVariables};UseCompression={useCompression};Connection Timeout={connectionTimeout};Default Command Timeout={defaultCommandTimeout};SslMode={sslMode};Pooling={pooling};Max Pool Size={maxPoolSize};Min Pool Size={minPoolSize};";
+            var builder = new MySqlConnectionStringBuilder
+            {
+                Server = server,
+                Port = port,
+                UserID = user,
+                Password = password,
+                CharacterSet = MapCharSet(charset),
+                AllowUserVariables = allowUserVariables,
+                UseCompression = useCompression,
+                ConnectionTimeout = connectionTimeout,
+                DefaultCommandTimeout = defaultCommandTimeout,
+                SslMode = MapSslMode(sslMode),
+                Pooling = pooling,
+                MaximumPoolSize = maxPoolSize,
+                MinimumPoolSize = minPoolSize
+            };
+
+            if (!string.IsNullOrWhiteSpace(database))
+            {
+                builder.Database = database;
+            }
+
+            connectionString = builder.ConnectionString;
+        }
+
+
+        /// <summary>
+        ///映射SslMode
+        /// </summary>
+        /// <param name="cs">枚举值</param>
+        /// <returns>映射数据</returns>
+        private string MapCharSet(CharSet cs)
+        {
+            switch (cs)
+            {
+                case CharSet.utf8:
+                    return "utf8";
+                case CharSet.utf8mb4:
+                    return "utf8mb4";
+                case CharSet.latin1:
+                    return "latin1";
+                case CharSet.ascii:
+                    return "ascii";
+                default: return "utf8mb4";
+            }
+        }
+
+
+
+
+        /// <summary>
+        ///映射SslMode
+        /// </summary>
+        /// <param name="mode">枚举值</param>
+        /// <returns>映射数据</returns>
+        private MySqlSslMode MapSslMode(SslMode mode)
+        {
+            switch (mode)
+            {
+                case SslMode.None:
+                    return MySqlSslMode.None;
+                case SslMode.Preferred:
+                    return MySqlSslMode.Preferred;
+                case SslMode.Required:
+                    return MySqlSslMode.Required;
+                case SslMode.VerifyCA:
+                    return MySqlSslMode.VerifyCA;
+                case SslMode.VerifyFull:
+                    return MySqlSslMode.VerifyFull;
+                default: return MySqlSslMode.None;
+            }
         }
 
         /// <summary>
@@ -192,15 +245,21 @@ namespace Ike
         /// <param name="disposing">是否释放托管资源</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!disposed)
             {
-                if (MySQLConnection != null)
+                if (disposing)
                 {
-                    MySQLConnection.Dispose();
-                    MySQLConnection = null;
+                    if (MySQLConnection != null)
+                    {
+                        try { MySQLConnection.Close(); } catch { }
+                        MySQLConnection.Dispose();
+                        MySQLConnection = null;
+                    }
                 }
+                disposed = true;
             }
         }
+
 
         /// <summary>
         /// 释放数据库资源
@@ -232,11 +291,12 @@ namespace Ike
         /// </summary>
         public void Open()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MySQL));
             if (MySQLConnection == null)
             {
                 Instantiation();
             }
-            if (MySQLConnection.State == ConnectionState.Closed)
+            if (MySQLConnection.State != ConnectionState.Open)
             {
                 MySQLConnection.Open();
             }
@@ -247,13 +307,14 @@ namespace Ike
         /// </summary>
         public async Task OpenAsync()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MySQL));
             if (MySQLConnection == null)
             {
                 Instantiation();
             }
-            if (MySQLConnection.State == ConnectionState.Closed)
+            if (MySQLConnection.State != ConnectionState.Open)
             {
-                await MySQLConnection.OpenAsync();
+                await MySQLConnection.OpenAsync().ConfigureAwait(false);
             }
         }
 
@@ -262,6 +323,7 @@ namespace Ike
         /// </summary>
         public void Close()
         {
+            if (MySQLConnection == null) return;
             if (MySQLConnection.State == ConnectionState.Open)
             {
                 MySQLConnection.Close();
@@ -273,9 +335,10 @@ namespace Ike
         /// </summary>
         public async Task CloseAsync()
         {
+            if (MySQLConnection == null) return;
             if (MySQLConnection.State == ConnectionState.Open)
             {
-                await MySQLConnection.CloseAsync();
+                await MySQLConnection.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -848,6 +911,8 @@ namespace Ike
             return databases;
         }
 
+
+        /*
         /// <summary>
         /// 获取指定表的外键约束信息
         /// </summary>
@@ -923,6 +988,9 @@ namespace Ike
             }
             return foreignKeys;
         }
+
+
+        */
 
         /// <summary>
         /// 获取指定表的创建语句

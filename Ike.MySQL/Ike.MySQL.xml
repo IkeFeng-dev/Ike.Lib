@@ -29,6 +29,11 @@
             数据库的连接对象
             </summary>
         </member>
+        <member name="F:Ike.MySQL.disposed">
+            <summary>
+            销毁标志
+            </summary>
+        </member>
         <member name="T:Ike.MySQL.CharSet">
             <summary>
             表示 MySQL 数据库的字符集
@@ -90,13 +95,14 @@
             </summary>
             <param name="connectionString">连接字符串</param>
         </member>
-        <member name="M:Ike.MySQL.#ctor(System.String,System.String,System.String,System.UInt32,Ike.MySQL.CharSet,System.Boolean,System.Boolean,System.UInt32,System.UInt32,Ike.MySQL.SslMode,System.Boolean,System.UInt32,System.UInt32)">
+        <member name="M:Ike.MySQL.#ctor(System.String,System.String,System.String,System.String,System.UInt32,Ike.MySQL.CharSet,System.Boolean,System.Boolean,System.UInt32,System.UInt32,Ike.MySQL.SslMode,System.Boolean,System.UInt32,System.UInt32)">
             <summary>
-            构造MySQL连接字符串,不指定连接数据库
+            构造MySQL连接字符串
             </summary>
             <param name="server">数据库服务器地址</param>
             <param name="user">数据库用户名</param>
             <param name="password">数据库密码</param>
+            <param name="database">数据库名称,默认<see langword="null"/>表示不选中数据库进行连接,连接后使用<see cref="M:Ike.MySQL.ChangeDatabase(System.String)"/>进行数据库选择</param>
             <param name="port">数据库端口号</param>
             <param name="charset">字符集</param>
             <param name="allowUserVariables">是否允许用户变量</param>
@@ -108,24 +114,19 @@
             <param name="maxPoolSize">连接池允许创建的最大连接数</param>
             <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
         </member>
-        <member name="M:Ike.MySQL.#ctor(System.String,System.String,System.String,System.String,System.UInt32,Ike.MySQL.CharSet,System.Boolean,System.Boolean,System.UInt32,System.UInt32,Ike.MySQL.SslMode,System.Boolean,System.UInt32,System.UInt32)">
-            <summary>
-            构造MySQL连接字符串
-            </summary>
-            <param name="server">数据库服务器地址</param>
-            <param name="database">数据库名称</param>
-            <param name="user">数据库用户名</param>
-            <param name="password">数据库密码</param>
-            <param name="port">数据库端口号</param>
-            <param name="charset">字符集</param>
-            <param name="allowUserVariables">是否允许用户变量</param>
-            <param name="useCompression">是否使用压缩</param>
-            <param name="connectionTimeout">连接超时时间</param>
-            <param name="defaultCommandTimeout">命令执行超时时间</param>
-            <param name="sslMode">SSL 模式</param>
-            <param name="pooling">是否开启连接池</param>
-            <param name="maxPoolSize">连接池允许创建的最大连接数</param>
-            <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
+        <member name="M:Ike.MySQL.MapCharSet(Ike.MySQL.CharSet)">
+             <summary>
+            映射SslMode
+             </summary>
+             <param name="cs">枚举值</param>
+             <returns>映射数据</returns>
+        </member>
+        <member name="M:Ike.MySQL.MapSslMode(Ike.MySQL.SslMode)">
+             <summary>
+            映射SslMode
+             </summary>
+             <param name="mode">枚举值</param>
+             <returns>映射数据</returns>
         </member>
         <member name="M:Ike.MySQL.Instantiation">
             <summary>
@@ -154,7 +155,7 @@
             释放数据库资源
             </summary>
         </member>
-        <member name="M:Ike.MySQL.AddParameters(MySql.Data.MySqlClient.MySqlCommand,System.Collections.Generic.Dictionary{System.String,System.Object})">
+        <member name="M:Ike.MySQL.AddParameters(MySqlConnector.MySqlCommand,System.Collections.Generic.Dictionary{System.String,System.Object})">
             <summary>
             添加参数到命令
             </summary>
@@ -429,20 +430,6 @@
             异步获取服务器上所有数据库的列表
             </summary>
             <returns>数据库名称列表</returns>
-        </member>
-        <member name="M:Ike.MySQL.GetTableForeignKeys(System.String)">
-            <summary>
-            获取指定表的外键约束信息
-            </summary>
-            <param name="tableName">表名</param>
-            <returns>外键约束信息列表</returns>
-        </member>
-        <member name="M:Ike.MySQL.GetTableForeignKeysAsync(System.String)">
-            <summary>
-            异步获取指定表的外键约束信息
-            </summary>
-            <param name="tableName">表名</param>
-            <returns>外键约束信息列表</returns>
         </member>
         <member name="M:Ike.MySQL.GetTableCreateStatement(System.String)">
             <summary>

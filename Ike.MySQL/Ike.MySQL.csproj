@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <!-- 只保留支持的框架 -->
-    <TargetFrameworks>netstandard2.0;net48</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462;net47;net471;net472;net48;net481;</TargetFrameworks>
     <RootNamespace>Ike</RootNamespace>
     <PackageId>Ike.MySQL</PackageId>
     <AssemblyName>Ike.MySQL</AssemblyName>
-    <Version>0.0.4</Version>
+    <Version>1.0.2</Version>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
@@ -17,13 +17,12 @@
     <PackageIcon>ico.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>
-     [2026年8月4日14:13:49]
-     一,构造函数新增线程池参数
-	 二,新增短连接方式
+     [2026-8-17 13:22:21]
+     一,兼容多个.NET版本
     </PackageReleaseNotes>
     <PackageTags>MYSQL</PackageTags>
-    <AssemblyVersion>0.0.0.4</AssemblyVersion>
-    <FileVersion>0.0.0.4</FileVersion>
+    <AssemblyVersion>1.0.0.2</AssemblyVersion>
+    <FileVersion>1.0.0.2</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     
     
@@ -61,9 +60,7 @@
     </None>
   </ItemGroup>
 
-  <!-- 统一使用 MySQL 8.4.0 -->
   <ItemGroup>
-    <PackageReference Include="MySql.Data" Version="8.4.0" />
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
   </ItemGroup>
-  
 </Project>

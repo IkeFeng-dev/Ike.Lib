@@ -62,6 +62,14 @@ namespace Ike.Standard
         /// </summary>
         private FileSystemWatcher fileWatcher;
         /// <summary>
+        /// 文件操作锁，防止读写并发
+        /// </summary>
+        private readonly object _fileLock = new object();
+        /// <summary>
+        /// 防止Save触发FileWatcher的重入标志
+        /// </summary>
+        private volatile bool _isSaving = false;
+        /// <summary>
         /// 支持的数据类型
         /// </summary>
         private readonly Type[] types = new Type[]
@@ -179,6 +187,9 @@ namespace Ike.Standard
         /// <param name="autoUpdate">是否自动更新(如果ini文件被外部修改,那么此管理器将会同步更新修改的数据)</param>
         /// <param name="encoding">配置档读写编码,默认使用<see cref="Encoding.UTF8"/></param>
         /// <exception cref="ArgumentNullException"></exception>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:49:14" />]
+        /// </remarks>
         public IniConfigManager(string filePath, bool autoUpdate, Encoding encoding = default)
         {
             this.encoding = encoding ?? Encoding.UTF8;
@@ -223,11 +234,13 @@ namespace Ike.Standard
                 };
                 fileWatcher.Changed += (sender, e) =>
                 {
+                    // 是自己保存触发的，忽略
+                    if (_isSaving) return;
                     if (debouncer.QueryDebouncer() && File.Exists(_filePath))
                     {
+                        debouncer.TriggerDebouncer();
                         Load();
                         UpdateEvent?.Invoke();
-                        debouncer.TriggerDebouncer();
                     }
                 };
             }
@@ -473,6 +486,58 @@ namespace Ike.Standard
         //           genericType == typeof(IEnumerable<>);
         //}
 
+        /// <summary>
+        /// 带重试的文件写入，解决文件占用问题
+        /// </summary>
+        /// <param name="path">文件爱你路径</param>
+        /// <param name="content">写入内容</param>
+        /// <param name="enc">文件编码</param>
+        /// <param name="retryCount">重试次数</param>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:47:34" />]
+        /// </remarks>
+        private void WriteFileWithRetry(string path, string content, Encoding enc, int retryCount = 3)
+        {
+            for (int i = 0; i < retryCount; i++)
+            {
+                try
+                {
+                    File.WriteAllText(path, content, enc);
+                    return;
+                }
+                catch (IOException) when (i < retryCount - 1)
+                {
+                    System.Threading.Thread.Sleep(100 * (i + 1));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 带重试的文件读取，解决文件占用问题
+        /// </summary>
+        /// <param name="path">文件路径</param>
+        /// <param name="enc">文件编码</param>
+        /// <param name="retryCount">重试次数</param>
+        /// <returns>文本所有行</returns>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:47:43" />]
+        /// </remarks>
+        private string[] ReadFileWithRetry(string path, Encoding enc, int retryCount = 3)
+        {
+            for (int i = 0; i < retryCount; i++)
+            {
+                try
+                {
+                    return File.ReadAllLines(path, enc);
+                }
+                catch (IOException) when (i < retryCount - 1)
+                {
+                    System.Threading.Thread.Sleep(100 * (i + 1));
+                }
+            }
+            return System.Array.Empty<string>();
+        }
+
 
 
         /// <summary>
@@ -486,18 +551,39 @@ namespace Ike.Standard
         /// 保存配置到INI文件
         /// </summary>
         /// <param name="config">配置档实例对象</param>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:47:59" />]
+        /// </remarks>
         public void Save(T config)
         {
-            debouncer.TriggerDebouncer();
-            if (_filePath.Split('\\').Length > 1)
-            { 
-               string dir = Path.GetDirectoryName(_filePath);
-                if (!Directory.Exists(dir))
+            lock (_fileLock)
+            {
+                _isSaving = true;
+                try
+
                 {
-                    Directory.CreateDirectory(dir);
+                    debouncer.TriggerDebouncer();
+                    if (_filePath.Split('\\').Length > 1)
+                    {
+                        string dir = Path.GetDirectoryName(_filePath);
+                        if (!Directory.Exists(dir))
+                        {
+                            Directory.CreateDirectory(dir);
+                        }
+                    }
+                    WriteFileWithRetry(_filePath, AnalyseData(config), encoding);
+                }
+                finally
+                {
+                    // 延迟重置，确保FileWatcher的事件已经被过滤掉
+                    System.Threading.Timer timer = null;
+                    timer = new System.Threading.Timer(_ =>
+                    {
+                        _isSaving = false;
+                        timer?.Dispose();
+                    }, null, 500, System.Threading.Timeout.Infinite);
                 }
             }
-            File.WriteAllText(_filePath, AnalyseData(config), encoding);
         }
 
 
@@ -614,15 +700,20 @@ namespace Ike.Standard
         /// <param name="filePath">配置档路径</param>
         /// <returns>配置档实例对象</returns>
         /// <exception cref="FileNotFoundException"></exception>
+        /// <remarks>
+        /// [<see langword="2026-9-18 10:48:24" />]
+        /// </remarks>
         public void Load(string filePath)
         {
             if (!File.Exists(filePath))
             {
                 throw new FileNotFoundException("INI file not found", filePath);
             }
-            var lines = File.ReadAllLines(filePath, encoding);
-            Data = AnalyseData(lines);
-
+            lock (_fileLock)
+            {
+                var lines = ReadFileWithRetry(filePath, encoding);
+                Data = AnalyseData(lines);
+            }
         }
 
         /// <summary>
