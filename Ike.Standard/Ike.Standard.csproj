@@ -22,8 +22,10 @@
 		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
 		<Title>C# 通用方法库</Title>
 		<PackageReleaseNotes>
-			[2026-9-18 10:56:27]
-			一,优化IniMap类卡死UI
+			[2026-9-18 14:07:51]
+			一,优化IniConfigManager类逻辑
+			二,优化IniMap类卡死UI
+			三,新增WPF控件IniMap类
 		</PackageReleaseNotes>
 		<Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
 		<PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>
