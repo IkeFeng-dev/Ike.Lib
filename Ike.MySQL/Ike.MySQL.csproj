@@ -6,7 +6,7 @@
     <RootNamespace>Ike</RootNamespace>
     <PackageId>Ike.MySQL</PackageId>
     <AssemblyName>Ike.MySQL</AssemblyName>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
@@ -17,12 +17,12 @@
     <PackageIcon>ico.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>
-     [2026-8-17 13:22:21]
-     一,兼容多个.NET版本
+     [2026-10-13 15:40:55]
+     一,优化构造函数参数
     </PackageReleaseNotes>
     <PackageTags>MYSQL</PackageTags>
-    <AssemblyVersion>1.0.0.2</AssemblyVersion>
-    <FileVersion>1.0.0.2</FileVersion>
+    <AssemblyVersion>1.0.0.3</AssemblyVersion>
+    <FileVersion>1.0.0.3</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     
     

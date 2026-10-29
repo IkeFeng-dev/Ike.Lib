@@ -12,6 +12,14 @@ namespace Ike.Standard
     public partial class LOG
     {
         /// <summary>
+        /// 是否记录输出log
+        /// </summary>
+        private bool isRecordLog = false;
+        /// <summary>
+        /// 记录日志输出内容
+        /// </summary>
+        private readonly StringBuilder recordLog = new();
+        /// <summary>
         /// 是否为控制台环境
         /// </summary>
         private readonly bool isonsoleEnv;
@@ -61,6 +69,10 @@ namespace Ike.Standard
         /// 日志事件,可用于订阅此事件后同步在自定义方法中输出到UI,输出前提是定义了<see cref="LogStruct.WriteToEvent"/> = <see langword="true"/>
         /// </summary>
         public event LogEventHandler LogEvent;
+        /// <summary>
+        /// 剩余排队输出的日志数量
+        /// </summary>
+        public int QueueNumbers => queue.Count;
 
         /// <summary>
         /// 定义日志输出颜色
@@ -115,15 +127,19 @@ namespace Ike.Standard
         /// <summary>
         /// 构造日志实例,如需订阅输出事件,可通过<see cref="LogEvent"/>进行订阅
         /// </summary>
-        /// <param name="logDirectory">日志目录</param>
+        /// <param name="logDirectory">日志目录,默认在AppDomain.CurrentDomain.BaseDirectory下Log目录</param>
         /// <param name="consoleMaxRow">控制台输出的最大行</param>
         /// <param name="fileNameFormat">文件名格式</param>
         /// <param name="timestamp">时间戳格式</param>
         /// <param name="isOutThreadId">是否输出线程ID</param>
         /// <param name="logColors">定义控制台输出的颜色</param>
 
-        public LOG(string logDirectory, int consoleMaxRow = 5000, string fileNameFormat = "yyyy-MM-dd", string timestamp = "yyyy-MM-dd HH:mm:ss", bool isOutThreadId = true, LogColors logColors = default)
+        public LOG(string logDirectory = default, int consoleMaxRow = 5000, string fileNameFormat = "yyyy-MM-dd", string timestamp = "yyyy-MM-dd HH:mm:ss", bool isOutThreadId = true, LogColors logColors = default)
         {
+            if (logDirectory == default)
+            {
+                logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log");
+            }
             isonsoleEnv = Console.IsConsoleEnv();
             this.timestamp = timestamp; if (isonsoleEnv)
             {
@@ -145,6 +161,32 @@ namespace Ike.Standard
 
 
         /// <summary>
+        /// 开始记录日志内容(如果此前有记录过,会把旧数据重新清空)
+        /// </summary>
+        public void StartRecordLog()
+        {
+            recordLog.Clear();
+            isRecordLog = true;
+        }
+
+
+        
+        /// <summary>
+        /// 获取记录的日志信息
+        /// </summary>
+        /// <param name="isStopRecordLog">是否同步停止数据记录</param>
+        /// <returns></returns>
+        public string GetRecordLog(bool isStopRecordLog = true)
+        {
+            if (isStopRecordLog)
+            {
+                isRecordLog = false;
+            }
+           return recordLog.ToString();
+        }
+
+
+        /// <summary>
         /// 输出日志
         /// </summary>
         /// <param name="logStruct"></param>
@@ -154,13 +196,17 @@ namespace Ike.Standard
             {
                 string time = logStruct.Time.ToString(timestamp);
                 string typeStr = logStruct.LogType.ToString().Substring(0, 3).ToUpper();
-                if (logStruct.WriteToFile)
-                {
-                    ToFile(logStruct.Info, logStruct.ThreadID, typeStr, time);
+                if (isRecordLog)
+                { 
+                   recordLog.AppendLine(logStruct.ToString());
                 }
                 if (logStruct.WriteToEvent)
                 {
                     LogEvent?.Invoke(logStruct);
+                }
+                if (logStruct.WriteToFile)
+                {
+                    ToFile(logStruct.Info, logStruct.ThreadID, typeStr, time);
                 }
                 if (logStruct.WriteToConsole)
                 {

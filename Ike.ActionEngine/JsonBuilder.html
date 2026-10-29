@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APP update action JSON builder </title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --text: #172033;
+            --muted: #718096;
+            --border: #e5eaf2;
+            --primary: #5865f2;
+            --primary-dark: #4652d9;
+            --primary-soft: #eef0ff;
+            --danger: #dc4564;
+            --success: #158765;
+            --shadow: 0 12px 36px rgba(30, 45, 80, .07);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 5% 0%, rgba(88, 101, 242, .08), transparent 27rem),
+                var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                "Microsoft YaHei", sans-serif;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .page {
+            width: min(1440px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 34px 0 56px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            display: grid;
+            place-items: center;
+            width: 46px;
+            height: 46px;
+            color: white;
+            background: linear-gradient(135deg, #7180ff, #5865f2);
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(88, 101, 242, .24);
+            font-size: 23px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 23px;
+            letter-spacing: -.5px;
+        }
+
+        .subtitle {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+            align-items: start;
+            gap: 22px;
+        }
+
+        .panel {
+            min-width: 0;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .panel-description {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .panel-body {
+            padding: 20px 22px 22px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .select-wrap {
+            position: relative;
+            min-width: 205px;
+        }
+
+        select,
+        .text-input,
+        .number-input {
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 12px;
+            color: var(--text);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        select:focus,
+        .text-input:focus,
+        .number-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, .12);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 40px;
+            padding: 9px 13px;
+            color: var(--text);
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: .15s ease;
+        }
+
+        .btn:hover {
+            background: var(--surface-soft);
+            border-color: #cbd3e1;
+        }
+
+        .btn-primary {
+            color: white;
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            color: white;
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-danger {
+            color: var(--danger);
+        }
+
+        .btn-small {
+            min-height: 32px;
+            padding: 6px 9px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #39445a;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .field-hint {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .actions-list {
+            display: grid;
+            gap: 13px;
+        }
+
+        .action-card {
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: white;
+        }
+
+        .action-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 13px 15px;
+            background: #fbfcfe;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .action-heading {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            min-width: 0;
+        }
+
+        .action-number {
+            display: grid;
+            place-items: center;
+            width: 27px;
+            height: 27px;
+            flex: 0 0 27px;
+            color: var(--primary);
+            background: var(--primary-soft);
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .action-name {
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .action-type {
+            margin-top: 3px;
+            color: var(--muted);
+            font-family: Consolas, monospace;
+            font-size: 11px;
+        }
+
+        .action-tools {
+            display: flex;
+            flex: 0 0 auto;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            display: grid;
+            place-items: center;
+            width: 31px;
+            height: 31px;
+            color: #647087;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .icon-btn svg,
+        .outline-delete svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon-btn:hover { color: var(--primary); }
+
+        .icon-btn:hover {
+            color: var(--primary);
+            border-color: #c9ceff;
+            background: var(--primary-soft);
+        }
+
+        .icon-btn.delete:hover {
+            color: var(--danger);
+            border-color: #f1c4cf;
+            background: #fff3f5;
+        }
+
+        .action-fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+            padding: 16px;
+        }
+
+        .field-full {
+            grid-column: 1 / -1;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+
+        .radio-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 8px 12px;
+            color: #4d596d;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: .15s ease;
+        }
+
+        .radio-option:has(input:checked) {
+            color: var(--primary-dark);
+            background: var(--primary-soft);
+            border-color: #bfc5ff;
+        }
+
+        .radio-option input {
+            accent-color: var(--primary);
+        }
+
+        .empty-state {
+            padding: 34px 18px;
+            color: var(--muted);
+            text-align: center;
+            border: 1px dashed #d7deea;
+            border-radius: 12px;
+        }
+
+        .empty-icon {
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .empty-state strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #48546a;
+            font-size: 14px;
+        }
+
+        .empty-state span {
+            font-size: 12px;
+        }
+
+        .json-panel {
+            position: sticky;
+            top: 20px;
+        }
+
+        .json-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .json-output {
+            display: block;
+            width: 100%;
+            min-height: 420px;
+            padding: 16px;
+            resize: vertical;
+            color: #d9e2f2;
+            background: #151b2a;
+            border: 0;
+            border-radius: 11px;
+            outline: none;
+            font-family: "Cascadia Code", Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.65;
+            tab-size: 2;
+        }
+
+        .json-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #35b58b;
+            border-radius: 50%;
+        }
+
+        .note {
+            margin-top: 18px;
+            padding: 13px 14px;
+            color: #647087;
+            background: #f7f8ff;
+            border: 1px solid #e7e9ff;
+            border-radius: 11px;
+            font-size: 11px;
+            line-height: 1.65;
+        }
+
+        .note strong {
+            color: #4853c5;
+        }
+
+        :root {
+            --bg: #eef3f0;
+            --surface: #fffefa;
+            --surface-soft: #f5f7f2;
+            --text: #172b27;
+            --muted: #687c75;
+            --border: #d7e1da;
+            --primary: #16745d;
+            --primary-dark: #105b49;
+            --primary-soft: #e6f3ed;
+            --danger: #bf4f48;
+            --shadow: 0 10px 28px rgba(28, 58, 46, .08);
+            --radius: 10px;
+        }
+
+        body {
+            background: linear-gradient(150deg, #eaf1ed 0%, #f7f6ef 52%, #edf3f0 100%);
+            font-family: "Aptos", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+        }
+
+        .page { width: min(1680px, calc(100% - 40px)); padding-top: 26px; }
+        .brand-icon { color: #fffefa; background: #16745d; border-radius: 10px; box-shadow: none; }
+        h1 { letter-spacing: 0; }
+        .layout { grid-template-columns: minmax(190px, .62fr) minmax(420px, 1.45fr) minmax(350px, 1fr); gap: 16px; }
+        .panel { border-radius: 10px; box-shadow: 0 5px 18px rgba(28, 58, 46, .055); }
+        .panel-header { padding: 16px 18px; }
+        .panel-body { padding: 17px 18px 19px; }
+        .outline-panel, .json-panel { position: sticky; top: 18px; }
+        .outline-list { display: grid; gap: 6px; }
+        .outline-item { display: grid; grid-template-columns: 26px minmax(0, 1fr) 28px; align-items: center; gap: 8px; min-height: 42px; padding: 5px 7px; background: #fffefa; border: 1px solid transparent; border-radius: 7px; cursor: grab; }
+        .outline-item:hover, .outline-item.is-active { background: #e9f3ed; border-color: #bdd8ca; }
+        .outline-item.is-invalid { background: #fff3ef; border-color: #efc6bd; }
+        .outline-item.is-dragging { opacity: .45; }
+        .outline-index { display: grid; place-items: center; width: 25px; height: 25px; color: #176d57; background: #e4f1e9; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .outline-title { overflow: hidden; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+        button.outline-title { min-width: 0; padding: 0; color: inherit; text-align: left; background: transparent; border: 0; cursor: pointer; font: inherit; }
+        .outline-delete { display: grid; place-items: center; width: 27px; height: 27px; color: #8a5e58; background: transparent; border: 0; border-radius: 5px; }
+        .outline-delete:hover { color: var(--danger); background: #ffe9e4; }
+        .outline-empty { padding: 12px 4px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+        .action-card { border: 1px solid #cbd8cf; border-radius: 9px; box-shadow: 0 2px 7px rgba(28, 58, 46, .035); scroll-margin-top: 20px; }
+        .action-card:has(.field.is-invalid) { border-color: #d98c7d; box-shadow: 0 0 0 2px rgba(191, 79, 72, .08); }
+        .action-card-head { background: #f3f6f1; }
+        .field.is-invalid .text-input, .field.is-invalid .number-input { border-color: #c75148; background: #fff8f5; box-shadow: 0 0 0 3px rgba(199, 81, 72, .1); }
+        .field-error { margin-top: 5px; color: #b43e37; font-size: 11px; font-weight: 600; }
+        .note { color: #536a61; background: #f1f5ef; border-color: #dce7dc; }
+        .note strong { color: #176d57; }
+        .toolbar .select-wrap { flex: 1 1 180px; }
+        .json-output { overflow: auto; min-height: 520px; margin: 0; white-space: pre; overflow-wrap: normal; border-radius: 8px; }
+        .json-key { color: #86c7ff; }
+        .json-string { color: #b5e58c; }
+        .json-number { color: #f4c77b; }
+        .json-boolean { color: #e5a2dd; }
+        .json-null { color: #aeb9c9; }
+        .dialog-backdrop { width: min(760px, calc(100% - 28px)); max-width: none; max-height: min(88vh, 850px); padding: 0; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 24px 80px rgba(20, 40, 32, .25); }
+        .dialog-backdrop::backdrop { background: rgba(17, 35, 29, .48); }
+        .dialog-content { padding: 22px; }
+        .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+        .dialog-head h2 { margin: 0; font-size: 18px; }
+        .definition-list, .definition-fields { display: grid; gap: 8px; margin-bottom: 18px; }
+        .definition-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 11px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 7px; }
+        .definition-row code { color: var(--muted); font-size: 11px; }
+        .definition-field-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr 120px 34px; gap: 8px; align-items: center; }
+        .definition-field-row .text-input, .definition-field-row select { min-width: 0; min-height: 38px; padding: 8px; font-size: 12px; }
+        .definition-field-row label { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+        @media (max-width: 1180px) {
+            .layout { grid-template-columns: 190px minmax(0, 1fr); }
+            .json-panel { position: static; grid-column: 2; }
+            .outline-panel { grid-row: 1 / span 2; }
+        }
+
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .outline-panel,
+            .json-panel {
+                position: static;
+                grid-column: auto;
+                grid-row: auto;
+            }
+
+            .outline-list { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+
+            .json-output {
+                min-height: 330px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                width: min(100% - 24px, 700px);
+                padding-top: 22px;
+            }
+
+            .topbar {
+                margin-bottom: 20px;
+            }
+
+            h1 {
+                font-size: 19px;
+            }
+
+            .panel-header {
+                align-items: flex-start;
+                padding: 16px;
+            }
+
+            .panel-body {
+                padding: 15px;
+            }
+
+            .action-fields {
+                grid-template-columns: 1fr;
+                gap: 13px;
+                padding: 14px;
+            }
+
+            .field-full {
+                grid-column: auto;
+            }
+
+            .toolbar {
+                align-items: stretch;
+            }
+
+            .select-wrap {
+                flex: 1 1 100%;
+            }
+
+            .toolbar .btn-primary {
+                width: 100%;
+            }
+
+            .json-header-actions .btn {
+                padding-inline: 9px;
+            }
+
+            .definition-field-row { grid-template-columns: 1fr 1fr; }
+        }
+
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        .page { display: flex; flex-direction: column; width: min(1680px, calc(100% - 32px)); height: 100vh; height: 100dvh; min-height: 0; padding: 12px 0; overflow: hidden; }
+        .topbar { flex: 0 0 auto; margin-bottom: 12px; padding-bottom: 10px; }
+        .layout { flex: 1 1 auto; min-height: 0; align-items: stretch; overflow: hidden; }
+        .panel { display: flex; flex-direction: column; min-height: 0; position: static; }
+        .panel-header { flex: 0 0 auto; }
+        .panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+        .json-panel .panel-body { display: flex; flex-direction: column; }
+        .json-output { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+        .json-footer { flex: 0 0 auto; }
+        .json-header-actions, .definition-config-toolbar { display: flex; align-items: center; gap: 6px; }
+        .json-header-actions .icon-btn, .definition-config-toolbar .icon-btn { width: 34px; height: 34px; }
+        .json-header-actions svg, .definition-config-toolbar svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .definition-config-toolbar { flex-wrap: wrap; margin: 12px 0 18px; }
+        .definition-config-toolbar .btn { min-height: 34px; }
+
+        @media (max-width: 1180px) {
+            .layout { grid-template-columns: minmax(180px, .7fr) minmax(0, 1.3fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+            .outline-panel { grid-row: 1 / span 2; }
+            .json-panel { grid-column: 2; grid-row: 2; }
+        }
+
+        @media (max-width: 960px) {
+            .page { width: calc(100% - 24px); }
+            .topbar { margin-bottom: 8px; }
+            .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(90px, .7fr) minmax(170px, 1.6fr) minmax(130px, 1.1fr); gap: 9px; }
+            .outline-panel, .json-panel { grid-column: auto; grid-row: auto; }
+            .outline-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .json-output { min-height: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .page { width: calc(100% - 16px); padding: 8px 0; }
+            .topbar { padding-bottom: 8px; }
+            .subtitle { margin-top: 3px; font-size: 12px; }
+            .panel-header { padding: 10px 12px; }
+            .panel-body { padding: 10px 12px; }
+            .json-header-actions { gap: 4px; }
+            .json-header-actions .icon-btn { width: 32px; height: 32px; }
+            .json-output { font-size: 11px; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-icon">↻</div>
+                <div>
+                    <h1>APP Update Action JSON Builder</h1>
+                    <p class="subtitle">通过表单配置更新步骤，并自动生成更新清单 JSON。</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="layout">
+            <aside class="panel outline-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">执行大纲</h2>
+                        <p class="panel-description" id="outlineSummary">0 个步骤</p>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <nav class="outline-list" id="outlineList" aria-label="更新动作大纲"></nav>
+                </div>
+            </aside>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">更新步骤</h2>
+                        <p class="panel-description">动作会按列表顺序执行，可使用右侧按钮调整顺序。</p>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="meta-grid">
+                        <div class="field">
+                            <label class="field-label" for="manifestVersion">更新版本号</label>
+                            <input class="text-input" id="manifestVersion" type="text" value="1.0.0.0"
+                                placeholder="例如：1.2.0">
+                        </div>
+                    </div>
+
+                    <div class="toolbar" style="margin-bottom: 17px;">
+                        <div class="select-wrap">
+                            <select id="actionSelector" aria-label="选择动作类型"></select>
+                        </div>
+                        <button class="btn btn-primary" id="addActionButton" type="button">
+                            <span>＋</span> 添加动作
+                        </button>
+                        <button class="btn" id="manageDefinitionsButton" type="button">管理动作配置</button>
+                    </div>
+
+                    <div class="actions-list" id="actionsList"></div>
+
+                    <div class="note">
+                        <strong>提示：</strong>
+                        动作 JSON 使用 <code>$type</code> 标识类型。请确认你的 C# 更新解释器按相同的
+                        type 名称进行分发。自定义动作配置保存在当前浏览器，不会自动同步到其他设备。
+                    </div>
+                </div>
+            </div>
+
+            <aside class="panel json-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">JSON 预览</h2>
+                        <p class="panel-description">表单变更后自动更新，可复制或下载。</p>
+                    </div>
+                    <div class="json-header-actions">
+                        <button class="icon-btn" id="importButton" type="button" title="导入清单 JSON" aria-label="导入清单 JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4L8 8"></path><path d="M4 14v5h16v-5"></path></svg></button>
+                        <input id="jsonFileInput" type="file" accept=".json,application/json" hidden>
+                        <button class="icon-btn" id="copyButton" type="button" title="复制 JSON" aria-label="复制 JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg></button>
+                        <button class="icon-btn" id="downloadButton" type="button" title="下载 JSON" aria-label="下载 JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v4h16v-4"></path></svg></button>
+                    </div>
+
+                </div>
+
+                <div class="panel-body">
+                    <pre class="json-output" id="jsonOutput" aria-label="带语法高亮的 JSON 预览"></pre>
+                    <div class="json-footer">
+                        <span class="status">
+                            <i class="status-dot"></i>
+                            <span id="statusText">JSON 已生成</span>
+                        </span>
+                        <span id="actionCount">0 个动作</span>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <dialog class="dialog-backdrop" id="definitionDialog">
+        <div class="dialog-content">
+            <div class="dialog-head">
+                <div>
+                    <h2>动作配置</h2>
+                    <p class="panel-description">自定义类型仅保存在当前浏览器，不会改变内置动作。</p>
+                </div>
+                <button class="icon-btn" id="closeDefinitionDialog" type="button" title="关闭" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+            </div>
+            <h3 class="panel-title">已保存的自定义动作</h3>
+            <div class="definition-config-toolbar">
+                <button class="icon-btn" id="importDefinitionsButton" type="button" title="导入动作配置" aria-label="导入动作配置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4L8 8"></path><path d="M4 14v5h16v-5"></path></svg></button>
+                <input id="definitionFileInput" type="file" accept=".json,application/json" hidden>
+                <button class="icon-btn" id="exportDefinitionsButton" type="button" title="导出动作配置" aria-label="导出动作配置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v4h16v-4"></path></svg></button>
+                <button class="icon-btn delete" id="resetDefinitionsButton" type="button" title="恢复默认动作配置" aria-label="恢复默认动作配置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg></button>
+            </div>
+            <div class="definition-list" id="customDefinitionList"></div>
+            <form id="definitionForm">
+                <h3 class="panel-title" id="definitionFormTitle">创建动作类型</h3>
+                <div class="action-fields" style="padding: 12px 0;">
+                    <label class="field"><span class="field-label">类型标识</span><input class="text-input" id="definitionType" required pattern="[A-Za-z_$][A-Za-z0-9_$]*" placeholder="例如：installPackage"></label>
+                    <label class="field"><span class="field-label">显示名称</span><input class="text-input" id="definitionTitle" required placeholder="例如：安装组件"></label>
+                </div>
+                <div class="field-label">字段</div>
+                <div class="definition-fields" id="definitionFields"></div>
+                <button class="btn btn-small" id="addDefinitionFieldButton" type="button">＋ 添加字段</button>
+                <div class="dialog-actions">
+                    <button class="btn" id="cancelDefinitionButton" type="button">关闭</button>
+                    <button class="btn btn-primary" type="submit">保存配置</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <script>
+        /*
+         * 添加新动作时，在此处注册定义即可。
+         *
+         * field.type 支持：
+         *   text    文本 / 路径
+         *   number  数字
+         *   boolean 是/否单选框
+         *
+         * required: true 表示空值也会写入 JSON；否则空字符串会被忽略。
+         */
+        const BUILTIN_ACTION_DEFINITIONS = {
+            killProcess: {
+                title: "结束进程",
+                fields: [
+                    { name: "processName", label: "进程名称", type: "text", placeholder: "例如：MainApp", required: true },
+                    { name: "waitForExit", label: "等待退出时间（毫秒）", type: "number", default: 5000, min: 0, required: true }
+                ]
+            },
+            createDir: {
+                title: "创建目录",
+                fields: [
+                    { name: "path", label: "目录路径", type: "text", placeholder: "例如：{AppDir}/logs", required: true }
+                ]
+            },
+            extract: {
+                title: "解压缩文件",
+                fields: [
+                    { name: "zipPath", label: "ZIP 文件路径", type: "text", placeholder: "例如：{TempDir}/update.zip", required: true },
+                    { name: "targetDir", label: "解压目标目录", type: "text", placeholder: "例如：{AppDir}", required: true }
+                ]
+            },
+            delete: {
+                title: "删除文件或目录",
+                fields: [
+                    { name: "path", label: "文件或目录路径", type: "text", placeholder: "例如：{AppDir}/old.dll", required: true },
+                    { name: "isFolder", label: "目标是否为目录", type: "boolean", default: false }
+                ]
+            },
+            modifyJson: {
+                title: "修改 JSON 配置",
+                fields: [
+                    {
+                        name: "filePath",
+                        label: "JSON 文件路径",
+                        type: "text",
+                        placeholder: "例如：{AppDir}/appsettings.json",
+                        required: true
+                    },
+                    {
+                        name: "jsonPath",
+                        label: "属性路径（逐层填写）",
+                        type: "pathSegments",
+                        required: true
+                    },
+                    {
+                        name: "newValue",
+                        label: "新值（字符串）",
+                        type: "text",
+                        placeholder: "例如：Warning",
+                        required: true
+                    }
+                ]
+            },
+            modifyIni: {
+                title: "修改 INI 配置",
+                fields: [
+                    { name: "filePath", label: "INI 文件路径", type: "text", placeholder: "例如：{AppDir}/config.ini", required: true },
+                    { name: "section", label: "配置节", type: "text", placeholder: "例如：General", required: true },
+                    { name: "key", label: "配置项名称", type: "text", placeholder: "例如：Version", required: true },
+                    { name: "value", label: "配置项新值", type: "text", placeholder: "例如：2.0.0", required: true }
+                ]
+            },
+            verifyFileHash: {
+                title: "校验 SHA-256",
+                fields: [
+                    { name: "filePath", label: "待校验文件路径", type: "text", placeholder: "例如：{TempDir}/update.zip", required: true },
+                    { name: "expectedHash", label: "预期 SHA-256", type: "text", placeholder: "64 位十六进制字符串", required: true }
+                ]
+            },
+            backupFile: {
+                title: "备份文件",
+                fields: [
+                    { name: "sourcePath", label: "原文件路径", type: "text", placeholder: "例如：{AppDir}/config.ini", required: true },
+                    { name: "backupPath", label: "备份文件路径", type: "text", placeholder: "例如：{AppDir}/backup/config.ini", required: true }
+                ]
+            },
+            copyFile: {
+                title: "复制文件",
+                fields: [
+                    { name: "sourcePath", label: "源文件路径", type: "text", placeholder: "例如：{TempDir}/new.dll", required: true },
+                    { name: "targetPath", label: "目标文件路径", type: "text", placeholder: "例如：{AppDir}/new.dll", required: true },
+                    { name: "overwrite", label: "目标已存在时覆盖", type: "boolean", default: true }
+                ]
+            },
+            startProcess: {
+                title: "启动程序",
+                fields: [
+                    { name: "filePath", label: "可执行文件路径", type: "text", placeholder: "例如：{AppDir}/MainApp.exe", required: true },
+                    { name: "arguments", label: "启动参数", type: "text", placeholder: "可留空" },
+                    { name: "workingDirectory", label: "工作目录", type: "text", placeholder: "可留空，默认使用程序所在目录" }
+                ]
+            }
+        };
+
+        const CUSTOM_DEFINITIONS_KEY = "updateBuilder.customActionDefinitions.v1";
+        const CUSTOM_FIELD_TYPES = ["text", "number", "boolean", "pathSegments"];
+
+        function loadCustomDefinitions() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(CUSTOM_DEFINITIONS_KEY) || "{}");
+                if (!saved || typeof saved !== "object" || Array.isArray(saved)) return {};
+
+                return Object.fromEntries(Object.entries(saved).filter(function (entry) {
+                    const type = entry[0];
+                    const definition = entry[1];
+                    return !BUILTIN_ACTION_DEFINITIONS[type] && definition &&
+                        typeof definition.title === "string" && Array.isArray(definition.fields) &&
+                        definition.fields.every(function (field) {
+                            return field && typeof field.name === "string" &&
+                                typeof field.label === "string" && CUSTOM_FIELD_TYPES.includes(field.type);
+                        });
+                }));
+            } catch (error) {
+                return {};
+            }
+        }
+
+        const customDefinitions = loadCustomDefinitions();
+        const ACTION_DEFINITIONS = Object.assign({}, BUILTIN_ACTION_DEFINITIONS, customDefinitions);
+
+        const actions = [];
+        const actionSelector = document.getElementById("actionSelector");
+        const actionsList = document.getElementById("actionsList");
+        const jsonOutput = document.getElementById("jsonOutput");
+        const versionInput = document.getElementById("manifestVersion");
+        const statusText = document.getElementById("statusText");
+        const importButton = document.getElementById("importButton");
+        const jsonFileInput = document.getElementById("jsonFileInput");
+        const outlineList = document.getElementById("outlineList");
+        const outlineSummary = document.getElementById("outlineSummary");
+        const definitionDialog = document.getElementById("definitionDialog");
+        const definitionForm = document.getElementById("definitionForm");
+        const definitionFields = document.getElementById("definitionFields");
+        const customDefinitionList = document.getElementById("customDefinitionList");
+        const definitionFileInput = document.getElementById("definitionFileInput");
+        let draggedActionIndex = null;
+        let editingDefinitionType = null;
+
+        importButton.addEventListener("click", function () {
+            jsonFileInput.click();
+        });
+
+        jsonFileInput.addEventListener("change", async function () {
+            const file = jsonFileInput.files && jsonFileInput.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const manifest = JSON.parse(text);
+                importManifest(manifest);
+                statusText.textContent = "JSON 已导入，可在表单中修改";
+            } catch (error) {
+                alert("导入失败：" + error.message);
+            } finally {
+                // 允许再次选择同一个文件。
+                jsonFileInput.value = "";
+            }
+        });
+
+        document.getElementById("importDefinitionsButton").addEventListener("click", function () {
+            definitionFileInput.click();
+        });
+
+        definitionFileInput.addEventListener("change", async function () {
+            const file = definitionFileInput.files && definitionFileInput.files[0];
+            if (!file) return;
+            try {
+                const imported = JSON.parse(await file.text());
+                importCustomDefinitions(imported);
+                statusText.textContent = "动作配置已导入";
+            } catch (error) {
+                alert("导入动作配置失败：" + error.message);
+            } finally {
+                definitionFileInput.value = "";
+            }
+        });
+
+        document.getElementById("exportDefinitionsButton").addEventListener("click", function () {
+            const payload = {
+                format: "update-builder-action-definitions",
+                version: 1,
+                definitions: customDefinitions
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], {
+                type: "application/json;charset=utf-8"
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "update-action-definitions.json";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById("resetDefinitionsButton").addEventListener("click", function () {
+            if (!confirm("恢复内置默认配置？所有自定义动作定义及使用它们的步骤都会被移除。")) return;
+            try {
+                localStorage.setItem(CUSTOM_DEFINITIONS_KEY, "{}");
+            } catch (error) {
+                alert("无法保存到本地存储：" + error.message);
+                return;
+            }
+
+            Object.keys(customDefinitions).forEach(function (type) {
+                delete ACTION_DEFINITIONS[type];
+                delete customDefinitions[type];
+            });
+            actions.splice(0, actions.length, ...actions.filter(function (action) {
+                return Boolean(BUILTIN_ACTION_DEFINITIONS[action.type]);
+            }));
+            populateActionSelector();
+            renderCustomDefinitionList();
+            renderActions();
+            updateJson();
+            statusText.textContent = "已恢复内置默认配置";
+        });
+
+
+        function makeElement(tag, className, text) {
+            const element = document.createElement(tag);
+            if (className) element.className = className;
+            if (text !== undefined) element.textContent = text;
+            return element;
+        }
+
+        function createIconButton(className, iconName, label) {
+            const button = makeElement("button", className);
+            button.type = "button";
+            button.title = label;
+            button.setAttribute("aria-label", label);
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("aria-hidden", "true");
+            const paths = {
+                edit: ["M12 20h9", "M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"],
+                delete: ["M3 6h18", "M8 6V4h8v2", "M19 6l-1 14H6L5 6", "M10 11v6", "M14 11v6"],
+                close: ["M18 6 6 18", "M6 6l12 12"]
+            }[iconName];
+
+            paths.forEach(function (pathData) {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                svg.appendChild(path);
+            });
+            button.appendChild(svg);
+            return button;
+        }
+
+        function populateActionSelector() {
+            actionSelector.replaceChildren();
+            Object.keys(ACTION_DEFINITIONS).forEach(function (type) {
+                const option = document.createElement("option");
+                option.value = type;
+                option.textContent = ACTION_DEFINITIONS[type].title;
+                actionSelector.appendChild(option);
+            });
+        }
+
+        function saveCustomDefinitions() {
+            localStorage.setItem(CUSTOM_DEFINITIONS_KEY, JSON.stringify(customDefinitions));
+        }
+
+        function importCustomDefinitions(data) {
+            if (!data || typeof data !== "object" || Array.isArray(data)) {
+                throw new Error("配置文件根节点必须是对象。");
+            }
+
+            const definitions = data.definitions === undefined ? data : data.definitions;
+            if (!definitions || typeof definitions !== "object" || Array.isArray(definitions)) {
+                throw new Error("配置文件必须包含 definitions 对象。");
+            }
+
+            const importedDefinitions = {};
+            Object.entries(definitions).forEach(function (entry) {
+                const type = entry[0];
+                const source = entry[1];
+                if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(type) ||
+                    Object.prototype.hasOwnProperty.call(BUILTIN_ACTION_DEFINITIONS, type)) {
+                    throw new Error("动作类型标识无效或与内置类型冲突：" + type);
+                }
+                if (!source || typeof source.title !== "string" || !source.title.trim() || !Array.isArray(source.fields)) {
+                    throw new Error("动作“" + type + "”定义格式不正确。");
+                }
+
+                const fieldNames = new Set();
+                const fields = source.fields.map(function (field) {
+                    if (!field || typeof field.name !== "string" || !field.name.trim() ||
+                        typeof field.label !== "string" || !field.label.trim() ||
+                        !CUSTOM_FIELD_TYPES.includes(field.type) || fieldNames.has(field.name)) {
+                        throw new Error("动作“" + type + "”包含无效或重复字段。");
+                    }
+                    fieldNames.add(field.name);
+                    const normalized = {
+                        name: field.name,
+                        label: field.label,
+                        type: field.type,
+                        required: Boolean(field.required)
+                    };
+                    if (typeof field.placeholder === "string" && field.placeholder) {
+                        normalized.placeholder = field.placeholder;
+                    }
+                    return normalized;
+                });
+                importedDefinitions[type] = { title: source.title.trim(), fields: fields };
+            });
+
+            const mergedDefinitions = Object.assign({}, customDefinitions, importedDefinitions);
+            localStorage.setItem(CUSTOM_DEFINITIONS_KEY, JSON.stringify(mergedDefinitions));
+            Object.keys(customDefinitions).forEach(function (type) { delete customDefinitions[type]; });
+            Object.assign(customDefinitions, mergedDefinitions);
+            Object.keys(ACTION_DEFINITIONS).forEach(function (type) {
+                if (!Object.prototype.hasOwnProperty.call(BUILTIN_ACTION_DEFINITIONS, type)) {
+                    delete ACTION_DEFINITIONS[type];
+                }
+            });
+            Object.assign(ACTION_DEFINITIONS, customDefinitions);
+
+            populateActionSelector();
+            renderCustomDefinitionList();
+            renderActions();
+            updateJson();
+        }
+
+        function addDefinitionFieldRow(field) {
+            const row = makeElement("div", "definition-field-row");
+            row.appendChild(Object.assign(makeElement("input", "text-input"), {
+                name: "fieldName", required: true, placeholder: "字段名", value: field?.name || ""
+            }));
+            row.appendChild(Object.assign(makeElement("input", "text-input"), {
+                name: "fieldLabel", required: true, placeholder: "显示名称", value: field?.label || ""
+            }));
+            row.appendChild(Object.assign(makeElement("input", "text-input"), {
+                name: "fieldPlaceholder", placeholder: "占位提示", value: field?.placeholder || ""
+            }));
+
+            const typeSelect = document.createElement("select");
+            typeSelect.name = "fieldType";
+            CUSTOM_FIELD_TYPES.forEach(function (type) {
+                const option = document.createElement("option");
+                option.value = type;
+                option.textContent = {
+                    text: "文本", number: "数字", boolean: "是/否", pathSegments: "路径层级"
+                }[type];
+                typeSelect.appendChild(option);
+            });
+            typeSelect.value = field?.type || "text";
+            row.appendChild(typeSelect);
+
+            const requiredLabel = makeElement("label", "required-toggle");
+            const requiredInput = document.createElement("input");
+            requiredInput.type = "checkbox";
+            requiredInput.name = "fieldRequired";
+            requiredInput.checked = Boolean(field?.required);
+            requiredLabel.appendChild(requiredInput);
+            requiredLabel.appendChild(document.createTextNode("必填"));
+            row.appendChild(requiredLabel);
+
+            const removeButton = createIconButton("icon-btn delete remove-field", "delete", "删除字段");
+            removeButton.addEventListener("click", function () { row.remove(); });
+            row.appendChild(removeButton);
+            definitionFields.appendChild(row);
+        }
+
+        function openDefinitionEditor(type) {
+            editingDefinitionType = type || null;
+            const definition = type ? customDefinitions[type] : null;
+            document.getElementById("definitionFormTitle").textContent = definition ? "编辑动作类型" : "创建动作类型";
+            const typeInput = document.getElementById("definitionType");
+            typeInput.value = type || "";
+            typeInput.disabled = Boolean(definition);
+            document.getElementById("definitionTitle").value = definition?.title || "";
+            definitionFields.replaceChildren();
+            (definition?.fields || [{}]).forEach(addDefinitionFieldRow);
+            definitionDialog.showModal();
+            if (definition) document.getElementById("definitionTitle").focus();
+        }
+
+        function renderCustomDefinitionList() {
+            customDefinitionList.replaceChildren();
+            const types = Object.keys(customDefinitions);
+            if (types.length === 0) {
+                customDefinitionList.appendChild(makeElement("div", "outline-empty", "还没有自定义动作配置。"));
+                return;
+            }
+
+            types.forEach(function (type) {
+                const row = makeElement("div", "definition-row");
+                const description = makeElement("div");
+                description.appendChild(makeElement("strong", "", customDefinitions[type].title));
+                description.appendChild(makeElement("div", "", ""));
+                description.lastChild.appendChild(makeElement("code", "", type));
+                const tools = makeElement("div", "action-tools");
+                const editButton = createIconButton("icon-btn", "edit", "编辑动作配置");
+                editButton.addEventListener("click", function () { openDefinitionEditor(type); });
+                const deleteButton = createIconButton("icon-btn delete", "delete", "删除动作配置");
+                deleteButton.addEventListener("click", function () {
+                    if (!confirm("删除自定义动作“" + customDefinitions[type].title + "”？")) return;
+                    delete customDefinitions[type];
+                    delete ACTION_DEFINITIONS[type];
+                    actions.splice(0, actions.length, ...actions.filter(function (action) { return action.type !== type; }));
+                    try {
+                        saveCustomDefinitions();
+                    } catch (error) {
+                        alert("无法保存到本地存储：" + error.message);
+                    }
+                    populateActionSelector();
+                    renderCustomDefinitionList();
+                    renderActions();
+                    updateJson();
+                });
+                tools.appendChild(editButton);
+                tools.appendChild(deleteButton);
+                row.appendChild(description);
+                row.appendChild(tools);
+                customDefinitionList.appendChild(row);
+            });
+        }
+
+        function createAction(type) {
+            const definition = ACTION_DEFINITIONS[type];
+            const values = {};
+
+            definition.fields.forEach(function (field) {
+                if (field.type === "pathSegments") {
+                    values[field.name] = [""];
+                } else if (field.default !== undefined) {
+                    values[field.name] = field.default;
+                } else {
+                    values[field.name] = "";
+                }
+            });
+
+            return {
+                type: type,
+                values: values,
+                continueOnError: true
+            };
+        }
+
+
+        function addAction(type) {
+            actions.push(createAction(type));
+            renderActions();
+            updateJson();
+        }
+
+        function createBooleanField(action, field) {
+            const wrapper = makeElement("div", "radio-group");
+            const groupName = "bool-" + actions.indexOf(action) + "-" + field.name;
+
+            [
+                { value: true, label: "是" },
+                { value: false, label: "否" }
+            ].forEach(function (optionData) {
+                const label = makeElement("label", "radio-option");
+                const input = document.createElement("input");
+
+                input.type = "radio";
+                input.name = groupName;
+                input.value = String(optionData.value);
+                input.checked = Boolean(action.values[field.name]) === optionData.value;
+
+                input.addEventListener("change", function () {
+                    action.values[field.name] = input.value === "true";
+                    updateJson();
+                });
+
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(optionData.label));
+                wrapper.appendChild(label);
+            });
+
+            return wrapper;
+        }
+
+        function createPathSegmentsField(action, field) {
+            const container = makeElement("div", "field");
+            container.classList.add("field-full");
+            container.dataset.fieldName = field.name;
+
+            container.appendChild(
+                makeElement("label", "field-label", field.label)
+            );
+
+            const rows = makeElement("div");
+            const segments = action.values[field.name] || [""];
+            action.values[field.name] = segments;
+
+            function renderRows() {
+                rows.replaceChildren();
+
+                segments.forEach(function (segment, index) {
+                    const row = document.createElement("div");
+
+                    row.style.display = "flex";
+                    row.style.gap = "8px";
+                    row.style.marginBottom = "8px";
+
+                    const input = document.createElement("input");
+                    input.className = "text-input";
+                    input.type = "text";
+                    input.value = segment;
+                    input.placeholder = index === 0
+                        ? "第 1 层，例如：targets"
+                        : "第 " + (index + 1) + " 层属性名";
+                    input.setAttribute("aria-label", "JSON 路径第 " + (index + 1) + " 层");
+
+                    input.addEventListener("input", function () {
+                        segments[index] = input.value;
+                        updateJson();
+                    });
+
+                    const removeButton = createIconButton("icon-btn delete", "delete", "删除路径层级");
+                    removeButton.addEventListener("click", function () {
+                        if (segments.length === 1) {
+                            segments[0] = "";
+                        } else {
+                            segments.splice(index, 1);
+                        }
+
+                        renderRows();
+                        updateJson();
+                    });
+
+                    row.appendChild(input);
+                    row.appendChild(removeButton);
+                    rows.appendChild(row);
+                });
+
+                const addButton = makeElement("button", "btn btn-small", "＋ 添加路径层级");
+                addButton.type = "button";
+                addButton.addEventListener("click", function () {
+                    segments.push("");
+                    renderRows();
+                    updateJson();
+                });
+
+                rows.appendChild(addButton);
+            }
+
+            renderRows();
+
+            container.appendChild(rows);
+            container.appendChild(
+                makeElement(
+                    "div",
+                    "field-hint",
+                    "每个输入框代表 JSON 中的一层属性。属性名中的点号、斜杠等字符会原样保留。"
+                )
+            );
+
+            return container;
+        }
+
+
+        function createField(action, field) {
+            const wrapper = makeElement("div", "field");
+            wrapper.dataset.fieldName = field.name;
+            if (field.full) wrapper.classList.add("field-full");
+
+            if (field.type === "pathSegments") {
+                return createPathSegmentsField(action, field);
+            }
+
+            const label = makeElement("label", "field-label", field.label);
+            wrapper.appendChild(label);
+
+            if (field.type === "boolean") {
+                wrapper.appendChild(createBooleanField(action, field));
+            } else {
+                const input = document.createElement("input");
+                input.className = field.type === "number" ? "number-input" : "text-input";
+                input.type = field.type === "number" ? "number" : "text";
+                input.value = action.values[field.name] ?? "";
+                if (field.required) input.setAttribute("aria-required", "true");
+
+                if (field.placeholder) input.placeholder = field.placeholder;
+                if (field.min !== undefined) input.min = field.min;
+                if (field.max !== undefined) input.max = field.max;
+                if (field.step !== undefined) input.step = field.step;
+
+                input.addEventListener("input", function () {
+                    // 数字输入也先保存为字符串，生成 JSON 时再转换为数字。
+                    action.values[field.name] = input.value;
+                    updateJson();
+                });
+
+                wrapper.appendChild(input);
+            }
+
+            if (field.hint) {
+                wrapper.appendChild(makeElement("div", "field-hint", field.hint));
+            }
+
+            return wrapper;
+        }
+
+
+        function createContinueOnErrorField(action) {
+            const field = {
+                name: "continueOnError",
+                label: "失败时继续执行后续动作"
+            };
+
+            const wrapper = makeElement("div", "field");
+            wrapper.classList.add("field-full");
+            wrapper.appendChild(makeElement("label", "field-label", field.label));
+
+            const label = makeElement("label", "radio-option");
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.checked = Boolean(action.continueOnError);
+            input.setAttribute("aria-label", field.label);
+            input.addEventListener("change", function () {
+                action.continueOnError = input.checked;
+                updateJson();
+            });
+
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(field.label));
+            wrapper.appendChild(label);
+            return wrapper;
+        }
+
+        function moveAction(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= actions.length) return;
+
+            const item = actions.splice(index, 1)[0];
+            actions.splice(newIndex, 0, item);
+
+            renderActions();
+            updateJson();
+        }
+
+        function getMissingRequiredFields(action) {
+            return ACTION_DEFINITIONS[action.type].fields.filter(function (field) {
+                if (!field.required) return false;
+                const value = action.values[field.name];
+                if (field.type === "pathSegments") {
+                    return !Array.isArray(value) || value.length === 0 ||
+                        value.some(function (segment) { return String(segment).trim() === ""; });
+                }
+                if (field.type === "boolean") return false;
+                return value === undefined || value === null || String(value).trim() === "";
+            });
+        }
+
+        function renderOutline() {
+            outlineList.replaceChildren();
+            outlineSummary.textContent = actions.length + " 个步骤 · " +
+                actions.reduce(function (count, action) { return count + getMissingRequiredFields(action).length; }, 0) + " 项待填写";
+
+            if (actions.length === 0) {
+                outlineList.appendChild(makeElement("div", "outline-empty", "添加动作后，可在这里定位、排序或删除步骤。"));
+                return;
+            }
+
+            actions.forEach(function (action, index) {
+                const definition = ACTION_DEFINITIONS[action.type];
+                const item = makeElement("div", "outline-item");
+                item.draggable = true;
+                item.dataset.index = String(index);
+                if (getMissingRequiredFields(action).length) item.classList.add("is-invalid");
+
+                const number = makeElement("span", "outline-index", String(index + 1));
+                const jump = makeElement("button", "outline-title", definition.title);
+                jump.type = "button";
+                jump.title = "定位到" + definition.title;
+                jump.addEventListener("click", function () {
+                    const card = document.getElementById("action-card-" + index);
+                    card.scrollIntoView({ behavior: "smooth", block: "start" });
+                    card.classList.add("is-active");
+                    window.setTimeout(function () { card.classList.remove("is-active"); }, 900);
+                });
+
+                const remove = createIconButton("outline-delete", "delete", "删除第 " + (index + 1) + " 个动作");
+                remove.addEventListener("click", function () {
+                    actions.splice(index, 1);
+                    renderActions();
+                    updateJson();
+                });
+
+                item.appendChild(number);
+                item.appendChild(jump);
+                item.appendChild(remove);
+                item.addEventListener("dragstart", function (event) {
+                    draggedActionIndex = index;
+                    item.classList.add("is-dragging");
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", String(index));
+                });
+                item.addEventListener("dragend", function () {
+                    draggedActionIndex = null;
+                    item.classList.remove("is-dragging");
+                });
+                item.addEventListener("dragover", function (event) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                });
+                item.addEventListener("drop", function (event) {
+                    event.preventDefault();
+                    const from = draggedActionIndex;
+                    const to = index;
+                    if (from === null || from === to) return;
+                    const moved = actions.splice(from, 1)[0];
+                    actions.splice(to, 0, moved);
+                    renderActions();
+                    updateJson();
+                });
+                outlineList.appendChild(item);
+            });
+        }
+
+        function updateFieldValidation() {
+            actions.forEach(function (action, index) {
+                const card = document.getElementById("action-card-" + index);
+                if (!card) return;
+                const missingNames = new Set(getMissingRequiredFields(action).map(function (field) { return field.name; }));
+                card.querySelectorAll("[data-field-name]").forEach(function (fieldElement) {
+                    const invalid = missingNames.has(fieldElement.dataset.fieldName);
+                    fieldElement.classList.toggle("is-invalid", invalid);
+                    const previousError = fieldElement.querySelector(".field-error");
+                    if (previousError) previousError.remove();
+                    if (invalid) fieldElement.appendChild(makeElement("div", "field-error", "此项为必填，请填写后再生成有效清单。"));
+                });
+            });
+        }
+
+        function renderActions() {
+            actionsList.replaceChildren();
+
+            if (actions.length === 0) {
+                const empty = makeElement("div", "empty-state");
+                empty.appendChild(makeElement("div", "empty-icon", "＋"));
+                empty.appendChild(makeElement("strong", "", "还没有添加更新动作"));
+                empty.appendChild(makeElement("span", "", "从上方选择一个动作类型并点击“添加动作”。"));
+                actionsList.appendChild(empty);
+                renderOutline();
+                return;
+            }
+
+            actions.forEach(function (action, index) {
+                const definition = ACTION_DEFINITIONS[action.type];
+                const card = makeElement("article", "action-card");
+                card.id = "action-card-" + index;
+
+                const header = makeElement("div", "action-card-head");
+                const heading = makeElement("div", "action-heading");
+                const number = makeElement("div", "action-number", String(index + 1));
+                const titleWrap = makeElement("div");
+                titleWrap.appendChild(makeElement("div", "action-name", definition.title));
+                titleWrap.appendChild(makeElement("div", "action-type", action.type));
+
+                heading.appendChild(number);
+                heading.appendChild(titleWrap);
+
+                const tools = makeElement("div", "action-tools");
+
+                const upButton = makeElement("button", "icon-btn", "↑");
+                upButton.type = "button";
+                upButton.title = "上移";
+                upButton.disabled = index === 0;
+                upButton.addEventListener("click", function () {
+                    moveAction(index, -1);
+                });
+
+                const downButton = makeElement("button", "icon-btn", "↓");
+                downButton.type = "button";
+                downButton.title = "下移";
+                downButton.disabled = index === actions.length - 1;
+                downButton.addEventListener("click", function () {
+                    moveAction(index, 1);
+                });
+
+                const deleteButton = createIconButton("icon-btn delete", "delete", "删除动作");
+                deleteButton.addEventListener("click", function () {
+                    actions.splice(index, 1);
+                    renderActions();
+                    updateJson();
+                });
+
+                tools.appendChild(upButton);
+                tools.appendChild(downButton);
+                tools.appendChild(deleteButton);
+
+                header.appendChild(heading);
+                header.appendChild(tools);
+
+                const fields = makeElement("div", "action-fields");
+                definition.fields.forEach(function (field) {
+                    fields.appendChild(createField(action, field));
+                });
+                fields.appendChild(createContinueOnErrorField(action));
+
+                card.appendChild(header);
+                card.appendChild(fields);
+                actionsList.appendChild(card);
+            });
+            updateFieldValidation();
+            renderOutline();
+        }
+
+        function buildManifest() {
+            const manifest = {
+                version: versionInput.value.trim(),
+                actions: actions.map(function (action) {
+                    const result = {
+                        "$type": action.type
+                    };
+
+                    Object.keys(ACTION_DEFINITIONS[action.type].fields).forEach(function (index) {
+                        const field = ACTION_DEFINITIONS[action.type].fields[index];
+                        const value = action.values[field.name];
+
+                        if (field.type === "pathSegments") {
+                            result[field.name] = Array.isArray(value)
+                                ? value.map(function (item) {
+                                    return String(item).trim();
+                                })
+                                : [];
+                        } else if (field.type === "boolean") {
+                            result[field.name] = Boolean(value);
+                        } else if (field.type === "number") {
+                            if (value !== "" && value !== null && value !== undefined) {
+                                result[field.name] = Number(value);
+                            } else if (field.required) {
+                                result[field.name] = 0;
+                            }
+                        } else if (field.required || (value !== "" && value !== null && value !== undefined)) {
+                            result[field.name] = value === undefined ? "" : String(value);
+                        }
+                    });
+
+                    result.continueOnError = Boolean(action.continueOnError);
+                    return result;
+                })
+            };
+
+            return manifest;
+        }
+
+        function updateJson() {
+            const jsonText = JSON.stringify(buildManifest(), null, 2);
+            const tokenPattern = /"(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null/g;
+            jsonOutput.innerHTML = jsonText.replace(tokenPattern, function (token, offset, source) {
+                const escaped = token.replace(/[&<>"']/g, function (character) {
+                    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+                });
+                let tokenClass = "json-string";
+                if (token[0] === '"' && /^\s*:/.test(source.slice(offset + token.length))) tokenClass = "json-key";
+                else if (token === "true" || token === "false") tokenClass = "json-boolean";
+                else if (token === "null") tokenClass = "json-null";
+                else if (token[0] !== '"') tokenClass = "json-number";
+                return '<span class="' + tokenClass + '">' + escaped + "</span>";
+            });
+            document.getElementById("actionCount").textContent = actions.length + " 个动作";
+            const missingCount = actions.reduce(function (count, action) {
+                return count + getMissingRequiredFields(action).length;
+            }, 0);
+            statusText.textContent = missingCount ? "JSON 已生成 · " + missingCount + " 项必填待完成" : "JSON 已生成";
+            updateFieldValidation();
+            renderOutline();
+        }
+        function importManifest(manifest) {
+            if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+                throw new Error("JSON 根节点必须是对象。");
+            }
+
+            if (!Array.isArray(manifest.actions)) {
+                throw new Error("JSON 中必须包含 actions 数组。");
+            }
+
+            // 先完整校验，避免导入失败时清空当前编辑内容。
+            manifest.actions.forEach(function (item, index) {
+                if (!item || typeof item !== "object" || Array.isArray(item)) {
+                    throw new Error(`第 ${index + 1} 个动作格式不正确。`);
+                }
+
+                const type = item.$type;
+                if (!type || !ACTION_DEFINITIONS[type]) {
+                    throw new Error(`第 ${index + 1} 个动作的 $type 无法识别：${type || "未填写"}`);
+                }
+            });
+
+            const importedActions = manifest.actions.map(function (item) {
+                const type = item.$type;
+                const definition = ACTION_DEFINITIONS[type];
+                const values = {};
+
+                definition.fields.forEach(function (field) {
+                    const value = item[field.name];
+
+                    if (field.type === "pathSegments") {
+                        values[field.name] = Array.isArray(value)
+                            ? value.map(function (segment) {
+                                return String(segment ?? "");
+                            })
+                            : (value === undefined ? [""] : [String(value ?? "")]);
+                    } else if (field.type === "boolean") {
+                        values[field.name] = value === undefined
+                            ? Boolean(field.default ?? false)
+                            : Boolean(value);
+                    } else if (field.type === "number") {
+                        values[field.name] = value === undefined || value === null
+                            ? (field.default ?? "")
+                            : String(value);
+                    } else {
+                        values[field.name] = value === undefined || value === null
+                            ? (field.default ?? "")
+                            : String(value);
+                    }
+                });
+
+                return {
+                    type: type,
+                    values: values,
+                    continueOnError: item.continueOnError === undefined
+                        ? true
+                        : Boolean(item.continueOnError)
+                };
+            });
+
+            // 校验成功后再更新页面状态。
+            actions.splice(0, actions.length, ...importedActions);
+            versionInput.value = manifest.version == null ? "" : String(manifest.version);
+
+            renderActions();
+            updateJson();
+        }
+
+        document.getElementById("addActionButton").addEventListener("click", function () {
+            addAction(actionSelector.value);
+        });
+
+        document.getElementById("manageDefinitionsButton").addEventListener("click", function () {
+            renderCustomDefinitionList();
+            openDefinitionEditor();
+        });
+
+        document.getElementById("addDefinitionFieldButton").addEventListener("click", function () {
+            addDefinitionFieldRow();
+        });
+
+        ["closeDefinitionDialog", "cancelDefinitionButton"].forEach(function (id) {
+            document.getElementById(id).addEventListener("click", function () {
+                definitionDialog.close();
+            });
+        });
+
+        definitionForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const type = document.getElementById("definitionType").value.trim();
+            const title = document.getElementById("definitionTitle").value.trim();
+            const existing = customDefinitions[type];
+            if (BUILTIN_ACTION_DEFINITIONS[type] || (customDefinitions[type] && type !== editingDefinitionType)) {
+                alert("此类型标识已存在，请使用其他标识。");
+                return;
+            }
+
+            const fields = Array.from(definitionFields.querySelectorAll(".definition-field-row")).map(function (row) {
+                const field = {
+                    name: row.querySelector('[name="fieldName"]').value.trim(),
+                    label: row.querySelector('[name="fieldLabel"]').value.trim(),
+                    type: row.querySelector('[name="fieldType"]').value,
+                    required: row.querySelector('[name="fieldRequired"]').checked
+                };
+                const placeholder = row.querySelector('[name="fieldPlaceholder"]').value.trim();
+                if (placeholder) field.placeholder = placeholder;
+                return field;
+            });
+
+            if (fields.some(function (field) { return !field.name || !field.label; }) ||
+                new Set(fields.map(function (field) { return field.name; })).size !== fields.length) {
+                alert("字段名和显示名称不能为空，且字段名不能重复。");
+                return;
+            }
+
+            const definition = { title: title, fields: fields };
+            customDefinitions[type] = definition;
+            ACTION_DEFINITIONS[type] = definition;
+            actions.forEach(function (action) {
+                if (action.type !== type) return;
+                const previousValues = action.values;
+                action.values = {};
+                definition.fields.forEach(function (field) {
+                    if (Object.prototype.hasOwnProperty.call(previousValues, field.name)) {
+                        action.values[field.name] = previousValues[field.name];
+                    } else if (field.type === "pathSegments") {
+                        action.values[field.name] = [""];
+                    } else if (field.type === "boolean") {
+                        action.values[field.name] = false;
+                    } else {
+                        action.values[field.name] = "";
+                    }
+                });
+            });
+
+            try {
+                saveCustomDefinitions();
+            } catch (error) {
+                if (existing) {
+                    customDefinitions[type] = existing;
+                    ACTION_DEFINITIONS[type] = existing;
+                } else {
+                    delete customDefinitions[type];
+                    delete ACTION_DEFINITIONS[type];
+                }
+                alert("无法保存到本地存储：" + error.message);
+                return;
+            }
+
+            populateActionSelector();
+            renderCustomDefinitionList();
+            renderActions();
+            updateJson();
+            definitionDialog.close();
+        });
+
+        versionInput.addEventListener("input", updateJson);
+
+        document.getElementById("copyButton").addEventListener("click", async function () {
+            try {
+                await navigator.clipboard.writeText(jsonOutput.textContent);
+                statusText.textContent = "已复制到剪贴板";
+            } catch (error) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(jsonOutput);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand("copy");
+                selection.removeAllRanges();
+                statusText.textContent = "已复制到剪贴板";
+            }
+        });
+
+        document.getElementById("downloadButton").addEventListener("click", function () {
+            const blob = new Blob([jsonOutput.textContent], {
+                type: "application/json;charset=utf-8"
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "update-manifest.json";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+        });
+
+        populateActionSelector();
+        renderCustomDefinitionList();
+        renderActions();
+        updateJson();
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Ike.Standard
 {
@@ -38,6 +39,24 @@ namespace Ike.Standard
             /// 线程ID
             /// </summary>
             public int ThreadID { get; set; }
+
+            /// <summary>
+            /// 转日志格式字符串
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                StringBuilder sb = new();
+                sb.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"))
+                .Append("  :[")
+                .Append(ThreadID)
+                .Append("]-[")
+                .Append(LogType.ToString().Substring(0, 3).ToUpper())
+                .Append("]  ")
+                .Append(Info)
+                .AppendLine();
+                return sb.ToString();
+            }
         }
     }
 }

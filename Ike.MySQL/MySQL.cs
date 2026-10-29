@@ -112,8 +112,14 @@ namespace Ike
         /// <param name="sslMode">SSL 模式</param>
         /// <param name="pooling">是否开启连接池</param>
         /// <param name="maxPoolSize">连接池允许创建的最大连接数</param>
-        /// <param name="minPoolSize">连接池中保持的最小空闲连接数。设为 0 可以在系统空闲时不占用数据库资源；如果要求响应速度极快，可以设为 5 或 10，这样系统启动时就会预先准备好几个连接</param>
-        public MySQL(string server, string user, string password, string database = null, uint port = 3306, CharSet charset = CharSet.utf8, bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, uint maxPoolSize = 100, uint minPoolSize = 10)
+        /// <param name="minPoolSize">连接池中保持的最小空闲连接数</param>
+        /// <param name="connectionIdleTimeout">连接归还池后，允许在池中空闲多久，单位秒,想控制空闲连接回收时设置</param>
+        /// <param name="connectionLifeTime">连接的最大生命周期，单位秒；0 表示不限	不是空闲超时，通常不必设置</param>
+        public MySQL(string server, string user, string password, 
+            string database = null, uint port = 3306, CharSet charset = CharSet.utf8, 
+            bool allowUserVariables = false, bool useCompression = false, uint connectionTimeout = 15, 
+            uint defaultCommandTimeout = 30, SslMode sslMode = SslMode.None, bool pooling = true, 
+            uint maxPoolSize = 10, uint minPoolSize = 0,uint connectionIdleTimeout = 600,uint connectionLifeTime = 0)
         {
             var builder = new MySqlConnectionStringBuilder
             {
@@ -129,7 +135,9 @@ namespace Ike
                 SslMode = MapSslMode(sslMode),
                 Pooling = pooling,
                 MaximumPoolSize = maxPoolSize,
-                MinimumPoolSize = minPoolSize
+                MinimumPoolSize = minPoolSize,
+                ConnectionIdleTimeout = connectionIdleTimeout,
+                ConnectionLifeTime = connectionLifeTime
             };
 
             if (!string.IsNullOrWhiteSpace(database))

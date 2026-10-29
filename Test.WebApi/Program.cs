@@ -1,11 +1,15 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using OpenCvSharp;
 using System.Text;
+using Ike.Standard.Controller;
+using System.Diagnostics;
+
 namespace Test.WebApi
 {
     public class Program
     {
 
+        
 
         public static void Main(string[] args)
         {
@@ -18,6 +22,9 @@ namespace Test.WebApi
             #region 测试
 
 
+            Console.ReadLine();
+
+            /*
             string scrfdModel = @"F:\Desktop\MediaHub\models\scrfd_10g_kps.onnx";
 
             string arcFaceModel =  @"F:\Desktop\MediaHub\models\arcfaceresnet100-8.onnx";
@@ -57,7 +64,7 @@ namespace Test.WebApi
             Cv2.ImShow("Compare", compare);
             Cv2.WaitKey();
 
-
+            */
 
             #endregion
 
@@ -65,11 +72,17 @@ namespace Test.WebApi
 
 
 
-
-
-            Console.ReadLine();
-            Environment.Exit(0);
+            //Console.ReadLine();
+            //Environment.Exit(0);
             var builder = WebApplication.CreateBuilder(args);
+
+
+            builder.Services.AddControllers()
+            .AddCommonControllers(options =>
+            {
+                // 语义化快捷启用
+                options.EnableFileRelease();
+            });
 
             // Add services to the container.
             builder.Services.AddAuthorization();

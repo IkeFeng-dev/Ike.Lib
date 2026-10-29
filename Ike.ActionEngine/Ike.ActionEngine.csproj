@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net462;</TargetFrameworks>
+		<PackageId>Ike.ActionEngine</PackageId>
+		<Version>1.0.0</Version>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="JsonBuilder.html" />
+	</ItemGroup>
+
+	<!-- 1. 关联 ActionEngine 项目 -->
+	<ItemGroup>
+		<ProjectReference Include="..\ActionEngine\ActionEngine.csproj">
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+		</ProjectReference>
+	</ItemGroup>
+
+	<!-- 2. 将 Costura 打包好的 ActionEngine.exe 抓取进 NuGet 包的 build\Tool\ 目录 -->
+	<Target Name="IncludeActionEngineInPackage" BeforeTargets="_GetPackageFiles">
+		<ItemGroup>
+			<Content Include="..\ActionEngine\bin\$(Configuration)\ActionEngine.exe">
+				<Pack>true</Pack>
+				<PackagePath>build\Tool\ActionEngine.exe</PackagePath>
+			</Content>
+		</ItemGroup>
+	</Target>
+
+	<!-- 3. 打包 .targets 自动化脚本 -->
+	<ItemGroup>
+		<Content Include="Ike.ActionEngine.targets">
+			<Pack>true</Pack>
+			<PackagePath>build\Ike.ActionEngine.targets</PackagePath>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="JsonBuilder.html" />
+	</ItemGroup>
+
+</Project>

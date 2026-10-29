@@ -32,7 +32,7 @@ namespace Ike.Standard
         /// <param name="ftpPassword">密码</param>
         public Ftp(string ftpServerIP, string ftpUserID, string ftpPassword)
         {
-            UpdataUser(ftpServerIP, ftpUserID, ftpPassword);
+            UpdateUser(ftpServerIP, ftpUserID, ftpPassword);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Ike.Standard
         {
             get
             {
-                string repl = currentDirectory.Replace("//", "/");
+                string repl = CheckPath(currentDirectory);
                 if (repl.StartsWith("/"))
                 {
                     repl = repl.Substring(1);
@@ -64,13 +64,33 @@ namespace Ike.Standard
             }
         }
 
+
+        /// <summary>
+        /// 检查重复分级路径,比如说把 /A//B/C中//转换为/
+        /// </summary>
+        /// <param name="ftpPath">FTP路径</param>
+        public string CheckPath(string ftpPath)
+        {
+            string c = "//";
+            if (ftpPath.Contains("\\"))
+            {
+                ftpPath = ftpPath.Replace("\\", "/");
+            }
+            if (ftpPath.Contains(c))
+            {
+                ftpPath = ftpPath.Replace(c, "/");
+                ftpPath = CheckPath(ftpPath);
+            }
+            return ftpPath;
+        }
+
         /// <summary>
         /// 进入FTP当前工作目录下的子目录
         /// </summary>
         /// <param name="directoryName"></param>
         public void CDIn(string directoryName)
         {
-            directoryName = directoryName.Replace("\\", "/");
+            directoryName = CheckPath(directoryName);
             if (!directoryName.StartsWith("/"))
             {
                 directoryName = '/' + directoryName;
@@ -160,7 +180,7 @@ namespace Ike.Standard
         /// <param name="ftpServerIP">IP[192.168.99.216:2121]</param>
         /// <param name="ftpUserID">用户名</param>
         /// <param name="ftpPassword">密码</param>
-        public void UpdataUser(string ftpServerIP, string ftpUserID, string ftpPassword)
+        public void UpdateUser(string ftpServerIP, string ftpUserID, string ftpPassword)
         {
             ftpServerIP = ftpServerIP.ToLower();
             if (!ftpServerIP.StartsWith("ftp://"))
@@ -191,7 +211,7 @@ namespace Ike.Standard
                 return null;
             }
             bool isFile = items[0].StartsWith("-");
-            string[] mouths = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+            string[] mouths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             for (int i = 0; i < notEmpty.Length; i++)
             {
                 if (i > notEmpty.Length - 4)
@@ -251,7 +271,7 @@ namespace Ike.Standard
         public ResponseInfo[] GetResponseInfo(string ftpPath)
         {
             string[] lines = GetResponse(ftpPath, WebRequestMethods.Ftp.ListDirectoryDetails);
-            List<ResponseInfo?> responseInfo = new List<ResponseInfo?>();
+            List<ResponseInfo?> responseInfo = [];
             foreach (var item in lines)
             {
                 responseInfo.Add(GetInfo(item));
@@ -268,7 +288,7 @@ namespace Ike.Standard
         /// <returns></returns>
         public string[] GetFileList()
         {
-            List<string> list = new List<string>();
+            List<string> list = [];
             foreach (var item in GetResponseInfo(CurrentDirectory))
             {
                 if (item.IsFile)
@@ -276,7 +296,7 @@ namespace Ike.Standard
                     list.Add(item.Name);
                 }
             }
-            return list.ToArray();
+            return [.. list];
         }
 
 
@@ -287,7 +307,7 @@ namespace Ike.Standard
         /// <returns></returns>
         public string[] GetFileList(string ftpPath)
         {
-            List<string> list = new List<string>();
+            List<string> list = [];
             foreach (var item in GetResponseInfo(ftpPath))
             {
                 if (item.IsFile)
@@ -295,7 +315,7 @@ namespace Ike.Standard
                     list.Add(item.Name);
                 }
             }
-            return list.ToArray();
+            return [.. list];
         }
 
 
@@ -305,7 +325,7 @@ namespace Ike.Standard
         /// <returns></returns>
         public string[] GetDirectoryList()
         {
-            List<string> list = new List<string>();
+            List<string> list = [];
             foreach (var item in GetResponseInfo(CurrentDirectory))
             {
                 if (!item.IsFile)
@@ -313,7 +333,7 @@ namespace Ike.Standard
                     list.Add(item.Name);
                 }
             }
-            return list.ToArray();
+            return [.. list];
         }
 
 
@@ -324,7 +344,7 @@ namespace Ike.Standard
         /// <returns></returns>
         public string[] GetDirectoryList(string ftpPath)
         {
-            List<string> list = new List<string>();
+            List<string> list = [];
             foreach (var item in GetResponseInfo(ftpPath))
             {
                 if (item.IsFile)
@@ -332,7 +352,7 @@ namespace Ike.Standard
                     list.Add(item.Name);
                 }
             }
-            return list.ToArray();
+            return [.. list];
         }
 
 
@@ -494,27 +514,23 @@ namespace Ike.Standard
             long totalUploaded = 0;
             long lastTotalUploaded = 0;
             bool isCal = progress != null;
-            using (FileStream fs = fileInf.OpenRead())
+            using FileStream fs = fileInf.OpenRead();
+            using Stream strm = reqFTP.GetRequestStream();
+            contentLen = fs.Read(buff, 0, buffLength);
+            while (contentLen != 0)
             {
-                using (Stream strm = reqFTP.GetRequestStream())
+                strm.Write(buff, 0, contentLen);
+                if (isCal && totalUploaded >= lastTotalUploaded)
                 {
-                    contentLen = fs.Read(buff, 0, buffLength);
-                    while (contentLen != 0)
-                    {
-                        strm.Write(buff, 0, contentLen);
-                        if (isCal && totalUploaded >= lastTotalUploaded)
-                        {
-                            totalUploaded += contentLen;
-                            double percent = (double)totalUploaded / fileInf.Length;
-                            progress.Report(percent);
-                        }
-                        contentLen = fs.Read(buff, 0, buffLength);
-                    }
-                    strm.Close();
-                    fs.Close();
-                    return true;
+                    totalUploaded += contentLen;
+                    double percent = (double)totalUploaded / fileInf.Length;
+                    progress.Report(percent);
                 }
+                contentLen = fs.Read(buff, 0, buffLength);
             }
+            strm.Close();
+            fs.Close();
+            return true;
         }
 
 
@@ -629,39 +645,31 @@ namespace Ike.Standard
             }
             string url = this.ftpServerIP + ftpFilePath + ftpFileName;
             Connect(url);
-            using (FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse())
+            using FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse();
+            using Stream Reader = response.GetResponseStream();
+            using MemoryStream mem = new(bufferSize);
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
+            int TotalByteRead = 0;
+            while (true)
             {
-                using (Stream Reader = response.GetResponseStream())
-                {
-                    using (MemoryStream mem = new MemoryStream(bufferSize))
-                    {
-                        byte[] buffer = new byte[bufferSize];
-                        int bytesRead;
-                        int TotalByteRead = 0;
-                        while (true)
-                        {
-                            bytesRead = Reader.Read(buffer, 0, buffer.Length);
-                            TotalByteRead += bytesRead;
-                            if (bytesRead == 0)
-                                break;
-                            mem.Write(buffer, 0, bytesRead);
-                        }
-                        if (mem.Length > 0)
-                        {
-                            byte[] bt = mem.ToArray();
-                            using (FileStream stream = new FileStream(newFileName, FileMode.Create))
-                            {
-                                stream.Write(bt, 0, bt.Length);
-                                stream.Flush();
-                                stream.Close();
-                                return true;
-                            }
-                        }
-                        response.Close();
-                        return true;
-                    }
-                }
+                bytesRead = Reader.Read(buffer, 0, buffer.Length);
+                TotalByteRead += bytesRead;
+                if (bytesRead == 0)
+                    break;
+                mem.Write(buffer, 0, bytesRead);
             }
+            if (mem.Length > 0)
+            {
+                byte[] bt = mem.ToArray();
+                using FileStream stream = new(newFileName, FileMode.Create);
+                stream.Write(bt, 0, bt.Length);
+                stream.Flush();
+                stream.Close();
+                return true;
+            }
+            response.Close();
+            return true;
         }
 
 
@@ -743,11 +751,9 @@ namespace Ike.Standard
             string url = this.ftpServerIP + ftpPath;
             Connect(url);
             reqFTP.Method = WebRequestMethods.Ftp.MakeDirectory;
-            using (FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse())
-            {
-                response.Close();
-                return true;
-            }
+            using FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse();
+            response.Close();
+            return true;
         }
 
 
@@ -769,17 +775,15 @@ namespace Ike.Standard
             }
             string url = this.ftpServerIP + ftpFilePath;
             Connect(url);
-            Uri serverUri = new Uri(url);
+            Uri serverUri = new(url);
             if (serverUri.Scheme != Uri.UriSchemeFtp)
             {
                 return false;
             }
             reqFTP.Method = WebRequestMethods.Ftp.DeleteFile;
-            using (FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse())
-            {
-                response.Close();
-                return true;
-            }
+            using FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse();
+            response.Close();
+            return true;
         }
 
 

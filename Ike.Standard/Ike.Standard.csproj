@@ -1,11 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net46;net461;net462;net47;net471;net472;net48;net481;netcoreapp3.1;net6.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net46;net461;net462;net47;net471;net472;net48;net481;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
 		<!-- 根据不同框架启用不同特性 -->
 		<UseWindowsForms Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' or '$(TargetFramework)' == 'net6.0-windows'">true</UseWindowsForms>
 		<UseWPF Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net48' or '$(TargetFramework)' == 'net481' or '$(TargetFramework)' == 'net6.0-windows'">true</UseWPF>
-		
+		<!-- 设置C#高语法 -->
+		<LangVersion>latest</LangVersion>
+		<!-- enable开启可空上下文，允许全局使用 string?、object? 等语法 -->
+		<Nullable>disable</Nullable>
 		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -13,19 +16,19 @@
 		<PackageIcon>ico.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-		<Version>6.0.1</Version>
-		<AssemblyVersion>6.0.0.1</AssemblyVersion>
-		<FileVersion>6.0.0.1</FileVersion>
+		<Version>7.0.0</Version>
+		<AssemblyVersion>7.0.0.0</AssemblyVersion>
+		<FileVersion>7.0.0.0</FileVersion>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<RepositoryUrl></RepositoryUrl>	
 		<PackageProjectUrl></PackageProjectUrl>
-		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换等...</Description>
+		<Description>C# 通用方法集成库,包括但不限于文件操作(INI,LOG),控制台,FTP,文本,WinAPI,Socket,队列,加解密,数据转换,Core API等...</Description>
 		<Title>C# 通用方法库</Title>
 		<PackageReleaseNotes>
-			[2026-9-18 14:07:51]
-			一,优化IniConfigManager类逻辑
-			二,优化IniMap类卡死UI
-			三,新增WPF控件IniMap类
+			[2026年10月20日13:41:36]
+			一,新增Core API通用控制器
+			二,优化FTP路径校验
+			三,LOG新增记录指定区间输出的内容
 		</PackageReleaseNotes>
 		<Copyright>© 2026 IkeFeng.  All rights reserved.</Copyright>
 		<PackageTags>Socket;ini;Text;Array;FTP;WinAPI;Log;Console</PackageTags>
@@ -58,6 +61,11 @@
 			<PackagePath>\</PackagePath>
 		</None>
 
+	</ItemGroup>
+	
+	<!-- 仅针对 .NET 5.0及以上框架 引入 ASP.NET Core 共享包 -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net7.0' or '$(TargetFramework)' == 'net8.0'">
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 
 	<!-- .NET Framework 4.6 -->

@@ -220,14 +220,14 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ike.Standard\Ike.Standard.csproj">
-      <Project>{14fafe68-54e5-4c16-a8f3-b958f7da42cd}</Project>
-      <Name>Ike.Standard</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ike.ActionEngine\Ike.ActionEngine.csproj">
+      <Project>{3213acd4-cf6e-4a42-9804-c21fc9df132b}</Project>
+      <Name>Ike.ActionEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -238,7 +238,9 @@
     <Error Condition="!Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\build\Microsoft.CodeAnalysis.Analyzers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\build\Microsoft.CodeAnalysis.Analyzers.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Diagnostics.Tracing.TraceEvent.3.1.8\build\Microsoft.Diagnostics.Tracing.TraceEvent.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Diagnostics.Tracing.TraceEvent.3.1.8\build\Microsoft.Diagnostics.Tracing.TraceEvent.props'))" />
     <Error Condition="!Exists('..\packages\SevenZipSharp.Interop.19.1.0\build\SevenZipSharp.Interop.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SevenZipSharp.Interop.19.1.0\build\SevenZipSharp.Interop.targets'))" />
+    <Error Condition="!Exists('..\packages\Ike.ActionEngine.1.0.0\build\Ike.ActionEngine.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Ike.ActionEngine.1.0.0\build\Ike.ActionEngine.targets'))" />
   </Target>
   <Import Project="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\build\Microsoft.CodeAnalysis.Analyzers.targets" Condition="Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\build\Microsoft.CodeAnalysis.Analyzers.targets')" />
   <Import Project="..\packages\SevenZipSharp.Interop.19.1.0\build\SevenZipSharp.Interop.targets" Condition="Exists('..\packages\SevenZipSharp.Interop.19.1.0\build\SevenZipSharp.Interop.targets')" />
+  <Import Project="..\packages\Ike.ActionEngine.1.0.0\build\Ike.ActionEngine.targets" Condition="Exists('..\packages\Ike.ActionEngine.1.0.0\build\Ike.ActionEngine.targets')" />
 </Project>

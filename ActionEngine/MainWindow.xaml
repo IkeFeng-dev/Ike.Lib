@@ -1,0 +1,244 @@
+﻿<Window x:Class="Ike.ActionEngine.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Ike.ActionEngine"
+        xmlns:model="clr-namespace:Ike.ActionEngine.Model"
+        mc:Ignorable="d"
+        Title="Action Engine Log" 
+        Width="650" Height="48"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
+
+    <!-- 右键菜单定义：使用 Opened 事件 -->
+    <Window.ContextMenu>
+        <ContextMenu x:Name="MainContextMenu" Opened="MainContextMenu_Opened">
+            <MenuItem x:Name="ToggleMenuItem" Header="展开" Click="ToggleMenuItem_Click"/>
+            <Separator/>
+            <MenuItem Header="关闭" Click="CloseMenuItem_Click"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+
+
+    <Window.Resources>
+        <!-- 浅色纤细滚动条样式 -->
+        <Style x:Key="SlimScrollBarStyle" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Height="0"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Height="0"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Border Background="#CCCCCC" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SlimScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ScrollContentPresenter Grid.Column="0"/>
+                            <ScrollBar Grid.Column="1"
+                                       x:Name="PART_VerticalScrollBar"
+                                       Style="{StaticResource SlimScrollBarStyle}"
+                                       Value="{TemplateBinding VerticalOffset}"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- 主卡片容器 -->
+    <Border Background="#FFFFFF"
+            CornerRadius="8"
+            BorderBrush="#E0E0E0"
+            BorderThickness="1"
+            Margin="5">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.12"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>
+                <!-- 常驻单行卡片 -->
+                <RowDefinition Height="*"/>
+                <!-- 展开后的历史日志区域 -->
+            </Grid.RowDefinitions>
+
+            <!-- ═══════════════ 1. 默认常驻卡片行 (只做拖拽) ═══════════════ -->
+            <Border Grid.Row="0" 
+                    Background="Transparent"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid Margin="12,0">
+                    <Grid.ColumnDefinitions>
+                        <!-- 时间 -->
+                        <ColumnDefinition Width="65"/>
+                        <!-- 步骤和动作名称 -->
+                        <ColumnDefinition Width="150"/>
+                        <!-- 类型 Badge -->
+                        <ColumnDefinition Width="50"/>
+                        <!-- 最新日志内容 -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- 展开按钮 -->
+                        <ColumnDefinition Width="28"/>
+                    </Grid.ColumnDefinitions>
+
+
+                    <!-- 最新时间戳 -->
+                    <TextBlock x:Name="LatestTimeText"
+                               Grid.Column="0"
+                               Text="--:--:--"
+                               Foreground="#888888"
+                               FontFamily="Consolas"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+
+                    <TextBlock x:Name="LatestStepActionText"
+                                Grid.Column="1"
+                                Foreground="#555555"
+                                FontFamily="Consolas"
+                                FontSize="11"
+                                TextTrimming="CharacterEllipsis"
+                                VerticalAlignment="Center"
+                                Margin="0,0,8,0"/>
+
+
+                    <!-- 最新类型标签 -->
+                    <Border x:Name="LatestTagBorder"
+                            Grid.Column="2"
+                            Background="#EDF2F7"
+                            CornerRadius="3"
+                            Padding="4,1,4,2"
+                            Margin="0,0,8,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="LatestTagText"
+                                   Text="IDLE"
+                                   Foreground="#4A5568"
+                                   FontFamily="Consolas"
+                                   FontSize="10"
+                                   FontWeight="Bold"/>
+                    </Border>
+
+                    <!-- 最新日志内容 (超出省略号) -->
+                    <TextBlock x:Name="LatestInfoText"
+                               Grid.Column="3"
+                               Text="Ready"
+                               Foreground="#333333"
+                               FontFamily="Consolas"
+                               FontSize="11"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+
+                    <!-- 右侧独立触发按钮：点击独立展开/折叠 -->
+                    <Border Grid.Column="4"
+                            Background="Transparent"
+                            Cursor="Hand"
+                            Padding="4"
+                            MouseLeftButtonDown="ToggleBtn_MouseLeftButtonDown">
+                        <TextBlock x:Name="ToggleIcon"
+                                   Text="▼"
+                                   Foreground="#999999"
+                                   FontSize="10"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- ═══════════════ 2. 展开后的历史日志区域 ═══════════════ -->
+            <Border x:Name="DetailPanel" 
+                    Grid.Row="1" 
+                    Visibility="Collapsed"
+                    BorderBrush="#F0F0F0"
+                    BorderThickness="0,1,0,0"
+                    Margin="0,2,0,0">
+                <ScrollViewer x:Name="LogScrollViewer"
+                              Style="{StaticResource SlimScrollViewerStyle}"
+                              VerticalScrollBarVisibility="Auto"
+                              Margin="12,6,6,6">
+                    <ItemsControl x:Name="LogItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type model:LogDisplayItem}">
+                                <Grid Margin="0,3,0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="65"/>
+                                        <ColumnDefinition Width="52"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 时间 -->
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Time}"
+                                               Foreground="#888888"
+                                               FontFamily="Consolas"
+                                               FontSize="11"
+                                               VerticalAlignment="Top"/>
+
+                                    <!-- 标签 -->
+                                    <Border Grid.Column="1"
+                                            Background="{Binding LabelBackground}"
+                                            CornerRadius="3"
+                                            Padding="4,1,4,2"
+                                            Margin="0,0,8,0"
+                                            VerticalAlignment="Top"
+                                            HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding TypeLabel}"
+                                                   Foreground="{Binding LabelForeground}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"/>
+                                    </Border>
+
+                                    <!-- 信息文本 -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Info}"
+                                               Foreground="{Binding InfoForeground}"
+                                               FontFamily="Consolas"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Top"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

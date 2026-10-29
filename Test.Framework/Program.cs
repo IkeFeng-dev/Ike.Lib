@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Ike.Standard;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Console = System.Console;
 
 namespace Test.Framework
@@ -22,77 +15,14 @@ namespace Test.Framework
         {
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
-            Ike.Standard.WinMethod.EnableAnsiSupport();
+
+            var a =  Ike.ActionEngine.ActionEngineRunner.StartBuilderServer(openBrowser: true); ;
 
          
             Console.ReadLine();
         }
 
 
-        /// <summary>
-        /// 重定向架位编号
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        private static string ConvertJWNumber(string input)
-        {
-            // 使用正则表达式提取数字部分
-            Match match = Regex.Match(input, @"JW-(\d+)-(\d+)");
-            if (!match.Success)
-                throw new ArgumentException("无效的编号格式");
-            int lastNumber = int.Parse(match.Groups[2].Value);
-            int column = lastNumber % 3;
-            if (column == 0) column = 3;
-            int row = (lastNumber - 1) / 3 + 1;
-            // 构造新编号
-            string newMiddle = column.ToString("D4");
-            string newLast = row.ToString("D2");
-            return $"JW-{newMiddle}-{newLast}";
-        }
-
-
-        private static void Handle(string info, Ike.Standard.Sockets.MessageType messageType)
-        {
-            info = DateTime.Now.ToString("HH:mm:ss.fff") + ": " + info;
-            switch (messageType)
-            {
-                case Ike.Standard.Sockets.MessageType.Error:
-                    Ike.Standard.Console.WriteLine(info, "#e94242");
-                    break;
-                case Ike.Standard.Sockets.MessageType.Receive:
-                    Ike.Standard.Console.WriteLine(info, "#a5cd71");
-                    break;
-                case Ike.Standard.Sockets.MessageType.Info:
-                    Ike.Standard.Console.WriteLine(info, "#006cc2");
-                    break;
-            }
-        }
-
-
-        /// <summary>
-        /// 处理接收的信息并且回复
-        /// </summary>
-        /// <param name="info">接收信息</param>
-        /// <returns></returns>
-        private static Task<string> ReplyHandle(string info)
-        {
-            var data = JsonConvert.DeserializeObject<RuninRequest>(info);
-            // 入库
-            if (data.Flag == SocketMessageActionFlag.Input)
-            {
-                string jw = ConvertJWNumber(data.Values.ShelfCode);
-                string query = $"[Query]{jw}";
-                string queryResult = Ike.Standard.Sockets.SendAndReceive("127.0.0.1", 16800, query, 2500);
-                var dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(queryResult);
-                bool isOK = dic[jw].Substring(0, 1).Equals("T");
-                data.Flag = isOK ? SocketMessageActionFlag.Complete : SocketMessageActionFlag.NG;
-            }
-            return Task.FromResult(JsonConvert.SerializeObject(data, Formatting.Indented, new JsonSerializerSettings { Converters = new List<JsonConverter> { new StringEnumConverter() } }));
-        }
-
-
-        
 
 
         //}
