@@ -224,9 +224,9 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.3\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ike.ActionEngine\Ike.ActionEngine.csproj">
+    <ProjectReference Include="..\Ike.ActionEngine\Ike.Updater.csproj">
       <Project>{3213acd4-cf6e-4a42-9804-c21fc9df132b}</Project>
-      <Name>Ike.ActionEngine</Name>
+      <Name>Ike.Updater</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

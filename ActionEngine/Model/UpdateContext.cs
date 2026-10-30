@@ -29,6 +29,7 @@ namespace Ike.ActionEngine.Model
             { "{AppDir}",        () => AppContext.BaseDirectory },
             { "{AppName}",       () => Assembly.GetEntryAssembly()?.GetName().Name ?? "App" },
             { "{AppVersion}",    () => Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0" },
+            { "{CurrentDataDir}",() => GlobalVariable.CurrentDataDir },
             // ==================== 2. 系统常用目录 ====================
             { "{TempDir}",       () => Path.GetTempPath() },
             { "{AppData}",       () => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) },
@@ -56,8 +57,12 @@ namespace Ike.ActionEngine.Model
         /// <summary>
         /// 替换路径中的宏变量
         /// </summary>
-        public string ResolvePath(string path)
+        /// <param name="path">宏变量解析的内容</param>
+        /// <param name="isFristCall">是否当前内容首次调用,用于输出宏变量内容解析对比</param>
+        /// <returns></returns>
+        public string ResolvePath(string path,bool isFristCall = true)
         {
+            string temp = path;
             if (string.IsNullOrEmpty(path)) return path;
 
             // 遍历所有注册的宏变量
@@ -77,6 +82,18 @@ namespace Ike.ActionEngine.Model
             while (path.Contains(r))
             {
                 path = path.Replace(r, "\\");
+            }
+            // 防止多重变量
+            foreach (var item in MacroVariables)
+            {
+                if (path.Contains(item.Key))
+                {
+                    path = ResolvePath(path,false);
+                }
+            }
+            if (isFristCall && temp != path)
+            {
+                GlobalVariable.Log.Verbose($"[ResolvePath] : {temp} -> {path}");
             }
             return path;
         }
@@ -102,6 +119,8 @@ namespace Ike.ActionEngine.Model
     [JsonDerivedType(typeof(UploadFileAction), "uploadFile")]
     [JsonDerivedType(typeof(HttpRequestAction), "httpRequest")]
     [JsonDerivedType(typeof(CreateVariablesAction), "createVariables")]
+    [JsonDerivedType(typeof(CompressAction), "compress")]
+    [JsonDerivedType(typeof(FtpAction), "ftp")]
     public abstract class UpdateAction
     {
         /// <summary>

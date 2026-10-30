@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ike.ActionEngine
+namespace Ike.Updater
 {
     /// <summary>
     /// 动作解析器运行
@@ -19,9 +19,9 @@ namespace Ike.ActionEngine
         /// </summary>
         private static readonly string BaseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tool");
         /// <summary>
-        /// JSON目录
+        /// 程序临时目录
         /// </summary>
-        private static readonly string JsonDir = Path.Combine(BaseDir, "Json");
+        private static readonly string TempDir = Path.Combine(BaseDir, "Temp");
         /// <summary>
         /// 获取输出目录中 Tool\ActionEngine.exe 的绝对路径
         /// </summary>
@@ -38,8 +38,8 @@ namespace Ike.ActionEngine
             {
                 throw new FileNotFoundException($"未找到工具引擎，请确认文件是否存在: {ExePath}");
             }
-            Directory.CreateDirectory(JsonDir);
-            string jsonPath = Path.Combine(JsonDir, DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".json");
+            Directory.CreateDirectory(TempDir);
+            string jsonPath = Path.Combine(TempDir, Guid.NewGuid() + ".json");
             File.WriteAllText(jsonPath, json, Encoding.UTF8);
             var startInfo = new ProcessStartInfo
             {
@@ -70,9 +70,9 @@ namespace Ike.ActionEngine
         /// 开启 JsonBuilder Web 访问服务
         /// </summary>
         /// <param name="openBrowser">是否自动在默认浏览器中打开链接</param>
-        /// <param name="port">指定端口号，默认为 0（自动随机获取可用空闲端口）</param>
+        /// <param name="port">指定端口号，默认为 45312（0表示自动随机获取可用空闲端口）</param>
         /// <returns>返回可访问的 URL 路径</returns>
-        public static string StartBuilderServer(bool openBrowser = false, int port = 0)
+        public static string StartBuilderServer(bool openBrowser = false, int port = 45321)
         {
             lock (_serverLock)
             {

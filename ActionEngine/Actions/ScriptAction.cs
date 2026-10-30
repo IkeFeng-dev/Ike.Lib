@@ -90,7 +90,7 @@ namespace Ike.ActionEngine.Actions
                     MemberNameComparer = StringComparer.OrdinalIgnoreCase
                 });
             })
-            .SetValue("ctx", context)
+            .SetValue("context", context)
             .SetValue("log", GlobalVariable.Log);
 
             // 执行脚本

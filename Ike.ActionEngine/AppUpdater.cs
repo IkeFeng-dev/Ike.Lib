@@ -1,4 +1,4 @@
-﻿using Ike.ActionEngine.Model;
+﻿using Ike.Updater.Model;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-namespace Ike.ActionEngine
+namespace Ike.Updater
 {
     /// <summary>
     /// 客户端程序更新SDK主类

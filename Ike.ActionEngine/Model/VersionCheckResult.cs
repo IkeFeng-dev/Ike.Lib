@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ike.ActionEngine.Model
+namespace Ike.Updater.Model
 {
     /// <summary>
     /// 客户端版本检测结果数据模型

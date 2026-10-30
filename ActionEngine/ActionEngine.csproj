@@ -65,11 +65,11 @@
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.13, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.13\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis, Version=5.9.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.5.9.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+    <Reference Include="Microsoft.CodeAnalysis, Version=4.12.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.4.12.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=5.9.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.5.9.0\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.12.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.12.0\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -142,6 +142,7 @@
       <SubType>Designer</SubType>
     </Page>
     <Compile Include="Actions\BackupFileAction.cs" />
+    <Compile Include="Actions\CompressAction.cs" />
     <Compile Include="Actions\CopyFileAction.cs" />
     <Compile Include="Actions\CreateDirAction.cs" />
     <Compile Include="Actions\CreateVariablesAction.cs" />
@@ -149,6 +150,7 @@
     <Compile Include="Actions\DeleteAction.cs" />
     <Compile Include="Actions\DownloadFileAction.cs" />
     <Compile Include="Actions\ExtractAction.cs" />
+    <Compile Include="Actions\FtpAction.cs" />
     <Compile Include="Actions\HttpRequestAction.cs" />
     <Compile Include="Actions\KillProcessAction.cs" />
     <Compile Include="Actions\ModifyIniAction.cs" />
@@ -161,7 +163,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Func\AppUpdater.cs" />
     <Compile Include="Func\GlobalVariable.cs" />
     <Compile Include="Func\DynamicTestScript.cs" />
     <Compile Include="Func\HttpHandle.cs" />
@@ -172,12 +173,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Func\ManifestEngine.cs" />
-    <Compile Include="Model\ApiResult.cs" />
-    <Compile Include="Model\DownloadProgressArgs.cs" />
     <Compile Include="Model\LogDisplayItem.cs" />
     <Compile Include="Model\UpdateContext.cs" />
-    <Compile Include="Model\VersionCheckResult.cs" />
-    <Compile Include="Model\VersionInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

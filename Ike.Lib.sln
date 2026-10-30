@@ -28,7 +28,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.WebApi", "Test.WebApi\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionEngine", "ActionEngine\ActionEngine.csproj", "{443CCD85-D693-4E49-A41B-AF7601AE51D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ike.ActionEngine", "Ike.ActionEngine\Ike.ActionEngine.csproj", "{3213ACD4-CF6E-4A42-9804-C21FC9DF132B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ike.Updater", "Ike.ActionEngine\Ike.Updater.csproj", "{3213ACD4-CF6E-4A42-9804-C21FC9DF132B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

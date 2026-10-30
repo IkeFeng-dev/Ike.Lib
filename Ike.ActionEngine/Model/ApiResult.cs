@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ike.ActionEngine.Model
+namespace Ike.Updater.Model
 {
     /// <summary>
     /// 服务端统一响应结构

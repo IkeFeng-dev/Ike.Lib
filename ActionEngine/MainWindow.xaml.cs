@@ -51,7 +51,7 @@ namespace Ike.ActionEngine
         /// <param name="e"></param>
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            GlobalVariable.Log.Info(string.Format("{0}{1}{2}START{1}{2}{0}", Environment.NewLine, Standard.Text.CopyString("=", 140), Standard.Text.CopyString(" ", 70)));
+            GlobalVariable.Log.Info(string.Format("{0}{1}{0}{2}START{0}{1}", Environment.NewLine, Standard.Text.CopyString("=", 140), Standard.Text.CopyString(" ", 70)));
             Task.Run(() => ProcessCommandLineArgs());
         }
 
@@ -66,6 +66,8 @@ namespace Ike.ActionEngine
             try
             {
                 string[] args = Environment.GetCommandLineArgs();
+                //string[] args = new string[] { "", @"F:\Desktop\update-manifest.json" };
+
                 if (args.Length <= 1)
                 {
                     DynamicTestScript dynamic = new DynamicTestScript();
@@ -92,8 +94,8 @@ namespace Ike.ActionEngine
                         }
                     }
                     else
-                    { 
-                       GlobalVariable.Log.Error($"传参不合法,只接收JSON URL或者JSON file path -> {arg}");
+                    {
+                        GlobalVariable.Log.Error($"传参不合法,只接收JSON URL或者JSON file path -> {arg}");
                         Thread.Sleep(1000);
                         Environment.Exit(0);
                     }
@@ -107,7 +109,7 @@ namespace Ike.ActionEngine
                     stopwatch.Stop();
                     GlobalVariable.Log.Info($"执行完成,总耗时 {Math.Round(stopwatch.ElapsedMilliseconds / 1000.0, 2)}s");
                     Directory.CreateDirectory(GlobalVariable.CurrentDataDir);
-                    File.WriteAllText(GlobalVariable.ActionLogPath,GlobalVariable.Log.GetRecordLog());
+                    File.WriteAllText(GlobalVariable.ActionLogPath, GlobalVariable.Log.GetRecordLog());
                 }
             }
             catch (Exception ex)

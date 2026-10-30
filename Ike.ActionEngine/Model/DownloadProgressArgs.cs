@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ike.ActionEngine.Model
+namespace Ike.Updater.Model
 {
     /// <summary>
     /// 下载进度参数

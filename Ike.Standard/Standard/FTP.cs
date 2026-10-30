@@ -734,27 +734,48 @@ namespace Ike.Standard
 
 
         /// <summary>
-        /// 创建FTP目录
+        /// 递归创建 FTP 目录（支持自动创建多级父目录，且自动跳过已存在的目录）
         /// </summary>
-        /// <param name="ftpPath">目录名</param>
+        /// <param name="ftpPath">FTP目录路径</param>
         /// <returns></returns>
         public bool CreateDirectory(string ftpPath)
         {
-            if (!ftpPath.EndsWith("/"))
+            if (string.IsNullOrWhiteSpace(ftpPath)) return true;
+
+            // 按 / 切割路径，实现逐级递归创建
+            string[] parts = ftpPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            string currentPath = "";
+
+            foreach (string part in parts)
             {
-                ftpPath += "/";
+                currentPath += "/" + part;
+
+                // 先检查当前层级目录是否存在，存在则无需重复创建
+                if (CheckDirectory(currentPath))
+                {
+                    continue;
+                }
+                try
+                {
+                    string url = this.ftpServerIP + currentPath.TrimStart('/');
+                    Connect(url);
+                    reqFTP.Method = WebRequestMethods.Ftp.MakeDirectory;
+                    using FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse();
+                    response.Close();
+                }
+                catch (WebException ex)
+                {
+                    // 如果报错是 550（如并发冲突或服务器判定目录已存在），再确认一次
+                    if (!CheckDirectory(currentPath))
+                    {
+                        throw new InvalidOperationException($"创建 FTP 目录失败: {currentPath}", ex);
+                    }
+                }
             }
-            if (ftpPath.StartsWith("/"))
-            {
-                ftpPath = ftpPath.Substring(1, ftpPath.Length - 1);
-            }
-            string url = this.ftpServerIP + ftpPath;
-            Connect(url);
-            reqFTP.Method = WebRequestMethods.Ftp.MakeDirectory;
-            using FtpWebResponse response = (FtpWebResponse)reqFTP.GetResponse();
-            response.Close();
+
             return true;
         }
+
 
 
         /// <summary>
